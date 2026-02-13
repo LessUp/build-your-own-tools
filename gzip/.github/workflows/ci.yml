@@ -24,7 +24,7 @@ jobs:
         run: go vet ./...
 
   rust:
-    name: Rust build
+    name: Rust build & lint
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -32,5 +32,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Cargo fmt
+        run: cargo fmt --all -- --check
+      - name: Cargo clippy
+        run: cargo clippy --all-targets -- -D warnings
       - name: Build
         run: cargo build --release --locked
+      - name: Test
+        run: cargo test --all --all-features

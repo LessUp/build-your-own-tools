@@ -123,7 +123,94 @@ pub fn ensure_writable(output: &Path, force: bool) -> io::Result<()> {
     Ok(())
 }
 
-/// 判断两个路径是否完全相同。
+/// 判断两个路径是否完全相同（尝试规范化后比较）。
 pub fn same_path(a: &Path, b: &Path) -> bool {
-    a == b
+    match (fs::canonicalize(a), fs::canonicalize(b)) {
+        (Ok(ca), Ok(cb)) => ca == cb,
+        _ => a == b,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+
+    #[test]
+    fn test_sanitize_level_clamp() {
+        assert_eq!(sanitize_level(0), 0);
+        assert_eq!(sanitize_level(6), 6);
+        assert_eq!(sanitize_level(9), 9);
+        assert_eq!(sanitize_level(100), 9);
+    }
+
+    #[test]
+    fn test_default_output_for_compress() {
+        let p = PathBuf::from("hello.txt");
+        assert_eq!(default_output_for_compress(&p), PathBuf::from("hello.txt.gz"));
+    }
+
+    #[test]
+    fn test_default_output_for_decompress_gz() {
+        let p = PathBuf::from("hello.txt.gz");
+        assert_eq!(default_output_for_decompress(&p), PathBuf::from("hello.txt"));
+    }
+
+    #[test]
+    fn test_default_output_for_decompress_no_gz() {
+        let p = PathBuf::from("hello.bin");
+        assert_eq!(default_output_for_decompress(&p), PathBuf::from("hello.bin.out"));
+    }
+
+    #[test]
+    fn test_compress_decompress_roundtrip() {
+        let dir = std::env::temp_dir().join("rgzip_test_roundtrip");
+        let _ = fs::create_dir_all(&dir);
+        let input = dir.join("input.txt");
+        let compressed = dir.join("input.txt.gz");
+        let decompressed = dir.join("output.txt");
+
+        let data = b"Hello, gzip roundtrip test!\n";
+        fs::write(&input, data).unwrap();
+
+        compress_path(&input, &compressed, 6).unwrap();
+        assert!(compressed.exists());
+
+        decompress_path(&compressed, &decompressed).unwrap();
+        assert_eq!(fs::read(&decompressed).unwrap(), data);
+
+        // cleanup
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_ensure_writable_no_force() {
+        let dir = std::env::temp_dir().join("rgzip_test_writable");
+        let _ = fs::create_dir_all(&dir);
+        let existing = dir.join("existing.txt");
+        fs::write(&existing, b"x").unwrap();
+
+        let err = ensure_writable(&existing, false);
+        assert!(err.is_err());
+
+        let ok = ensure_writable(&existing, true);
+        assert!(ok.is_ok());
+
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_compress_reader_to_writer() {
+        let input = b"test data for stream compression";
+        let mut compressed = Vec::new();
+        {
+            let writer = compress_reader_to_writer(&input[..], &mut compressed, 6).unwrap();
+            let _ = writer;
+        }
+        assert!(!compressed.is_empty());
+
+        let mut decompressed = Vec::new();
+        decompress_reader_to_writer(&compressed[..], &mut decompressed).unwrap();
+        assert_eq!(decompressed, input);
+    }
 }

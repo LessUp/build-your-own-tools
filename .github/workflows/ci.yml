@@ -146,11 +146,11 @@ jobs:
       - name: go vet
         run: go vet ./...
 
+      - name: go build
+        run: go build ./...
+
       - name: go test
         run: go test ./...
-
-      - name: go build
-        run: go build -o bin/htop-win.exe ./cmd/htop-win
 
   # Summary job for branch protection
   ci-success:

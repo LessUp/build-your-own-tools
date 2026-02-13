@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 
 use anyhow::Result;
-use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEvent};
+use crossterm::event::{self, Event, KeyCode, KeyEvent};
 use crossterm::terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::execute;
 use ratatui::backend::CrosstermBackend;
@@ -18,7 +18,7 @@ use sysinfo::{CpuExt, Pid, PidExt, ProcessExt, System, SystemExt};
 fn main() -> Result<()> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    execute!(stdout, EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
@@ -27,8 +27,7 @@ fn main() -> Result<()> {
     // 清理终端状态
     disable_raw_mode().ok();
     let mut stdout = io::stdout();
-    execute!(stdout, LeaveAlternateScreen, DisableMouseCapture)
-    .ok();
+    execute!(stdout, LeaveAlternateScreen).ok();
 
     // 将可能的错误返回
     res
@@ -450,7 +449,7 @@ fn ui(frame: &mut Frame, app: &mut App) {
             Constraint::Min(8),    // 进程表
             Constraint::Length(1), // 底部帮助
         ])
-        .split(frame.size());
+        .split(frame.area());
 
     draw_top_panel(frame, chunks[0], app);
     draw_process_table(frame, chunks[1], app);
@@ -649,7 +648,7 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 
 fn draw_details_popup(frame: &mut Frame, app: &App) {
     // 计算弹窗区域（居中 70%x60%）
-    let area = centered_rect(70, 60, frame.size());
+    let area = centered_rect(70, 60, frame.area());
     frame.render_widget(Clear, area); // 清理背景
 
     let mut lines: Vec<Line> = Vec::new();

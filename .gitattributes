@@ -1,0 +1,45 @@
+* text=auto eol=lf
+
+# Source code
+*.rs text eol=lf
+*.go text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+
+# Windows scripts
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Archives
+*.gz binary
+*.zip binary
+*.tar binary
+*.tgz binary
+*.7z binary
+*.rar binary
+
+# Binaries & libraries
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.a binary
+*.o binary
+*.rlib binary
+*.pdb binary
+*.wasm binary
+*.lib binary
+*.obj binary
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary

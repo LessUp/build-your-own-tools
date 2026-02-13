@@ -3,14 +3,24 @@
 
 # Go build artifacts
 **/bin/
+/build/
+/dist/
+*.test
+coverage.out
+
+# Compiled binaries
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-*.test
-*.out
-coverage.out
+*.a
+*.o
+*.obj
+*.lib
+*.pdb
+*.rlib
+*.wasm
 
 # Logs & temporary files
 *.log
@@ -22,6 +32,7 @@ coverage.out
 # OS / file manager
 .DS_Store
 Thumbs.db
+Desktop.ini
 
 # Editor / IDE
 .vscode/
@@ -30,6 +41,7 @@ Thumbs.db
 **/.idea/
 *.iml
 
-# Misc
+# Environment
 .env
 .env.*
+!.env.example

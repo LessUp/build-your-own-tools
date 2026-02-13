@@ -213,4 +213,24 @@ mod tests {
     fn test_trailing_crlf() {
         assert_eq!(convert_crlf_to_lf(b"a\r\n"), b"a\n".to_vec());
     }
+
+    #[test]
+    fn test_lone_cr_not_converted() {
+        assert_eq!(convert_crlf_to_lf(b"a\rb"), b"a\rb".to_vec());
+    }
+
+    #[test]
+    fn test_trailing_cr_not_converted() {
+        assert_eq!(convert_crlf_to_lf(b"a\r"), b"a\r".to_vec());
+    }
+
+    #[test]
+    fn test_consecutive_crlf() {
+        assert_eq!(convert_crlf_to_lf(b"\r\n\r\n\r\n"), b"\n\n\n".to_vec());
+    }
+
+    #[test]
+    fn test_no_newlines() {
+        assert_eq!(convert_crlf_to_lf(b"hello world"), b"hello world".to_vec());
+    }
 }

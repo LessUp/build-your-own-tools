@@ -1,8 +1,12 @@
 [workspace]
+resolver = "2"
 members = [
     "dos2unix",
     "gzip/rust",
     "htop/unix/rust",
     "htop/win/rust",
 ]
-resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "MIT OR Apache-2.0"

@@ -21,3 +21,11 @@
   - `install` 目标依赖 `build`，确保先构建再安装。
 - README：
   - 增补交叉编译指令（`make build-linux` 与显式 `GOOS/GOARCH` 示例）。
+
+## v0.3.0 - 2026-02-13
+- `go.mod`：Go 版本从 1.21 升级至 1.23，与 `go.work` 保持一致。
+- 补充单元测试（`main_test.go`）：
+  - 流式压缩/解压往返（`TestGzipStream`）
+  - 文件级压缩（`TestGzipFile`）、解压往返（`TestGunzipFile`）
+  - 输入收集逻辑（`TestCollectInputs_SkipDir`、`TestCollectInputs_SkipGz`）
+  - 压缩到 Writer（`TestGzipToWriter`）

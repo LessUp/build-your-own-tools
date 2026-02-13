@@ -8,3 +8,7 @@
 - 新增 `--check/-c` 模式，检测含 CRLF 的目标并使用退出码区分结果。
 - 更新 `README.md` 文档，说明检测模式的用法与注意事项。
 - 为 `convert_crlf_to_lf()` 函数补充单元测试。
+
+## 0.2.1 - 2026-02-13
+- 补充 5 个单元测试：`lone_cr_not_converted`、`trailing_cr_not_converted`、`consecutive_crlf`、`no_newlines`。
+- 新增 `.editorconfig` 和 `.gitattributes`。

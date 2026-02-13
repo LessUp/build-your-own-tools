@@ -77,8 +77,24 @@ fn kill_process(pid: i32) -> Result<(), String> {
     }
     #[cfg(not(windows))]
     {
-        let _ = pid;
-        Err("kill not supported on this platform in this build".into())
+        use std::process::Command;
+        // 先尝试 SIGTERM
+        let out = Command::new("kill")
+            .arg(pid.to_string())
+            .output()
+            .map_err(|e| format!("spawn kill failed: {}", e))?;
+        if out.status.success() {
+            return Ok(());
+        }
+        // 强制 SIGKILL
+        let out = Command::new("kill")
+            .args(["-9", &pid.to_string()])
+            .output()
+            .map_err(|e| format!("spawn kill -9 failed: {}", e))?;
+        if out.status.success() {
+            return Ok(());
+        }
+        Err(format!("kill exit code {:?}", out.status.code()))
     }
 }
 
