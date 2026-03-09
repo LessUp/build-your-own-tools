@@ -1,0 +1,127 @@
+import { defineConfig } from 'vitepress'
+
+export default defineConfig({
+  lang: 'zh-CN',
+  title: 'Build Your Own Tools',
+  description: '用 Rust / Go 手写常用命令行工具的学习仓库',
+
+  base: '/build-your-own-tools/',
+
+  srcExclude: [
+    'README.md',
+    '**/node_modules/**',
+    '**/target/**',
+    '**/bin/**',
+    'changelog/**',
+    '**/changelog/**',
+    '.kiro/**',
+    '.github/**',
+  ],
+
+  ignoreDeadLinks: [
+    /\/changelog\//,
+  ],
+
+  markdown: {
+    lineNumbers: true,
+    languageAlias: {
+      toml: 'ini',
+    },
+  },
+
+  lastUpdated: true,
+
+  themeConfig: {
+    nav: [
+      { text: '指南', link: '/docs/ARCHITECTURE' },
+      {
+        text: '子项目',
+        items: [
+          { text: 'dos2unix', link: '/dos2unix/' },
+          { text: 'gzip', link: '/gzip/' },
+          { text: 'htop', link: '/htop/' },
+        ],
+      },
+      { text: '语言对比', link: '/docs/COMPARISON' },
+    ],
+
+    sidebar: {
+      '/docs/': [
+        {
+          text: '项目文档',
+          items: [
+            { text: '架构说明', link: '/docs/ARCHITECTURE' },
+            { text: 'Rust vs Go 对比', link: '/docs/COMPARISON' },
+          ],
+        },
+        {
+          text: '社区',
+          items: [
+            { text: '贡献指南', link: '/CONTRIBUTING' },
+            { text: '行为准则', link: '/CODE_OF_CONDUCT' },
+            { text: '安全政策', link: '/SECURITY' },
+            { text: '变更日志', link: '/CHANGELOG' },
+          ],
+        },
+      ],
+      '/dos2unix/': [
+        {
+          text: 'dos2unix',
+          items: [
+            { text: '概述', link: '/dos2unix/' },
+          ],
+        },
+        { text: '← 返回首页', link: '/' },
+      ],
+      '/gzip/': [
+        {
+          text: 'gzip',
+          items: [
+            { text: '概述', link: '/gzip/' },
+            { text: 'Go 实现', link: '/gzip/go/' },
+            { text: 'Rust 实现', link: '/gzip/rust/' },
+          ],
+        },
+        { text: '← 返回首页', link: '/' },
+      ],
+      '/htop/': [
+        {
+          text: 'htop',
+          items: [
+            { text: '概述', link: '/htop/' },
+            { text: 'Unix Rust', link: '/htop/unix/rust/' },
+            { text: 'Windows Rust', link: '/htop/win/rust/' },
+            { text: 'Windows Go', link: '/htop/win/go/' },
+          ],
+        },
+        { text: '← 返回首页', link: '/' },
+      ],
+    },
+
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/LessUp/build-your-own-tools' },
+    ],
+
+    search: {
+      provider: 'local',
+    },
+
+    outline: {
+      level: [2, 3],
+      label: '目录',
+    },
+
+    lastUpdated: {
+      text: '最后更新',
+    },
+
+    docFooter: {
+      prev: '上一页',
+      next: '下一页',
+    },
+
+    returnToTopLabel: '返回顶部',
+    sidebarMenuLabel: '菜单',
+    darkModeSwitchLabel: '主题',
+  },
+})
