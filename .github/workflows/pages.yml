@@ -10,7 +10,7 @@ on:
       - "htop/**/*.md"
       - "*.md"
       - ".vitepress/**"
-      - ".github/workflows/docs.yml"
+      - ".github/workflows/pages.yml"
       - "package.json"
   workflow_dispatch:
 
@@ -33,6 +33,9 @@ jobs:
         with:
           node-version: 20
           cache: npm
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
       - run: npm ci
       - run: npm run docs:build
