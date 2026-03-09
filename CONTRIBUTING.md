@@ -1,6 +1,6 @@
 # 贡献指南
 
-感谢你对 Build-Your-Own-Utils 项目的关注！我们欢迎各种形式的贡献。
+感谢你对 Build-Your-Own-Tools 项目的关注！我们欢迎各种形式的贡献。
 
 ## 📋 目录
 
@@ -19,7 +19,7 @@
 
 ### 报告 Bug
 
-1. 在 [Issues](https://github.com/user/Build-Your-Own-Utils/issues) 中搜索是否已有相同问题
+1. 在 [Issues](https://github.com/LessUp/build-your-own-tools/issues) 中搜索是否已有相同问题
 2. 如果没有，创建新 Issue 并使用 Bug Report 模板
 3. 提供详细的复现步骤和环境信息
 
@@ -42,11 +42,11 @@
 
 ```bash
 # 克隆你的 fork
-git clone https://github.com/YOUR_USERNAME/Build-Your-Own-Utils.git
-cd Build-Your-Own-Utils
+git clone https://github.com/<your-username>/build-your-own-tools.git
+cd build-your-own-tools
 
 # 添加上游仓库
-git remote add upstream https://github.com/user/Build-Your-Own-Utils.git
+git remote add upstream https://github.com/LessUp/build-your-own-tools.git
 
 # 安装依赖
 # Rust: https://rustup.rs/
