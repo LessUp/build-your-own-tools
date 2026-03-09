@@ -28,14 +28,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .vitepress
+            docs
+            dos2unix
+            gzip
+            htop
+            index.md
+            package.json
+            package-lock.json
+            CHANGELOG.md
+            CONTRIBUTING.md
+            CODE_OF_CONDUCT.md
+            SECURITY.md
+            README.zh-CN.md
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
 
       - run: npm ci
       - run: npm run docs:build
