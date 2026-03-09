@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/LessUp/build-your-own-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/LessUp/build-your-own-tools/actions/workflows/ci.yml)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
+[![Docs](https://img.shields.io/badge/Docs-GitHub%20Pages-blue?logo=github)](https://lessup.github.io/build-your-own-tools/)
 
 一个用 **Rust / Go** 手写常用命令行工具的学习仓库，用于练习底层实现、命令行设计与跨语言对比。
 
