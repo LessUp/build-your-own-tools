@@ -133,7 +133,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
         run: |
           mkdir -p ../../../dist
-          go build -o "../../../dist/htop-win-go-${{ matrix.suffix }}.exe" ./cmd/htop-win
+          go build -o "../../../dist/htop-win-go-${{ matrix.suffix }}.exe" ./cmd/htop-win-go
         shell: bash
 
       - name: Upload artifacts

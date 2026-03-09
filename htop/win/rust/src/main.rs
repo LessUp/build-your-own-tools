@@ -1,17 +1,21 @@
-use std::io;
 use std::collections::VecDeque;
+use std::io;
 use std::time::{Duration, Instant};
 
 use anyhow::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::execute;
+use crossterm::terminal::{
+    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
+};
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
-use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, Borders, BorderType, Cell, Clear, Gauge, Row, Table, TableState, Sparkline};
 use ratatui::symbols::bar::NINE_LEVELS;
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{
+    Block, BorderType, Borders, Cell, Clear, Gauge, Row, Sparkline, Table, TableState,
+};
 use ratatui::{Frame, Terminal};
 use sysinfo::{CpuExt, Pid, PidExt, ProcessExt, System, SystemExt};
 
@@ -139,11 +143,7 @@ impl App {
             return;
         }
         // 按可调间隔刷新
-        if self
-            .last_refresh
-            .elapsed()
-            >= Duration::from_millis(self.refresh_interval_ms)
-        {
+        if self.last_refresh.elapsed() >= Duration::from_millis(self.refresh_interval_ms) {
             self.refresh_data();
         }
     }
@@ -159,8 +159,12 @@ impl App {
         self.mem_used_mb = self.sys.used_memory() / 1024;
 
         // 维护历史（百分比 0-100）
-        let cpu_pct = self.cpu_usage.max(0.0).min(100.0) as u64;
-        let mem_pct = if self.mem_total_mb == 0 { 0 } else { ((self.mem_used_mb * 100) / self.mem_total_mb).min(100) };
+        let cpu_pct = self.cpu_usage.clamp(0.0, 100.0) as u64;
+        let mem_pct = if self.mem_total_mb == 0 {
+            0
+        } else {
+            ((self.mem_used_mb * 100) / self.mem_total_mb).min(100)
+        };
         self.cpu_hist.push_back(cpu_pct);
         self.mem_hist.push_back(mem_pct);
         while self.cpu_hist.len() > self.hist_capacity {
@@ -206,7 +210,11 @@ impl App {
 
     fn sort_rows(&self, rows: &mut [ProcRow]) {
         match self.sort_key {
-            SortKey::Cpu => rows.sort_by(|a, b| a.cpu.partial_cmp(&b.cpu).unwrap_or(std::cmp::Ordering::Equal)),
+            SortKey::Cpu => rows.sort_by(|a, b| {
+                a.cpu
+                    .partial_cmp(&b.cpu)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            }),
             SortKey::Mem => rows.sort_by_key(|r| r.mem_mb),
             SortKey::Pid => rows.sort_by_key(|r| r.pid.as_u32()),
             SortKey::Name => rows.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
@@ -446,8 +454,8 @@ fn ui(frame: &mut Frame, app: &mut App) {
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(10), // 顶部 CPU/内存 + 历史曲线
-            Constraint::Min(8),    // 进程表
-            Constraint::Length(1), // 底部帮助
+            Constraint::Min(8),     // 进程表
+            Constraint::Length(1),  // 底部帮助
         ])
         .split(frame.area());
 
@@ -464,7 +472,11 @@ fn draw_top_panel(frame: &mut Frame, area: Rect, app: &App) {
     // 顶部区域：CPU/内存仪表 + 历史曲线
     let lines = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(2), Constraint::Length(2), Constraint::Min(3)])
+        .constraints([
+            Constraint::Length(2),
+            Constraint::Length(2),
+            Constraint::Min(3),
+        ])
         .split(area);
 
     let cpu_ratio = (app.cpu_usage / 100.0).clamp(0.0, 1.0);
@@ -560,9 +572,8 @@ fn draw_process_table(frame: &mut Frame, area: Rect, app: &mut App) {
         .iter()
         .enumerate()
         .map(|(i, r)| {
-            let cpu_cell = Cell::from(format!("{:>6.1}", r.cpu)).style(Style::default().fg(
-                color_for_ratio((r.cpu / 100.0).clamp(0.0, 1.0)),
-            ));
+            let cpu_cell = Cell::from(format!("{:>6.1}", r.cpu))
+                .style(Style::default().fg(color_for_ratio((r.cpu / 100.0).clamp(0.0, 1.0))));
             let row = Row::new(vec![
                 Cell::from(r.pid.as_u32().to_string()),
                 Cell::from(r.name.clone()),
@@ -599,7 +610,12 @@ fn draw_process_table(frame: &mut Frame, area: Rect, app: &mut App) {
                 .border_type(BorderType::Rounded)
                 .title(format!("进程（排序: {} {}）", sort_text, order_text)),
         )
-        .highlight_style(Style::default().bg(Color::DarkGray).fg(Color::White).add_modifier(Modifier::BOLD))
+        .row_highlight_style(
+            Style::default()
+                .bg(Color::DarkGray)
+                .fg(Color::White)
+                .add_modifier(Modifier::BOLD),
+        )
         .highlight_symbol("> ");
 
     frame.render_stateful_widget(table, area, &mut app.table_state);
@@ -621,7 +637,10 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
     let help = Line::from(vec![
         Span::styled(" q ", Style::default().bg(Color::DarkGray)),
         Span::raw("退出  "),
-        Span::styled(" ↑/↓ PgUp/PgDn Home/End ", Style::default().bg(Color::DarkGray)),
+        Span::styled(
+            " ↑/↓ PgUp/PgDn Home/End ",
+            Style::default().bg(Color::DarkGray),
+        ),
         Span::raw("导航  "),
         Span::styled(" s/r ", Style::default().bg(Color::DarkGray)),
         Span::raw("切换/反转排序  "),
@@ -641,7 +660,9 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
         )),
     ]);
 
-    let block = Block::default().borders(Borders::ALL).border_type(BorderType::Rounded);
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded);
     let paragraph = ratatui::widgets::Paragraph::new(help).block(block);
     frame.render_widget(paragraph, area);
 }
@@ -663,8 +684,7 @@ fn draw_details_popup(frame: &mut Frame, app: &App) {
             let cmd: String = if p.cmd().is_empty() {
                 String::new()
             } else {
-                p
-                    .cmd()
+                p.cmd()
                     .iter()
                     .map(|s| s.as_str())
                     .collect::<Vec<_>>()
@@ -673,7 +693,11 @@ fn draw_details_popup(frame: &mut Frame, app: &App) {
             let status = format!("{:?}", p.status());
 
             lines.push(Line::raw(format!("名称: {}", name)));
-            lines.push(Line::raw(format!("PID: {}    PPID: {}", pid.as_u32(), parent)));
+            lines.push(Line::raw(format!(
+                "PID: {}    PPID: {}",
+                pid.as_u32(),
+                parent
+            )));
             lines.push(Line::raw(format!("状态: {}", status)));
             lines.push(Line::raw(format!("CPU%: {:.1}    内存: {} MiB", cpu, mem)));
             lines.push(Line::raw(format!("Exe: {}", exe)));
@@ -692,7 +716,9 @@ fn draw_details_popup(frame: &mut Frame, app: &App) {
         .title("进程详情（Esc/Enter 关闭）")
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded);
-    let paragraph = ratatui::widgets::Paragraph::new(lines).block(block).wrap(ratatui::widgets::Wrap { trim: true });
+    let paragraph = ratatui::widgets::Paragraph::new(lines)
+        .block(block)
+        .wrap(ratatui::widgets::Wrap { trim: true });
     frame.render_widget(paragraph, area);
 }
 

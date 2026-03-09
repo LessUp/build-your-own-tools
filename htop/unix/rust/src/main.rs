@@ -1,4 +1,9 @@
-use std::{cmp::Ordering, error::Error, io, time::{Duration, Instant}};
+use std::{
+    cmp::Ordering,
+    error::Error,
+    io,
+    time::{Duration, Instant},
+};
 
 use crossterm::{
     event::{self, Event, KeyCode, KeyEventKind},
@@ -24,15 +29,20 @@ enum SortKey {
 
 fn draw_process_details(frame: &mut ratatui::Frame<'_>, area: Rect, sys: &System, app: &App) {
     if app.processes.is_empty() {
-        let para = Paragraph::new("No process selected").block(Block::default().borders(Borders::ALL).title("Details"));
+        let para = Paragraph::new("No process selected")
+            .block(Block::default().borders(Borders::ALL).title("Details"));
         frame.render_widget(para, area);
         return;
     }
-    let row = match app.processes.get(app.selected) { Some(r) => r, None => {
-        let para = Paragraph::new("No process selected").block(Block::default().borders(Borders::ALL).title("Details"));
-        frame.render_widget(para, area);
-        return;
-    }};
+    let row = match app.processes.get(app.selected) {
+        Some(r) => r,
+        None => {
+            let para = Paragraph::new("No process selected")
+                .block(Block::default().borders(Borders::ALL).title("Details"));
+            frame.render_widget(para, area);
+            return;
+        }
+    };
     let pid = Pid::from_u32(row.pid as u32);
     let (name, status, cpu, mem_mb, exe, cmd) = if let Some(p) = sys.process(pid) {
         let name = p.name().to_string();
@@ -40,14 +50,31 @@ fn draw_process_details(frame: &mut ratatui::Frame<'_>, area: Rect, sys: &System
         let cpu = format!("{:.1}", p.cpu_usage());
         let mem_mb = format!("{:.1}", p.memory() as f64 / 1024.0);
         let exe = format!("{}", p.exe().display());
-        let cmd = if p.cmd().is_empty() { String::from("") } else { p.cmd().join(" ") };
+        let cmd = if p.cmd().is_empty() {
+            String::from("")
+        } else {
+            p.cmd().join(" ")
+        };
         (name, status, cpu, mem_mb, exe, cmd)
     } else {
-        (row.name.clone(), String::from("Unknown"), format!("{:.1}", row.cpu), format!("{:.1}", row.mem_kb as f64 / 1024.0), String::from(""), String::from(""))
+        (
+            row.name.clone(),
+            String::from("Unknown"),
+            format!("{:.1}", row.cpu),
+            format!("{:.1}", row.mem_kb as f64 / 1024.0),
+            String::from(""),
+            String::from(""),
+        )
     };
 
     let lines = vec![
-        Line::from(vec![Span::styled(format!(" PID: {}  ", row.pid), Style::default().fg(Color::Yellow)), Span::raw(format!("Status: {}", status))]),
+        Line::from(vec![
+            Span::styled(
+                format!(" PID: {}  ", row.pid),
+                Style::default().fg(Color::Yellow),
+            ),
+            Span::raw(format!("Status: {}", status)),
+        ]),
         Line::from(format!(" Name: {}", name)),
         Line::from(format!(" CPU%: {}  Mem: {} MB", cpu, mem_mb)),
         Line::from(format!(" Exe: {}", exe)),
@@ -64,15 +91,21 @@ fn kill_process(pid: i32) -> Result<(), String> {
     {
         use std::process::Command;
         // 尝试正常结束
-        let out = Command::new("taskkill").args(["/PID", &pid.to_string()]).output()
+        let out = Command::new("taskkill")
+            .args(["/PID", &pid.to_string()])
+            .output()
             .map_err(|e| format!("spawn taskkill failed: {}", e))?;
         if out.status.success() {
             return Ok(());
         }
         // 强制结束
-        let out = Command::new("taskkill").args(["/PID", &pid.to_string(), "/F"]).output()
+        let out = Command::new("taskkill")
+            .args(["/PID", &pid.to_string(), "/F"])
+            .output()
             .map_err(|e| format!("spawn taskkill /F failed: {}", e))?;
-        if out.status.success() { return Ok(()); }
+        if out.status.success() {
+            return Ok(());
+        }
         Err(format!("taskkill exit code {:?}", out.status.code()))
     }
     #[cfg(not(windows))]
@@ -162,7 +195,9 @@ impl App {
 
     fn sort_processes(&mut self) {
         match self.sort {
-            SortKey::Cpu => self.processes.sort_by(|a, b| a.cpu.partial_cmp(&b.cpu).unwrap_or(Ordering::Equal)),
+            SortKey::Cpu => self
+                .processes
+                .sort_by(|a, b| a.cpu.partial_cmp(&b.cpu).unwrap_or(Ordering::Equal)),
             SortKey::Mem => self.processes.sort_by_key(|p| p.mem_kb),
             SortKey::Pid => self.processes.sort_by_key(|p| p.pid),
         }
@@ -214,72 +249,97 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<(), 
         }
 
         // 绘制
-        table_state.select(if app.processes.is_empty() { None } else { Some(app.selected) });
+        table_state.select(if app.processes.is_empty() {
+            None
+        } else {
+            Some(app.selected)
+        });
         terminal.draw(|f| ui(f, &sys, &app, &mut table_state))?;
 
         let timeout = tick_rate.saturating_sub(last_tick.elapsed());
         if crossterm::event::poll(timeout)? {
             if let Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Release { continue; }
+                if key.kind == KeyEventKind::Release {
+                    continue;
+                }
                 match app.mode {
-                    InputMode::Normal => {
-                        match key.code {
-                            KeyCode::Char('q') => return Ok(()),
-                            KeyCode::Up => app.selected = app.selected.saturating_sub(1),
-                            KeyCode::Down => {
-                                if app.selected + 1 < app.processes.len() { app.selected += 1; }
+                    InputMode::Normal => match key.code {
+                        KeyCode::Char('q') => return Ok(()),
+                        KeyCode::Up => app.selected = app.selected.saturating_sub(1),
+                        KeyCode::Down => {
+                            if app.selected + 1 < app.processes.len() {
+                                app.selected += 1;
                             }
-                            KeyCode::PageUp => app.selected = app.selected.saturating_sub(10),
-                            KeyCode::PageDown => {
-                                app.selected = (app.selected + 10).min(app.processes.len().saturating_sub(1));
-                            }
-                            KeyCode::Home => { app.selected = 0; }
-                            KeyCode::End => { app.selected = app.processes.len().saturating_sub(1); }
-                            KeyCode::Char('s') => { app.cycle_sort(); app.sort_processes(); }
-                            KeyCode::Char('r') => { app.desc = !app.desc; app.sort_processes(); }
-                            KeyCode::Char('/') => { app.mode = InputMode::Searching; }
-                            KeyCode::Char('p') => { app.paused = !app.paused; }
-                            KeyCode::F(5) => { do_refresh(&mut sys, &mut app); }
-                            KeyCode::Char('k') => {
-                                if let Some(row) = app.processes.get(app.selected) {
-                                    match kill_process(row.pid) {
-                                        Ok(()) => {
-                                            app.status = format!("killed PID {}", row.pid);
-                                            do_refresh(&mut sys, &mut app);
-                                        }
-                                        Err(e) => {
-                                            app.status = format!("kill PID {} failed: {}", row.pid, e);
-                                        }
+                        }
+                        KeyCode::PageUp => app.selected = app.selected.saturating_sub(10),
+                        KeyCode::PageDown => {
+                            app.selected =
+                                (app.selected + 10).min(app.processes.len().saturating_sub(1));
+                        }
+                        KeyCode::Home => {
+                            app.selected = 0;
+                        }
+                        KeyCode::End => {
+                            app.selected = app.processes.len().saturating_sub(1);
+                        }
+                        KeyCode::Char('s') => {
+                            app.cycle_sort();
+                            app.sort_processes();
+                        }
+                        KeyCode::Char('r') => {
+                            app.desc = !app.desc;
+                            app.sort_processes();
+                        }
+                        KeyCode::Char('/') => {
+                            app.mode = InputMode::Searching;
+                        }
+                        KeyCode::Char('p') => {
+                            app.paused = !app.paused;
+                        }
+                        KeyCode::F(5) => {
+                            do_refresh(&mut sys, &mut app);
+                        }
+                        KeyCode::Char('k') => {
+                            if let Some(row) = app.processes.get(app.selected) {
+                                match kill_process(row.pid) {
+                                    Ok(()) => {
+                                        app.status = format!("killed PID {}", row.pid);
+                                        do_refresh(&mut sys, &mut app);
+                                    }
+                                    Err(e) => {
+                                        app.status = format!("kill PID {} failed: {}", row.pid, e);
                                     }
                                 }
                             }
-                            KeyCode::Char('-') => {
-                                let ms = tick_rate.as_millis().saturating_sub(100) as u64;
-                                let ms = ms.clamp(100, 5000);
-                                tick_rate = Duration::from_millis(ms);
-                            }
-                            KeyCode::Char('+') | KeyCode::Char('=') => {
-                                let ms = (tick_rate.as_millis() as u64).saturating_add(100);
-                                let ms = ms.clamp(100, 5000);
-                                tick_rate = Duration::from_millis(ms);
-                            }
-                            KeyCode::Enter | KeyCode::Char('d') => {
-                                app.show_details = !app.show_details;
-                            }
-                            KeyCode::Esc => {
-                                if !app.filter.is_empty() {
-                                    app.filter.clear();
-                                    app.selected = 0;
-                                    app.processes = collect_processes(&sys);
-                                    app.sort_processes();
-                                }
-                            }
-                            _ => {}
                         }
-                    }
+                        KeyCode::Char('-') => {
+                            let ms = tick_rate.as_millis().saturating_sub(100) as u64;
+                            let ms = ms.clamp(100, 5000);
+                            tick_rate = Duration::from_millis(ms);
+                        }
+                        KeyCode::Char('+') | KeyCode::Char('=') => {
+                            let ms = (tick_rate.as_millis() as u64).saturating_add(100);
+                            let ms = ms.clamp(100, 5000);
+                            tick_rate = Duration::from_millis(ms);
+                        }
+                        KeyCode::Enter | KeyCode::Char('d') => {
+                            app.show_details = !app.show_details;
+                        }
+                        KeyCode::Esc => {
+                            if !app.filter.is_empty() {
+                                app.filter.clear();
+                                app.selected = 0;
+                                app.processes = collect_processes(&sys);
+                                app.sort_processes();
+                            }
+                        }
+                        _ => {}
+                    },
                     InputMode::Searching => {
                         match key.code {
-                            KeyCode::Enter => { app.mode = InputMode::Normal; }
+                            KeyCode::Enter => {
+                                app.mode = InputMode::Normal;
+                            }
                             KeyCode::Esc => {
                                 app.filter.clear();
                                 app.mode = InputMode::Normal;
@@ -287,10 +347,14 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<(), 
                                 app.processes = collect_processes(&sys);
                                 app.sort_processes();
                             }
-                            KeyCode::Backspace => { app.filter.pop(); }
+                            KeyCode::Backspace => {
+                                app.filter.pop();
+                            }
                             KeyCode::Char(c) => {
                                 // 只接受可显示字符
-                                if !c.is_control() { app.filter.push(c); }
+                                if !c.is_control() {
+                                    app.filter.push(c);
+                                }
                             }
                             _ => {}
                         }
@@ -323,7 +387,9 @@ fn collect_processes(sys: &System) -> Vec<ProcRow> {
 }
 
 fn filter_processes(v: Vec<ProcRow>, filter: &str) -> Vec<ProcRow> {
-    if filter.is_empty() { return v; }
+    if filter.is_empty() {
+        return v;
+    }
     let needle = filter.to_lowercase();
     v.into_iter()
         .filter(|p| p.name.to_lowercase().contains(&needle))
@@ -335,7 +401,11 @@ fn do_refresh(sys: &mut System, app: &mut App) {
     sys.refresh_cpu();
     sys.refresh_processes();
     let v = collect_processes(sys);
-    app.processes = if app.filter.is_empty() { v } else { filter_processes(v, &app.filter) };
+    app.processes = if app.filter.is_empty() {
+        v
+    } else {
+        filter_processes(v, &app.filter)
+    };
     app.sort_processes();
 }
 
@@ -352,10 +422,7 @@ fn ui(frame: &mut ratatui::Frame<'_>, sys: &System, app: &App, table_state: &mut
     } else {
         Layout::default()
             .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(3),
-                Constraint::Min(5),
-            ])
+            .constraints([Constraint::Length(3), Constraint::Min(5)])
             .split(frame.area())
     };
 
@@ -388,8 +455,15 @@ fn draw_summary(frame: &mut ratatui::Frame<'_>, area: Rect, sys: &System, app: &
         SortKey::Pid => "PID",
     };
     let order = if app.desc { "desc" } else { "asc" };
-    let mode = match app.mode { InputMode::Normal => "NORMAL", InputMode::Searching => "SEARCH" };
-    let filter_shown: String = if app.filter.is_empty() { "—".into() } else { app.filter.clone() };
+    let mode = match app.mode {
+        InputMode::Normal => "NORMAL",
+        InputMode::Searching => "SEARCH",
+    };
+    let filter_shown: String = if app.filter.is_empty() {
+        "—".into()
+    } else {
+        app.filter.clone()
+    };
     let paused = if app.paused { "PAUSED" } else { "RUN" };
 
     let text = Line::from(vec![
@@ -408,14 +482,34 @@ fn draw_summary(frame: &mut ratatui::Frame<'_>, area: Rect, sys: &System, app: &
     frame.render_widget(para, area);
 }
 
-fn draw_process_table(frame: &mut ratatui::Frame<'_>, area: Rect, app: &App, table_state: &mut TableState) {
+fn draw_process_table(
+    frame: &mut ratatui::Frame<'_>,
+    area: Rect,
+    app: &App,
+    table_state: &mut TableState,
+) {
     let arrow = if app.desc { "↓" } else { "↑" };
-    let pid_h = if matches!(app.sort, SortKey::Pid) { format!("PID {arrow}") } else { "PID".into() };
+    let pid_h = if matches!(app.sort, SortKey::Pid) {
+        format!("PID {arrow}")
+    } else {
+        "PID".into()
+    };
     let name_h = "NAME".to_string();
-    let cpu_h = if matches!(app.sort, SortKey::Cpu) { format!("CPU% {arrow}") } else { "CPU%".into() };
-    let mem_h = if matches!(app.sort, SortKey::Mem) { format!("MEM(MB) {arrow}") } else { "MEM(MB)".into() };
-    let header = Row::new(vec![pid_h, name_h, cpu_h, mem_h]) 
-        .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD));
+    let cpu_h = if matches!(app.sort, SortKey::Cpu) {
+        format!("CPU% {arrow}")
+    } else {
+        "CPU%".into()
+    };
+    let mem_h = if matches!(app.sort, SortKey::Mem) {
+        format!("MEM(MB) {arrow}")
+    } else {
+        "MEM(MB)".into()
+    };
+    let header = Row::new(vec![pid_h, name_h, cpu_h, mem_h]).style(
+        Style::default()
+            .fg(Color::Yellow)
+            .add_modifier(Modifier::BOLD),
+    );
 
     let rows = app.processes.iter().map(|p| p.as_row());
 

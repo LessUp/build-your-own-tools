@@ -134,7 +134,6 @@ pub fn same_path(a: &Path, b: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Write;
 
     #[test]
     fn test_sanitize_level_clamp() {
@@ -147,19 +146,28 @@ mod tests {
     #[test]
     fn test_default_output_for_compress() {
         let p = PathBuf::from("hello.txt");
-        assert_eq!(default_output_for_compress(&p), PathBuf::from("hello.txt.gz"));
+        assert_eq!(
+            default_output_for_compress(&p),
+            PathBuf::from("hello.txt.gz")
+        );
     }
 
     #[test]
     fn test_default_output_for_decompress_gz() {
         let p = PathBuf::from("hello.txt.gz");
-        assert_eq!(default_output_for_decompress(&p), PathBuf::from("hello.txt"));
+        assert_eq!(
+            default_output_for_decompress(&p),
+            PathBuf::from("hello.txt")
+        );
     }
 
     #[test]
     fn test_default_output_for_decompress_no_gz() {
         let p = PathBuf::from("hello.bin");
-        assert_eq!(default_output_for_decompress(&p), PathBuf::from("hello.bin.out"));
+        assert_eq!(
+            default_output_for_decompress(&p),
+            PathBuf::from("hello.bin.out")
+        );
     }
 
     #[test]
@@ -203,10 +211,7 @@ mod tests {
     fn test_compress_reader_to_writer() {
         let input = b"test data for stream compression";
         let mut compressed = Vec::new();
-        {
-            let writer = compress_reader_to_writer(&input[..], &mut compressed, 6).unwrap();
-            let _ = writer;
-        }
+        compress_reader_to_writer(&input[..], &mut compressed, 6).unwrap();
         assert!(!compressed.is_empty());
 
         let mut decompressed = Vec::new();

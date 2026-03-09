@@ -1,9 +1,9 @@
 [package]
 name = "dos2unix-rust"
 version = "0.2.0"
-edition = "2021"
+edition.workspace = true
+license.workspace = true
 description = "Rust 实现的轻量 dos2unix：将 CRLF 转换为 LF，支持 stdin/stdout 与就地转换。"
 readme = "README.md"
-license = "MIT OR Apache-2.0"
 
 [dependencies]

@@ -133,7 +133,7 @@ make test-all
 ## 📁 目录结构
 
 ```
-Build-Your-Own-Utils/
+build-your-own-tools/
 ├── dos2unix/           # Rust 实现的 dos2unix
 ├── gzip/
 │   ├── go/             # Go 实现

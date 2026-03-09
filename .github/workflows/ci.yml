@@ -49,10 +49,14 @@ jobs:
       - name: Cargo build (release)
         run: cargo build --all --release
 
-  # Go gzip - Linux
-  go-gzip-linux:
-    name: Go gzip (Linux)
-    runs-on: ubuntu-latest
+  # Go gzip - Linux & macOS
+  go-gzip:
+    name: Go gzip (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     defaults:
       run:
         working-directory: gzip/go
@@ -63,41 +67,7 @@ jobs:
         with:
           go-version: stable
           cache: true
-          cache-dependency-path: gzip/go/go.sum
-
-      - name: gofmt check
-        run: |
-          changed=$(gofmt -l .)
-          if [ -n "$changed" ]; then
-            echo "Go files not formatted:" >&2
-            echo "$changed" >&2
-            exit 1
-          fi
-
-      - name: go vet
-        run: go vet ./...
-
-      - name: go test
-        run: go test ./...
-
-      - name: go build
-        run: go build -o bin/gzip-go ./cmd/gzip-go
-
-  # Go gzip - macOS
-  go-gzip-macos:
-    name: Go gzip (macOS)
-    runs-on: macos-latest
-    defaults:
-      run:
-        working-directory: gzip/go
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version: stable
-          cache: true
-          cache-dependency-path: gzip/go/go.sum
+          cache-dependency-path: gzip/go/go.mod
 
       - name: gofmt check
         run: |
@@ -131,7 +101,7 @@ jobs:
         with:
           go-version: stable
           cache: true
-          cache-dependency-path: htop/win/go/go.sum
+          cache-dependency-path: htop/win/go/go.mod
 
       - name: gofmt check
         shell: pwsh
@@ -155,15 +125,14 @@ jobs:
   # Summary job for branch protection
   ci-success:
     name: CI Success
-    needs: [rust, go-gzip-linux, go-gzip-macos, go-htop-windows]
+    needs: [rust, go-gzip, go-htop-windows]
     runs-on: ubuntu-latest
     if: always()
     steps:
       - name: Check all jobs
         run: |
           if [[ "${{ needs.rust.result }}" != "success" ]] || \
-             [[ "${{ needs.go-gzip-linux.result }}" != "success" ]] || \
-             [[ "${{ needs.go-gzip-macos.result }}" != "success" ]] || \
+             [[ "${{ needs.go-gzip.result }}" != "success" ]] || \
              [[ "${{ needs.go-htop-windows.result }}" != "success" ]]; then
             echo "One or more jobs failed"
             exit 1

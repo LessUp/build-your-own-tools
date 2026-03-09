@@ -100,7 +100,6 @@ func main() {
 	sem := make(chan struct{}, opts.workers)
 
 	for _, src := range inputs {
-		src := src
 		sem <- struct{}{}
 		wg.Add(1)
 		go func() {
@@ -226,13 +225,13 @@ func collectInputs(paths []string, recursive bool, decompress bool) ([]string, e
 }
 
 func gzipFile(src, dest string, level int) error {
-	in, err := os.Open(src)
+	inf, err := os.Open(src)
 	if err != nil {
 		return err
 	}
-	defer in.Close()
+	defer inf.Close()
 
-	fi, err := in.Stat()
+	fi, err := inf.Stat()
 	if err != nil {
 		return err
 	}
@@ -250,7 +249,7 @@ func gzipFile(src, dest string, level int) error {
 	w.Name = filepath.Base(src)
 	w.ModTime = fi.ModTime()
 
-	if _, err := io.Copy(w, in); err != nil {
+	if _, err := io.Copy(w, inf); err != nil {
 		_ = w.Close()
 		return err
 	}
@@ -261,13 +260,13 @@ func gzipFile(src, dest string, level int) error {
 }
 
 func gunzipFile(src, dest string) error {
-	in, err := os.Open(src)
+	inf, err := os.Open(src)
 	if err != nil {
 		return err
 	}
-	defer in.Close()
+	defer inf.Close()
 
-	r, err := gzip.NewReader(in)
+	r, err := gzip.NewReader(inf)
 	if err != nil {
 		return err
 	}

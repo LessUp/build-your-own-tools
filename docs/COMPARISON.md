@@ -1,6 +1,6 @@
 # Rust vs Go 实现对比
 
-本文档对比 Build-Your-Own-Utils 项目中 Rust 和 Go 两种语言实现的差异和特点。
+本文档对比 build-your-own-tools 项目中 Rust 和 Go 两种语言实现的差异和特点。
 
 ## 概述
 

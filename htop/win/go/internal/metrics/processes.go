@@ -114,8 +114,8 @@ func (c *Collector) Snapshot(ctx context.Context) ([]ProcessInfo, error) {
 
 	// 清理已退出进程的缓存，避免无限增长
 	alive := make(map[int32]struct{}, len(infos))
-	for _, in := range infos {
-		alive[in.PID] = struct{}{}
+	for _, info := range infos {
+		alive[info.PID] = struct{}{}
 	}
 	for pid := range c.cache {
 		if _, ok := alive[pid]; !ok {

@@ -130,10 +130,8 @@ fn main() {
     if files.is_empty() {
         match process_stdin_stdout(quiet, check_only) {
             Ok(has_crlf) => {
-                if has_crlf {
-                    if check_only {
-                        std::process::exit(2);
-                    }
+                if has_crlf && check_only {
+                    std::process::exit(2);
                 }
             }
             Err(e) => {
