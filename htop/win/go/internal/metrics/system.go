@@ -18,10 +18,10 @@ import (
 // Keep it simple for UI rendering
 
 type SystemStats struct {
-	CPUPercent      float64
-	MemTotal        uint64
-	MemUsed         uint64
-	MemUsedPercent  float64
+	CPUPercent     float64
+	MemTotal       uint64
+	MemUsed        uint64
+	MemUsedPercent float64
 }
 
 // GetSystemStats 采集系统 CPU 与内存使用情况

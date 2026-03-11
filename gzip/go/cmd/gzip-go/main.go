@@ -17,10 +17,10 @@ import (
 type options struct {
 	decompress bool
 	recursive  bool
-	stdout    bool
-	force     bool
-	level     int
-	workers   int
+	stdout     bool
+	force      bool
+	level      int
+	workers    int
 }
 
 func main() {

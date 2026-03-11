@@ -35,35 +35,35 @@ type UI struct {
 }
 
 func colorByPercent(p float64) string {
-    if p >= 85 {
-        return "red"
-    }
-    if p >= 60 {
-        return "yellow"
-    }
-    return "green"
+	if p >= 85 {
+		return "red"
+	}
+	if p >= 60 {
+		return "yellow"
+	}
+	return "green"
 }
 
 func renderBar(prefix string, pct float64, width int) string {
-    if width <= 0 {
-        width = 20
-    }
-    val := pct
-    if val < 0 {
-        val = 0
-    }
-    if val > 100 {
-        val = 100
-    }
-    filled := int(math.Round(val * float64(width) / 100.0))
-    if filled < 0 {
-        filled = 0
-    }
-    if filled > width {
-        filled = width
-    }
-    bar := fmt.Sprintf("[%s]%s[-]%s", colorByPercent(val), strings.Repeat("#", filled), strings.Repeat("-", width-filled))
-    return fmt.Sprintf("[white::b]%s:[-] %5.1f%% %s", prefix, pct, bar)
+	if width <= 0 {
+		width = 20
+	}
+	val := pct
+	if val < 0 {
+		val = 0
+	}
+	if val > 100 {
+		val = 100
+	}
+	filled := int(math.Round(val * float64(width) / 100.0))
+	if filled < 0 {
+		filled = 0
+	}
+	if filled > width {
+		filled = width
+	}
+	bar := fmt.Sprintf("[%s]%s[-]%s", colorByPercent(val), strings.Repeat("#", filled), strings.Repeat("-", width-filled))
+	return fmt.Sprintf("[white::b]%s:[-] %5.1f%% %s", prefix, pct, bar)
 }
 
 type sortMode int

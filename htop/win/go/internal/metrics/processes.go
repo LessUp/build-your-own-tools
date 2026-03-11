@@ -14,12 +14,12 @@ import (
 // KISS: 只展示最常用字段
 
 type ProcessInfo struct {
-	PID         int32
-	Name        string
-	CPUPercent  float64
-	MemRSS      uint64
-	MemPercent  float32
-	CreateTime  int64 // milliseconds since epoch
+	PID        int32
+	Name       string
+	CPUPercent float64
+	MemRSS     uint64
+	MemPercent float32
+	CreateTime int64 // milliseconds since epoch
 }
 
 type cpuCache struct {
@@ -28,10 +28,10 @@ type cpuCache struct {
 }
 
 type Collector struct {
-	mu      sync.Mutex
-	cache   map[int32]cpuCache
-	lastTS  time.Time
-	numCPU  int
+	mu     sync.Mutex
+	cache  map[int32]cpuCache
+	lastTS time.Time
+	numCPU int
 }
 
 func NewCollector() *Collector {
