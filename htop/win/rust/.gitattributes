@@ -1,3 +1,4 @@
 * text eol=crlf
+*.rs text eol=lf
 
 # 仍强制保留 LF 的文件类型可在此追加
