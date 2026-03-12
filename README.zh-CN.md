@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/LessUp/build-your-own-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/LessUp/build-your-own-tools/actions/workflows/ci.yml)
 [![Docs](https://github.com/LessUp/build-your-own-tools/actions/workflows/pages.yml/badge.svg)](https://lessup.github.io/build-your-own-tools/)
-[![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](https://github.com/LessUp/build-your-own-tools/blob/main/LICENSE)
 
-[English](README.md) | 简体中文
+[English](/) | 简体中文
 
 一个用 **Rust / Go** 手写常用命令行工具的学习仓库，用于练习底层实现、命令行设计与跨语言对比。
 
@@ -160,7 +160,7 @@ build-your-own-tools/
 
 ## 📄 许可证
 
-本项目采用 [MIT](LICENSE) 或 [Apache-2.0](LICENSE) 双许可证，你可以选择其中之一。
+本项目采用 [MIT](https://github.com/LessUp/build-your-own-tools/blob/main/LICENSE) 或 [Apache-2.0](https://github.com/LessUp/build-your-own-tools/blob/main/LICENSE) 双许可证，你可以选择其中之一。
 
 ## 🙏 致谢
 
