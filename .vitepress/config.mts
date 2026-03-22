@@ -22,6 +22,18 @@ export default defineConfig({
     /\/changelog\//,
   ],
 
+  head: [
+    ['link', { rel: 'canonical', href: 'https://lessup.github.io/build-your-own-tools/' }],
+    ['meta', { name: 'theme-color', content: '#0f172a' }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:title', content: 'Build Your Own Tools' }],
+    ['meta', { property: 'og:description', content: '用 Rust / Go 手写常用命令行工具的学习仓库' }],
+    ['meta', { property: 'og:url', content: 'https://lessup.github.io/build-your-own-tools/' }],
+    ['meta', { name: 'twitter:card', content: 'summary' }],
+    ['meta', { name: 'twitter:title', content: 'Build Your Own Tools' }],
+    ['meta', { name: 'twitter:description', content: '用 Rust / Go 手写常用命令行工具的学习仓库' }],
+  ],
+
   markdown: {
     lineNumbers: true,
     languageAlias: {
