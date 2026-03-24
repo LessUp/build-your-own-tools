@@ -31,7 +31,7 @@ features:
     link: /htop/
   - icon: 🎯
     title: 学习驱动
-    details: 代码清晰易读，详细注释，每个工具对标生产级 CLI 标准（clap / cobra、彩色输出、进度条）
+    details: 代码清晰易读，强调文件 I/O、系统 API、TUI 与跨语言实现差异，便于边读边学
   - icon: ⚡
     title: 跨平台 CI
     details: GitHub Actions 多平台构建矩阵（Linux / macOS / Windows），Rust fmt+clippy+test、Go vet+test
@@ -45,7 +45,7 @@ features:
 
 | | Rust | Go |
 |------|------|-----|
-| **CLI 框架** | clap | cobra / 标准库 |
+| **CLI 框架** | clap | 标准库 flag |
 | **TUI** | ratatui + crossterm | tview |
 | **压缩** | flate2 (DEFLATE) | compress/gzip (标准库) |
 | **系统信息** | sysinfo | gopsutil |

@@ -126,7 +126,7 @@ htop/
 │   └── src/main.rs
 └── win/
     ├── go/             # Windows Go 实现
-    │   └── cmd/htop-win/
+    │   └── cmd/htop-win-go/
     └── rust/           # Windows Rust 实现
         └── src/main.rs
 ```
@@ -176,7 +176,7 @@ members = [
 
 ```
 # go.work
-go 1.20
+go 1.23.0
 
 use (
     ./gzip/go

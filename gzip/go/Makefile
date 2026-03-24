@@ -1,4 +1,4 @@
-.PHONY: build build-linux install clean fmt
+.PHONY: build build-linux install clean fmt fmt-check
 
 BIN_DIR := bin
 
@@ -18,4 +18,11 @@ clean:
 	rm -rf $(BIN_DIR)
 
 fmt:
-	go fmt ./...
+	gofmt -w .
+
+fmt-check:
+	@changed=$$(gofmt -l .); if [ -n "$$changed" ]; then \
+		echo "Go files not formatted:"; \
+		echo "$$changed"; \
+		exit 1; \
+	fi

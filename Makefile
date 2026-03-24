@@ -35,7 +35,8 @@ fmt-rust:
 	cargo fmt --all
 
 fmt-go:
-	gofmt -w gzip/go htop/win/go
+	$(MAKE) -C gzip/go fmt
+	$(MAKE) -C htop/win/go fmt
 
 fmt-all: fmt-rust fmt-go
 
@@ -47,10 +48,10 @@ lint-rust:
 
 lint-go:
 	@echo "==> gzip/go"
-	$(MAKE) -C gzip/go fmt
+	$(MAKE) -C gzip/go fmt-check
 	go vet -C gzip/go ./...
 	@echo "==> htop/win/go"
-	gofmt -w htop/win/go
+	$(MAKE) -C htop/win/go fmt-check
 	go vet -C htop/win/go ./...
 
 lint-all: lint-rust lint-go

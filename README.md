@@ -17,9 +17,9 @@ A learning repository for re-implementing common CLI tools from scratch in **Rus
 ## Features
 
 - **Multi-Language Implementation** — Same tool in Rust and Go for side-by-side comparison
-- **Production-Quality CLI** — clap/cobra argument parsing, colored output, progress bars
+- **Learning-Focused CLI** — clap / standard-library flag parsing, terminal output, and cross-language implementation comparison
 - **Cross-Platform** — Linux, macOS, Windows support
-- **Comprehensive Testing** — Unit tests, integration tests, property-based tests
+- **Automated Verification** — Unit tests, build checks, CI validation
 - **CI/CD** — GitHub Actions with build matrix and automated releases
 
 ## Quick Start
@@ -36,7 +36,7 @@ cargo test
 
 ```bash
 cd gzip/go
-go build -o gzip-go ./cmd/gzip
+go build -o gzip-go ./cmd/gzip-go
 go test ./...
 ```
 
