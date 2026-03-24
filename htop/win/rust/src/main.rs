@@ -62,7 +62,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<()> 
     Ok(())
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum SortKey {
     Cpu,
     Mem,
@@ -70,6 +70,7 @@ enum SortKey {
     Name,
 }
 
+#[derive(Clone, Debug)]
 struct ProcRow {
     pid: Pid,
     name: String,
@@ -101,6 +102,89 @@ struct App {
     cpu_hist: VecDeque<u64>,
     mem_hist: VecDeque<u64>,
     hist_capacity: usize,
+}
+
+fn clamp_refresh_interval(current_ms: u64, delta_ms: i64) -> u64 {
+    let next = current_ms as i64 + delta_ms;
+    next.clamp(200, 5000) as u64
+}
+
+fn push_capped(history: &mut VecDeque<u64>, value: u64, capacity: usize) {
+    history.push_back(value);
+    while history.len() > capacity {
+        history.pop_front();
+    }
+}
+
+fn filter_matches(row: &ProcRow, query: &str) -> bool {
+    let q = query.to_lowercase();
+    row.name.to_lowercase().contains(&q) || row.pid.as_u32().to_string().contains(&q)
+}
+
+fn current_selected_pid(rows: &[ProcRow], selected: Option<usize>) -> Option<Pid> {
+    selected
+        .and_then(|index| rows.get(index))
+        .map(|row| row.pid)
+}
+
+fn resolve_selected_index(
+    rows: &[ProcRow],
+    preferred_pid: Option<Pid>,
+    fallback_index: Option<usize>,
+) -> Option<usize> {
+    if rows.is_empty() {
+        return None;
+    }
+    if let Some(pid) = preferred_pid {
+        if let Some(index) = rows.iter().position(|row| row.pid == pid) {
+            return Some(index);
+        }
+    }
+    Some(fallback_index.unwrap_or(0).min(rows.len() - 1))
+}
+
+fn compare_proc_rows(a: &ProcRow, b: &ProcRow, sort_key: SortKey) -> std::cmp::Ordering {
+    match sort_key {
+        SortKey::Cpu => a
+            .cpu
+            .partial_cmp(&b.cpu)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
+            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32()))
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
+        SortKey::Mem => a
+            .mem_mb
+            .cmp(&b.mem_mb)
+            .then_with(|| {
+                a.cpu
+                    .partial_cmp(&b.cpu)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32()))
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
+        SortKey::Pid => a
+            .pid
+            .as_u32()
+            .cmp(&b.pid.as_u32())
+            .then_with(|| {
+                a.cpu
+                    .partial_cmp(&b.cpu)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
+        SortKey::Name => a
+            .name
+            .to_lowercase()
+            .cmp(&b.name.to_lowercase())
+            .then_with(|| {
+                a.cpu
+                    .partial_cmp(&b.cpu)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
+            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32())),
+    }
 }
 
 impl App {
@@ -149,6 +233,9 @@ impl App {
     }
 
     fn refresh_data(&mut self) {
+        let selected = self.table_state.selected();
+        let preferred_pid = current_selected_pid(&self.rows, selected);
+
         // 为了更准确的 CPU% 需要连续两次刷新间隔一段时间，但我们采用周期性刷新简化
         self.sys.refresh_cpu();
         self.sys.refresh_memory();
@@ -165,14 +252,8 @@ impl App {
         } else {
             ((self.mem_used_mb * 100) / self.mem_total_mb).min(100)
         };
-        self.cpu_hist.push_back(cpu_pct);
-        self.mem_hist.push_back(mem_pct);
-        while self.cpu_hist.len() > self.hist_capacity {
-            self.cpu_hist.pop_front();
-        }
-        while self.mem_hist.len() > self.hist_capacity {
-            self.mem_hist.pop_front();
-        }
+        push_capped(&mut self.cpu_hist, cpu_pct, self.hist_capacity);
+        push_capped(&mut self.mem_hist, mem_pct, self.hist_capacity);
 
         let mut new_rows: Vec<ProcRow> = self
             .sys
@@ -186,39 +267,19 @@ impl App {
             })
             .collect();
 
-        self.sort_rows(&mut new_rows);
-        // 应用过滤
         if let Some(ft) = &self.filter_text {
-            let q = ft.to_lowercase();
-            new_rows.retain(|r| {
-                r.name.to_lowercase().contains(&q) || r.pid.as_u32().to_string().contains(&q)
-            });
+            new_rows.retain(|r| filter_matches(r, ft));
         }
+        self.sort_rows(&mut new_rows);
         self.rows = new_rows;
-
-        // 修正选中索引
-        if let Some(i) = self.table_state.selected() {
-            if self.rows.is_empty() {
-                self.table_state.select(None);
-            } else if i >= self.rows.len() {
-                self.table_state.select(Some(self.rows.len() - 1));
-            }
-        }
+        self.table_state
+            .select(resolve_selected_index(&self.rows, preferred_pid, selected));
 
         self.last_refresh = Instant::now();
     }
 
     fn sort_rows(&self, rows: &mut [ProcRow]) {
-        match self.sort_key {
-            SortKey::Cpu => rows.sort_by(|a, b| {
-                a.cpu
-                    .partial_cmp(&b.cpu)
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            }),
-            SortKey::Mem => rows.sort_by_key(|r| r.mem_mb),
-            SortKey::Pid => rows.sort_by_key(|r| r.pid.as_u32()),
-            SortKey::Name => rows.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
-        }
+        rows.sort_by(|a, b| compare_proc_rows(a, b, self.sort_key));
         if self.sort_desc {
             rows.reverse();
         }
@@ -289,17 +350,11 @@ impl App {
     }
 
     fn set_interval_faster(&mut self) {
-        // 更快：减小间隔，最小 200ms
-        let cur = self.refresh_interval_ms as i64;
-        let next = (cur - 200).max(200) as u64;
-        self.refresh_interval_ms = next;
+        self.refresh_interval_ms = clamp_refresh_interval(self.refresh_interval_ms, -200);
     }
 
     fn set_interval_slower(&mut self) {
-        // 更慢：增大间隔，最大 5000ms
-        let cur = self.refresh_interval_ms as i64;
-        let next = (cur + 200).min(5000) as u64;
-        self.refresh_interval_ms = next;
+        self.refresh_interval_ms = clamp_refresh_interval(self.refresh_interval_ms, 200);
     }
 
     fn select_next(&mut self) {
@@ -750,5 +805,171 @@ fn color_for_ratio(ratio: f32) -> Color {
         Color::Yellow
     } else {
         Color::Red
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn proc_row(pid: u32, name: &str, cpu: f32, mem_mb: u64) -> ProcRow {
+        ProcRow {
+            pid: Pid::from_u32(pid),
+            name: name.to_string(),
+            cpu,
+            mem_mb,
+        }
+    }
+
+    #[test]
+    fn test_clamp_refresh_interval_bounds() {
+        assert_eq!(clamp_refresh_interval(1000, -200), 800);
+        assert_eq!(clamp_refresh_interval(200, -200), 200);
+        assert_eq!(clamp_refresh_interval(5000, 200), 5000);
+    }
+
+    #[test]
+    fn test_push_capped_keeps_capacity() {
+        let mut history = VecDeque::new();
+        push_capped(&mut history, 1, 2);
+        push_capped(&mut history, 2, 2);
+        push_capped(&mut history, 3, 2);
+        assert_eq!(history.into_iter().collect::<Vec<_>>(), vec![2, 3]);
+    }
+
+    #[test]
+    fn test_filter_matches_name_and_pid() {
+        let row = proc_row(1234, "Python", 1.0, 100);
+        assert!(filter_matches(&row, "py"));
+        assert!(filter_matches(&row, "234"));
+        assert!(!filter_matches(&row, "nginx"));
+    }
+
+    #[test]
+    fn test_resolve_selected_index_prefers_existing_pid() {
+        let rows = vec![proc_row(1, "a", 1.0, 100), proc_row(2, "b", 2.0, 200)];
+        let selected = resolve_selected_index(&rows, Some(Pid::from_u32(2)), Some(0));
+        assert_eq!(selected, Some(1));
+    }
+
+    #[test]
+    fn test_resolve_selected_index_falls_back_when_pid_missing() {
+        let rows = vec![proc_row(1, "a", 1.0, 100), proc_row(2, "b", 2.0, 200)];
+        let selected = resolve_selected_index(&rows, Some(Pid::from_u32(9)), Some(8));
+        assert_eq!(selected, Some(1));
+    }
+
+    #[test]
+    fn test_resolve_selected_index_empty_rows() {
+        let rows = Vec::new();
+        let selected = resolve_selected_index(&rows, Some(Pid::from_u32(9)), Some(0));
+        assert_eq!(selected, None);
+    }
+
+    #[test]
+    fn test_sort_rows_by_cpu_desc() {
+        let app = App {
+            sys: System::new(),
+            rows: Vec::new(),
+            table_state: TableState::default(),
+            sort_key: SortKey::Cpu,
+            sort_desc: true,
+            last_refresh: Instant::now(),
+            cpu_usage: 0.0,
+            mem_used_mb: 0,
+            mem_total_mb: 0,
+            should_quit: false,
+            filter_text: None,
+            filter_input: String::new(),
+            filter_active: false,
+            paused: false,
+            refresh_interval_ms: 1000,
+            show_details: false,
+            cpu_hist: VecDeque::new(),
+            mem_hist: VecDeque::new(),
+            hist_capacity: 120,
+        };
+        let mut rows = vec![
+            proc_row(1, "zeta", 10.0, 100),
+            proc_row(2, "alpha", 10.0, 200),
+            proc_row(3, "beta", 2.0, 300),
+        ];
+        app.sort_rows(&mut rows);
+        let pids: Vec<u32> = rows.iter().map(|row| row.pid.as_u32()).collect();
+        assert_eq!(pids, vec![2, 1, 3]);
+    }
+
+    #[test]
+    fn test_sort_rows_by_name_ascending() {
+        let app = App {
+            sys: System::new(),
+            rows: Vec::new(),
+            table_state: TableState::default(),
+            sort_key: SortKey::Name,
+            sort_desc: false,
+            last_refresh: Instant::now(),
+            cpu_usage: 0.0,
+            mem_used_mb: 0,
+            mem_total_mb: 0,
+            should_quit: false,
+            filter_text: None,
+            filter_input: String::new(),
+            filter_active: false,
+            paused: false,
+            refresh_interval_ms: 1000,
+            show_details: false,
+            cpu_hist: VecDeque::new(),
+            mem_hist: VecDeque::new(),
+            hist_capacity: 120,
+        };
+        let mut rows = vec![
+            proc_row(1, "zeta", 10.0, 100),
+            proc_row(2, "Alpha", 10.0, 200),
+            proc_row(3, "beta", 2.0, 300),
+        ];
+        app.sort_rows(&mut rows);
+        let names: Vec<&str> = rows.iter().map(|row| row.name.as_str()).collect();
+        assert_eq!(names, vec!["Alpha", "beta", "zeta"]);
+    }
+
+    #[test]
+    fn test_navigation_clamps() {
+        let mut app = App::new();
+        app.rows = vec![
+            proc_row(1, "a", 1.0, 1),
+            proc_row(2, "b", 2.0, 2),
+            proc_row(3, "c", 3.0, 3),
+        ];
+        app.table_state.select(Some(0));
+
+        app.select_prev();
+        assert_eq!(app.table_state.selected(), Some(0));
+
+        app.page_down();
+        assert_eq!(app.table_state.selected(), Some(2));
+
+        app.select_next();
+        assert_eq!(app.table_state.selected(), Some(2));
+
+        app.go_home();
+        assert_eq!(app.table_state.selected(), Some(0));
+
+        app.go_end();
+        assert_eq!(app.table_state.selected(), Some(2));
+    }
+
+    #[test]
+    fn test_centered_rect_size() {
+        let area = Rect::new(0, 0, 100, 50);
+        let centered = centered_rect(70, 60, area);
+        assert_eq!(centered.width, 70);
+        assert_eq!(centered.height, 30);
+    }
+
+    #[test]
+    fn test_color_for_ratio_thresholds() {
+        assert_eq!(color_for_ratio(0.49), Color::LightGreen);
+        assert_eq!(color_for_ratio(0.5), Color::Yellow);
+        assert_eq!(color_for_ratio(0.8), Color::Red);
     }
 }
