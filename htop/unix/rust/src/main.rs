@@ -43,7 +43,7 @@ fn draw_process_details(frame: &mut ratatui::Frame<'_>, area: Rect, sys: &System
             return;
         }
     };
-    let pid = Pid::from_u32(row.pid as u32);
+    let pid = row.pid;
     let (name, status, cpu, mem_mb, exe, cmd) = if let Some(p) = sys.process(pid) {
         let name = p.name().to_string();
         let status = format!("{:?}", p.status());
@@ -139,7 +139,7 @@ enum InputMode {
 
 #[derive(Clone, Debug)]
 struct ProcRow {
-    pid: i32,
+    pid: Pid,
     name: String,
     cpu: f32,
     mem_kb: u64,
@@ -150,11 +150,55 @@ impl ProcRow {
         let cpu = format!("{:.1}", self.cpu);
         let mem_mb = (self.mem_kb as f64) / 1024.0;
         Row::new(vec![
-            Cell::from(self.pid.to_string()),
+            Cell::from(self.pid.as_u32().to_string()),
             Cell::from(self.name.clone()),
             Cell::from(cpu),
             Cell::from(format!("{mem_mb:.1}")),
         ])
+    }
+}
+
+fn selected_pid(processes: &[ProcRow], selected: usize) -> Option<Pid> {
+    processes.get(selected).map(|row| row.pid)
+}
+
+fn resolve_selected_index(
+    processes: &[ProcRow],
+    preferred_pid: Option<Pid>,
+    fallback_index: usize,
+) -> usize {
+    if processes.is_empty() {
+        return 0;
+    }
+    if let Some(pid) = preferred_pid {
+        if let Some(index) = processes.iter().position(|row| row.pid == pid) {
+            return index;
+        }
+    }
+    fallback_index.min(processes.len() - 1)
+}
+
+fn compare_process_rows(a: &ProcRow, b: &ProcRow, sort: SortKey) -> Ordering {
+    match sort {
+        SortKey::Cpu => a
+            .cpu
+            .partial_cmp(&b.cpu)
+            .unwrap_or(Ordering::Equal)
+            .then_with(|| a.mem_kb.cmp(&b.mem_kb))
+            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32()))
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
+        SortKey::Mem => a
+            .mem_kb
+            .cmp(&b.mem_kb)
+            .then_with(|| a.cpu.partial_cmp(&b.cpu).unwrap_or(Ordering::Equal))
+            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32()))
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
+        SortKey::Pid => a
+            .pid
+            .cmp(&b.pid)
+            .then_with(|| a.cpu.partial_cmp(&b.cpu).unwrap_or(Ordering::Equal))
+            .then_with(|| a.mem_kb.cmp(&b.mem_kb))
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
     }
 }
 
@@ -194,19 +238,17 @@ impl App {
     }
 
     fn sort_processes(&mut self) {
-        match self.sort {
-            SortKey::Cpu => self
-                .processes
-                .sort_by(|a, b| a.cpu.partial_cmp(&b.cpu).unwrap_or(Ordering::Equal)),
-            SortKey::Mem => self.processes.sort_by_key(|p| p.mem_kb),
-            SortKey::Pid => self.processes.sort_by_key(|p| p.pid),
-        }
+        let preferred_pid = selected_pid(&self.processes, self.selected);
+        self.sort_processes_with_selection(preferred_pid, self.selected);
+    }
+
+    fn sort_processes_with_selection(&mut self, preferred_pid: Option<Pid>, fallback_index: usize) {
+        self.processes
+            .sort_by(|a, b| compare_process_rows(a, b, self.sort));
         if self.desc {
             self.processes.reverse();
         }
-        if self.selected >= self.processes.len() {
-            self.selected = self.processes.len().saturating_sub(1);
-        }
+        self.selected = resolve_selected_index(&self.processes, preferred_pid, fallback_index);
     }
 }
 
@@ -301,7 +343,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<(), 
                         }
                         KeyCode::Char('k') => {
                             if let Some(row) = app.processes.get(app.selected) {
-                                match kill_process(row.pid) {
+                                match kill_process(row.pid.as_u32() as i32) {
                                     Ok(()) => {
                                         app.status = format!("killed PID {}", row.pid);
                                         do_refresh(&mut sys, &mut app);
@@ -328,9 +370,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<(), 
                         KeyCode::Esc => {
                             if !app.filter.is_empty() {
                                 app.filter.clear();
-                                app.selected = 0;
-                                app.processes = collect_processes(&sys);
-                                app.sort_processes();
+                                rebuild_processes(&sys, &mut app);
                             }
                         }
                         _ => {}
@@ -343,9 +383,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<(), 
                             KeyCode::Esc => {
                                 app.filter.clear();
                                 app.mode = InputMode::Normal;
-                                app.selected = 0;
-                                app.processes = collect_processes(&sys);
-                                app.sort_processes();
+                                rebuild_processes(&sys, &mut app);
                             }
                             KeyCode::Backspace => {
                                 app.filter.pop();
@@ -360,12 +398,7 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<(), 
                         }
 
                         // 根据当前过滤词即时过滤
-                        app.selected = 0;
-                        app.processes = collect_processes(&sys);
-                        if !app.filter.is_empty() {
-                            app.processes = filter_processes(app.processes, &app.filter);
-                        }
-                        app.sort_processes();
+                        rebuild_processes(&sys, &mut app);
                     }
                 }
             }
@@ -377,7 +410,7 @@ fn collect_processes(sys: &System) -> Vec<ProcRow> {
     let mut v = Vec::new();
     for (pid, p) in sys.processes() {
         v.push(ProcRow {
-            pid: pid.as_u32() as i32, // compatible display
+            pid: *pid,
             name: p.name().to_string(),
             cpu: p.cpu_usage(),
             mem_kb: p.memory(),
@@ -396,17 +429,23 @@ fn filter_processes(v: Vec<ProcRow>, filter: &str) -> Vec<ProcRow> {
         .collect()
 }
 
+fn rebuild_processes(sys: &System, app: &mut App) {
+    let preferred_pid = selected_pid(&app.processes, app.selected);
+    let fallback_index = app.selected;
+    let mut processes = collect_processes(sys);
+    if !app.filter.is_empty() {
+        processes = filter_processes(processes, &app.filter);
+    }
+    app.processes = processes;
+    app.sort_processes_with_selection(preferred_pid, fallback_index);
+}
+
 fn do_refresh(sys: &mut System, app: &mut App) {
     // 刷新系统与进程信息并应用过滤与排序
     sys.refresh_cpu();
+    sys.refresh_memory();
     sys.refresh_processes();
-    let v = collect_processes(sys);
-    app.processes = if app.filter.is_empty() {
-        v
-    } else {
-        filter_processes(v, &app.filter)
-    };
-    app.sort_processes();
+    rebuild_processes(sys, app);
 }
 
 fn ui(frame: &mut ratatui::Frame<'_>, sys: &System, app: &App, table_state: &mut TableState) {
@@ -527,4 +566,103 @@ fn draw_process_table(
         .highlight_symbol("▶ ");
 
     frame.render_stateful_widget(table, area, table_state);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn proc_row(pid: u32, name: &str, cpu: f32, mem_kb: u64) -> ProcRow {
+        ProcRow {
+            pid: Pid::from_u32(pid),
+            name: name.to_string(),
+            cpu,
+            mem_kb,
+        }
+    }
+
+    #[test]
+    fn test_filter_processes_case_insensitive() {
+        let rows = vec![
+            proc_row(1, "bash", 1.0, 100),
+            proc_row(2, "Python", 2.0, 200),
+            proc_row(3, "nginx", 3.0, 300),
+        ];
+
+        let filtered = filter_processes(rows, "PY");
+        assert_eq!(filtered.len(), 1);
+        assert_eq!(filtered[0].pid.as_u32(), 2);
+    }
+
+    #[test]
+    fn test_filter_processes_empty_returns_all() {
+        let rows = vec![
+            proc_row(1, "bash", 1.0, 100),
+            proc_row(2, "python", 2.0, 200),
+        ];
+        let filtered = filter_processes(rows.clone(), "");
+        assert_eq!(filtered.len(), rows.len());
+    }
+
+    #[test]
+    fn test_cycle_sort_rotates_keys() {
+        let mut app = App::new();
+        app.cycle_sort();
+        assert!(matches!(app.sort, SortKey::Mem));
+        app.cycle_sort();
+        assert!(matches!(app.sort, SortKey::Pid));
+        app.cycle_sort();
+        assert!(matches!(app.sort, SortKey::Cpu));
+    }
+
+    #[test]
+    fn test_sort_processes_cpu_with_tiebreakers() {
+        let mut app = App::new();
+        app.processes = vec![
+            proc_row(30, "zeta", 10.0, 100),
+            proc_row(10, "alpha", 10.0, 200),
+            proc_row(20, "beta", 5.0, 400),
+        ];
+        app.sort = SortKey::Cpu;
+        app.desc = true;
+        app.sort_processes();
+
+        let pids: Vec<u32> = app.processes.iter().map(|row| row.pid.as_u32()).collect();
+        assert_eq!(pids, vec![10, 30, 20]);
+    }
+
+    #[test]
+    fn test_sort_processes_pid_ascending() {
+        let mut app = App::new();
+        app.processes = vec![
+            proc_row(30, "zeta", 10.0, 100),
+            proc_row(10, "alpha", 10.0, 200),
+            proc_row(20, "beta", 5.0, 400),
+        ];
+        app.sort = SortKey::Pid;
+        app.desc = false;
+        app.sort_processes();
+
+        let pids: Vec<u32> = app.processes.iter().map(|row| row.pid.as_u32()).collect();
+        assert_eq!(pids, vec![10, 20, 30]);
+    }
+
+    #[test]
+    fn test_resolve_selected_index_prefers_existing_pid() {
+        let rows = vec![proc_row(11, "a", 1.0, 100), proc_row(22, "b", 2.0, 200)];
+        assert_eq!(resolve_selected_index(&rows, Some(Pid::from_u32(22)), 0), 1);
+    }
+
+    #[test]
+    fn test_resolve_selected_index_falls_back_when_pid_missing() {
+        let rows = vec![proc_row(11, "a", 1.0, 100), proc_row(22, "b", 2.0, 200)];
+        assert_eq!(resolve_selected_index(&rows, Some(Pid::from_u32(99)), 1), 1);
+        assert_eq!(resolve_selected_index(&rows, Some(Pid::from_u32(99)), 8), 1);
+    }
+
+    #[test]
+    fn test_resolve_selected_index_empty_rows() {
+        let rows = Vec::new();
+        assert_eq!(resolve_selected_index(&rows, Some(Pid::from_u32(99)), 3), 0);
+    }
 }
