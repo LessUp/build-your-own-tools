@@ -14,54 +14,15 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::symbols::bar::NINE_LEVELS;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{
-    Block, BorderType, Borders, Cell, Clear, Gauge, Row, Sparkline, Table, TableState,
+    Block, BorderType, Borders, Clear, Gauge, Row, Sparkline, Table, TableState,
 };
 use ratatui::{Frame, Terminal};
 use sysinfo::{CpuExt, Pid, PidExt, ProcessExt, System, SystemExt};
 
-fn main() -> Result<()> {
-    enable_raw_mode()?;
-    let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen)?;
-    let backend = CrosstermBackend::new(stdout);
-    let mut terminal = Terminal::new(backend)?;
+// Import from shared library (note: we extend SortKey with Name locally)
+use htop_shared::{color_for_ratio, ProcRow, SortKey as BaseSortKey};
 
-    let res = run_app(&mut terminal);
-
-    // 清理终端状态
-    disable_raw_mode().ok();
-    let mut stdout = io::stdout();
-    execute!(stdout, LeaveAlternateScreen).ok();
-
-    // 将可能的错误返回
-    res
-}
-
-fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<()> {
-    let mut app = App::new();
-    // 清空启动前残留按键（例如在 shell 中按 Enter 启动命令的回车）
-    while event::poll(Duration::from_millis(0))? {
-        let _ = event::read()?;
-    }
-
-    loop {
-        terminal.draw(|f| ui(f, &mut app))?;
-
-        // 事件处理，带超时让 UI 定期刷新
-        let timeout = Duration::from_millis(200);
-        if event::poll(timeout)? {
-            if let Event::Key(key) = event::read()? {
-                if app.handle_key(key) {
-                    break;
-                }
-            }
-        }
-        app.on_tick();
-    }
-
-    Ok(())
-}
-
+/// Extended sort key including Name (Windows-specific feature)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum SortKey {
     Cpu,
@@ -70,12 +31,59 @@ enum SortKey {
     Name,
 }
 
-#[derive(Clone, Debug)]
-struct ProcRow {
-    pid: Pid,
-    name: String,
-    cpu: f32,
-    mem_mb: u64,
+impl From<SortKey> for BaseSortKey {
+    fn from(key: SortKey) -> Self {
+        match key {
+            SortKey::Cpu => BaseSortKey::Cpu,
+            SortKey::Mem => BaseSortKey::Mem,
+            SortKey::Pid => BaseSortKey::Pid,
+            SortKey::Name => BaseSortKey::Cpu, // Fallback
+        }
+    }
+}
+
+fn compare_proc_rows_local(a: &ProcRow, b: &ProcRow, sort_key: SortKey) -> std::cmp::Ordering {
+    match sort_key {
+        SortKey::Cpu => a
+            .cpu
+            .partial_cmp(&b.cpu)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
+            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32()))
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
+        SortKey::Mem => a
+            .mem_mb
+            .cmp(&b.mem_mb)
+            .then_with(|| {
+                a.cpu
+                    .partial_cmp(&b.cpu)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32()))
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
+        SortKey::Pid => a
+            .pid
+            .as_u32()
+            .cmp(&b.pid.as_u32())
+            .then_with(|| {
+                a.cpu
+                    .partial_cmp(&b.cpu)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
+        SortKey::Name => a
+            .name
+            .to_lowercase()
+            .cmp(&b.name.to_lowercase())
+            .then_with(|| {
+                a.cpu
+                    .partial_cmp(&b.cpu)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
+            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32())),
+    }
 }
 
 struct App {
@@ -127,7 +135,7 @@ fn current_selected_pid(rows: &[ProcRow], selected: Option<usize>) -> Option<Pid
         .map(|row| row.pid)
 }
 
-fn resolve_selected_index(
+fn resolve_selected_index_local(
     rows: &[ProcRow],
     preferred_pid: Option<Pid>,
     fallback_index: Option<usize>,
@@ -141,50 +149,6 @@ fn resolve_selected_index(
         }
     }
     Some(fallback_index.unwrap_or(0).min(rows.len() - 1))
-}
-
-fn compare_proc_rows(a: &ProcRow, b: &ProcRow, sort_key: SortKey) -> std::cmp::Ordering {
-    match sort_key {
-        SortKey::Cpu => a
-            .cpu
-            .partial_cmp(&b.cpu)
-            .unwrap_or(std::cmp::Ordering::Equal)
-            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
-            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32()))
-            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
-        SortKey::Mem => a
-            .mem_mb
-            .cmp(&b.mem_mb)
-            .then_with(|| {
-                a.cpu
-                    .partial_cmp(&b.cpu)
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            })
-            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32()))
-            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
-        SortKey::Pid => a
-            .pid
-            .as_u32()
-            .cmp(&b.pid.as_u32())
-            .then_with(|| {
-                a.cpu
-                    .partial_cmp(&b.cpu)
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            })
-            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
-            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
-        SortKey::Name => a
-            .name
-            .to_lowercase()
-            .cmp(&b.name.to_lowercase())
-            .then_with(|| {
-                a.cpu
-                    .partial_cmp(&b.cpu)
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            })
-            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
-            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32())),
-    }
 }
 
 impl App {
@@ -272,14 +236,17 @@ impl App {
         }
         self.sort_rows(&mut new_rows);
         self.rows = new_rows;
-        self.table_state
-            .select(resolve_selected_index(&self.rows, preferred_pid, selected));
+        self.table_state.select(resolve_selected_index_local(
+            &self.rows,
+            preferred_pid,
+            selected,
+        ));
 
         self.last_refresh = Instant::now();
     }
 
     fn sort_rows(&self, rows: &mut [ProcRow]) {
-        rows.sort_by(|a, b| compare_proc_rows(a, b, self.sort_key));
+        rows.sort_by(|a, b| compare_proc_rows_local(a, b, self.sort_key));
         if self.sort_desc {
             rows.reverse();
         }
@@ -377,7 +344,6 @@ impl App {
         if let Some(i) = self.table_state.selected() {
             if let Some(row) = self.rows.get(i) {
                 if let Some(proc_) = self.sys.process(row.pid) {
-                    // 尝试结束进程
                     let _ = proc_.kill();
                 }
             }
@@ -403,7 +369,6 @@ impl App {
         if self.filter_active {
             match key.code {
                 KeyCode::Esc => {
-                    // 取消输入，恢复之前的过滤
                     self.filter_active = false;
                     return false;
                 }
@@ -471,14 +436,12 @@ impl App {
                 false
             }
             KeyCode::Char('i') => {
-                // 打开详情（需已选中）
                 if self.selected_pid().is_some() {
                     self.show_details = true;
                 }
                 false
             }
             KeyCode::Char('/') => {
-                // 进入过滤输入
                 self.filter_active = true;
                 self.filter_input = self.filter_text.clone().unwrap_or_default();
                 false
@@ -504,6 +467,48 @@ impl App {
     }
 }
 
+fn main() -> Result<()> {
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen)?;
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+
+    let res = run_app(&mut terminal);
+
+    // 清理终端状态
+    disable_raw_mode().ok();
+    let mut stdout = io::stdout();
+    execute!(stdout, LeaveAlternateScreen).ok();
+
+    res
+}
+
+fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<()> {
+    let mut app = App::new();
+    // 清空启动前残留按键（例如在 shell 中按 Enter 启动命令的回车）
+    while event::poll(Duration::from_millis(0))? {
+        let _ = event::read()?;
+    }
+
+    loop {
+        terminal.draw(|f| ui(f, &mut app))?;
+
+        // 事件处理，带超时让 UI 定期刷新
+        let timeout = Duration::from_millis(200);
+        if event::poll(timeout)? {
+            if let Event::Key(key) = event::read()? {
+                if app.handle_key(key) {
+                    break;
+                }
+            }
+        }
+        app.on_tick();
+    }
+
+    Ok(())
+}
+
 fn ui(frame: &mut Frame, app: &mut App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -524,7 +529,6 @@ fn ui(frame: &mut Frame, app: &mut App) {
 }
 
 fn draw_top_panel(frame: &mut Frame, area: Rect, app: &App) {
-    // 顶部区域：CPU/内存仪表 + 历史曲线
     let lines = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -572,7 +576,6 @@ fn draw_top_panel(frame: &mut Frame, area: Rect, app: &App) {
         ));
     frame.render_widget(mem_gauge, lines[1]);
 
-    // 历史曲线区域再拆成两行：CPU 与 内存
     let hist_rows = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(2), Constraint::Length(2)])
@@ -609,13 +612,7 @@ fn draw_top_panel(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn draw_process_table(frame: &mut Frame, area: Rect, app: &mut App) {
-    let header = Row::new(vec![
-        Cell::from("PID"),
-        Cell::from("进程"),
-        Cell::from("CPU%"),
-        Cell::from("内存(MiB)"),
-    ])
-    .style(
+    let header = Row::new(vec!["PID", "进程", "CPU%", "内存(MiB)"]).style(
         Style::default()
             .bg(Color::DarkGray)
             .fg(Color::White)
@@ -627,13 +624,13 @@ fn draw_process_table(frame: &mut Frame, area: Rect, app: &mut App) {
         .iter()
         .enumerate()
         .map(|(i, r)| {
-            let cpu_cell = Cell::from(format!("{:>6.1}", r.cpu))
+            let cpu_cell = ratatui::widgets::Cell::from(format!("{:>6.1}", r.cpu))
                 .style(Style::default().fg(color_for_ratio((r.cpu / 100.0).clamp(0.0, 1.0))));
             let row = Row::new(vec![
-                Cell::from(r.pid.as_u32().to_string()),
-                Cell::from(r.name.clone()),
+                ratatui::widgets::Cell::from(r.pid.as_u32().to_string()),
+                ratatui::widgets::Cell::from(r.name.clone()),
                 cpu_cell,
-                Cell::from(format!("{:>10}", r.mem_mb)),
+                ratatui::widgets::Cell::from(format!("{:>10}", r.mem_mb)),
             ]);
             if i % 2 == 0 {
                 row.style(Style::default().bg(Color::Rgb(32, 32, 32)))
@@ -723,9 +720,8 @@ fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
 }
 
 fn draw_details_popup(frame: &mut Frame, app: &App) {
-    // 计算弹窗区域（居中 70%x60%）
     let area = centered_rect(70, 60, frame.area());
-    frame.render_widget(Clear, area); // 清理背景
+    frame.render_widget(Clear, area);
 
     let mut lines: Vec<Line> = Vec::new();
     if let Some(pid) = app.selected_pid() {
@@ -733,7 +729,7 @@ fn draw_details_popup(frame: &mut Frame, app: &App) {
             let name = p.name();
             let parent = p.parent().map(|pp| pp.as_u32()).unwrap_or(0);
             let cpu = p.cpu_usage();
-            let mem = p.memory() / 1024; // MiB
+            let mem = p.memory() / 1024;
             let exe = p.exe().to_string_lossy().to_string();
             let cwd = p.cwd().to_string_lossy().to_string();
             let cmd: String = if p.cmd().is_empty() {
@@ -798,16 +794,6 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
     horizontal[1]
 }
 
-fn color_for_ratio(ratio: f32) -> Color {
-    if ratio < 0.5 {
-        Color::LightGreen
-    } else if ratio < 0.8 {
-        Color::Yellow
-    } else {
-        Color::Red
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -848,21 +834,21 @@ mod tests {
     #[test]
     fn test_resolve_selected_index_prefers_existing_pid() {
         let rows = vec![proc_row(1, "a", 1.0, 100), proc_row(2, "b", 2.0, 200)];
-        let selected = resolve_selected_index(&rows, Some(Pid::from_u32(2)), Some(0));
+        let selected = resolve_selected_index_local(&rows, Some(Pid::from_u32(2)), Some(0));
         assert_eq!(selected, Some(1));
     }
 
     #[test]
     fn test_resolve_selected_index_falls_back_when_pid_missing() {
         let rows = vec![proc_row(1, "a", 1.0, 100), proc_row(2, "b", 2.0, 200)];
-        let selected = resolve_selected_index(&rows, Some(Pid::from_u32(9)), Some(8));
+        let selected = resolve_selected_index_local(&rows, Some(Pid::from_u32(9)), Some(8));
         assert_eq!(selected, Some(1));
     }
 
     #[test]
     fn test_resolve_selected_index_empty_rows() {
-        let rows = Vec::new();
-        let selected = resolve_selected_index(&rows, Some(Pid::from_u32(9)), Some(0));
+        let rows: Vec<ProcRow> = Vec::new();
+        let selected = resolve_selected_index_local(&rows, Some(Pid::from_u32(9)), Some(0));
         assert_eq!(selected, None);
     }
 

@@ -9,3 +9,4 @@ crossterm.workspace = true
 ratatui.workspace = true
 sysinfo.workspace = true
 anyhow.workspace = true
+htop-shared = { path = "../../shared" }

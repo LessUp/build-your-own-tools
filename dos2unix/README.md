@@ -1,75 +1,115 @@
 # dos2unix-rust
 
-一个用 Rust 实现的轻量 dos2unix 工具：将 Windows 的 CRLF 换行转换为 Unix 的 LF。
+[![License](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](../../LICENSE)
 
-## 功能
+A lightweight, streaming CRLF to LF converter written in Rust.
 
-- 将 CRLF 转换为 LF（就地转换文件）。
-- 支持从 `stdin` 读取、向 `stdout` 写出（当无文件参数或使用 `-` 时）。
-- 检测模式 `--check/-c`：报告哪些目标仍含 CRLF，退出码区分结果。
-- 选项：`-h/--help`、`-v/--version`、`-q/--quiet`。
+## Features
 
-## 构建
+- **Streaming Processing** — Handles files larger than memory
+- **In-place Conversion** — Modifies files directly
+- **Stdin/Stdout Support** — Works in pipelines
+- **Check Mode** — Detect CRLF without modification
+- **Cross-buffer CRLF Handling** — Correctly handles CRLF sequences that span buffer boundaries
 
-需要安装 Rust（建议 1.70+）。
+## Installation
 
 ```bash
+# Build from source
+cd dos2unix
 cargo build --release
+
+# Binary location
+./target/release/dos2unix-rust  # Unix
+.\target\release\dos2unix-rust.exe  # Windows
 ```
 
-可执行文件位于：`target/release/dos2unix-rust`（Windows 为 `dos2unix-rust.exe`）。
+## Usage
 
-## 用法
-
-```text
+```
 dos2unix-rust [OPTIONS] [FILES...]
+
+OPTIONS:
+  -h, --help       Show help message
+  -v, --version    Show version
+  -c, --check      Check mode (report CRLF, don't modify)
+  -q, --quiet      Quiet mode (less output)
+
+ARGS:
+  FILES...         Files to convert (use '-' for stdin)
 ```
 
-- 无文件参数时：从标准输入读取并输出到标准输出。
-- 指定 `-` 作为文件名时：从标准输入读取一次并将结果输出到标准输出（可与文件名混用）。
+## Examples
 
-### 选项
-
-- `-h, --help` 显示帮助
-- `-v, --version` 显示版本
-- `-c, --check` 检测模式，仅报告含 CRLF 的目标
-- `-q, --quiet` 静默模式，减少日志输出
-
-### 示例
-
-- 就地转换文件：
+### Convert files in-place
 
 ```bash
-dos2unix-rust README.md
+dos2unix-rust file1.txt file2.txt
 ```
 
-- 从标准输入读取，输出到标准输出：
+### Pipeline usage
 
 ```bash
+# Unix
+cat file.txt | dos2unix-rust > output.txt
+
 # Windows PowerShell
-type README.md | dos2unix-rust > README.unix.md
+type file.txt | dos2unix-rust > output.txt
 ```
 
-- 只检测是否含 CRLF（含 CRLF 时退出码为 2）：
+### Check for CRLF
 
 ```bash
-dos2unix-rust --check file1.txt file2.txt
+# Exit code 2 if CRLF found
+dos2unix-rust --check file.txt
+if [ $? -eq 2 ]; then
+    echo "File contains CRLF"
+fi
 ```
 
-- 混合使用标准流与文件：
+### Mixed stdin and files
 
 ```bash
 dos2unix-rust - file1.txt file2.txt
 ```
 
-## 注意
+## Exit Codes
 
-- `--check` 模式下：
-  - 含 CRLF 的文件将逐一打印路径；若目标是 `-`（标准输入），则输出 `-`。
-  - 退出码：0 表示所有目标均无 CRLF，2 表示至少存在一个含 CRLF 的目标，1 表示发生错误。
-- 该工具以简单、可读为目标，默认不进行二进制文件检测，请谨慎对二进制文件使用（建议先做备份）。
-- 目前仅将 `\r\n` 转换为 `\n`，不会处理仅包含 `\r` 的老式 Mac 换行。
+| Code | Meaning |
+|------|---------|
+| 0 | Success (no CRLF found in check mode) |
+| 1 | Error occurred |
+| 2 | CRLF found (check mode only) |
 
-## 许可证
+## Implementation Details
 
-MIT OR Apache-2.0（遵循仓库根目录 LICENSE）。
+### Streaming Algorithm
+
+The tool uses an 8KB buffer for streaming conversion. It tracks the previous byte to handle CRLF sequences that span buffer boundaries:
+
+```
+Buffer 1: [..., '\r']  ← CR at end
+Buffer 2: ['\n', ...]   ← LF at start → CRLF detected!
+```
+
+### Quick Path Optimization
+
+For files without CRLF:
+1. Read first 4KB
+2. If no CRLF detected, read remaining file
+3. Only convert if CRLF found
+
+This avoids unnecessary memory allocation for clean files.
+
+## Testing
+
+```bash
+cargo test
+
+# Run specific test
+cargo test test_stream_large_data
+```
+
+## License
+
+MIT OR Apache-2.0

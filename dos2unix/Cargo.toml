@@ -7,3 +7,4 @@ description = "Rust 实现的轻量 dos2unix：将 CRLF 转换为 LF，支持 st
 readme = "README.md"
 
 [dependencies]
+anyhow.workspace = true

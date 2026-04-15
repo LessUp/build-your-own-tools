@@ -1,5 +1,4 @@
 use std::{
-    cmp::Ordering,
     error::Error,
     io,
     time::{Duration, Instant},
@@ -15,191 +14,20 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Cell, Paragraph, Row, Table, TableState, Wrap},
+    widgets::{Block, Borders, Paragraph, Row, Table, TableState, Wrap},
     Terminal,
 };
-use sysinfo::{CpuExt, Pid, PidExt, ProcessExt, System, SystemExt};
+use sysinfo::{CpuExt, Pid, ProcessExt, System, SystemExt};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum SortKey {
-    Cpu,
-    Mem,
-    Pid,
-}
-
-fn draw_process_details(frame: &mut ratatui::Frame<'_>, area: Rect, sys: &System, app: &App) {
-    if app.processes.is_empty() {
-        let para = Paragraph::new("No process selected")
-            .block(Block::default().borders(Borders::ALL).title("Details"));
-        frame.render_widget(para, area);
-        return;
-    }
-    let row = match app.processes.get(app.selected) {
-        Some(r) => r,
-        None => {
-            let para = Paragraph::new("No process selected")
-                .block(Block::default().borders(Borders::ALL).title("Details"));
-            frame.render_widget(para, area);
-            return;
-        }
-    };
-    let pid = row.pid;
-    let (name, status, cpu, mem_mb, exe, cmd) = if let Some(p) = sys.process(pid) {
-        let name = p.name().to_string();
-        let status = format!("{:?}", p.status());
-        let cpu = format!("{:.1}", p.cpu_usage());
-        let mem_mb = format!("{:.1}", p.memory() as f64 / 1024.0);
-        let exe = format!("{}", p.exe().display());
-        let cmd = if p.cmd().is_empty() {
-            String::from("")
-        } else {
-            p.cmd().join(" ")
-        };
-        (name, status, cpu, mem_mb, exe, cmd)
-    } else {
-        (
-            row.name.clone(),
-            String::from("Unknown"),
-            format!("{:.1}", row.cpu),
-            format!("{:.1}", row.mem_kb as f64 / 1024.0),
-            String::from(""),
-            String::from(""),
-        )
-    };
-
-    let lines = vec![
-        Line::from(vec![
-            Span::styled(
-                format!(" PID: {}  ", row.pid),
-                Style::default().fg(Color::Yellow),
-            ),
-            Span::raw(format!("Status: {}", status)),
-        ]),
-        Line::from(format!(" Name: {}", name)),
-        Line::from(format!(" CPU%: {}  Mem: {} MB", cpu, mem_mb)),
-        Line::from(format!(" Exe: {}", exe)),
-        Line::from(format!(" Cmd: {}", cmd)),
-    ];
-    let para = Paragraph::new(lines)
-        .wrap(Wrap { trim: true })
-        .block(Block::default().borders(Borders::ALL).title("Details"));
-    frame.render_widget(para, area);
-}
-
-fn kill_process(pid: i32) -> Result<(), String> {
-    #[cfg(windows)]
-    {
-        use std::process::Command;
-        // 尝试正常结束
-        let out = Command::new("taskkill")
-            .args(["/PID", &pid.to_string()])
-            .output()
-            .map_err(|e| format!("spawn taskkill failed: {}", e))?;
-        if out.status.success() {
-            return Ok(());
-        }
-        // 强制结束
-        let out = Command::new("taskkill")
-            .args(["/PID", &pid.to_string(), "/F"])
-            .output()
-            .map_err(|e| format!("spawn taskkill /F failed: {}", e))?;
-        if out.status.success() {
-            return Ok(());
-        }
-        Err(format!("taskkill exit code {:?}", out.status.code()))
-    }
-    #[cfg(not(windows))]
-    {
-        use std::process::Command;
-        // 先尝试 SIGTERM
-        let out = Command::new("kill")
-            .arg(pid.to_string())
-            .output()
-            .map_err(|e| format!("spawn kill failed: {}", e))?;
-        if out.status.success() {
-            return Ok(());
-        }
-        // 强制 SIGKILL
-        let out = Command::new("kill")
-            .args(["-9", &pid.to_string()])
-            .output()
-            .map_err(|e| format!("spawn kill -9 failed: {}", e))?;
-        if out.status.success() {
-            return Ok(());
-        }
-        Err(format!("kill exit code {:?}", out.status.code()))
-    }
-}
+// Import from shared library
+use htop_shared::{
+    compare_proc_rows, filter_processes, resolve_selected_index, selected_pid, ProcRow, SortKey,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum InputMode {
     Normal,
     Searching,
-}
-
-#[derive(Clone, Debug)]
-struct ProcRow {
-    pid: Pid,
-    name: String,
-    cpu: f32,
-    mem_kb: u64,
-}
-
-impl ProcRow {
-    fn as_row(&self) -> Row<'_> {
-        let cpu = format!("{:.1}", self.cpu);
-        let mem_mb = (self.mem_kb as f64) / 1024.0;
-        Row::new(vec![
-            Cell::from(self.pid.as_u32().to_string()),
-            Cell::from(self.name.clone()),
-            Cell::from(cpu),
-            Cell::from(format!("{mem_mb:.1}")),
-        ])
-    }
-}
-
-fn selected_pid(processes: &[ProcRow], selected: usize) -> Option<Pid> {
-    processes.get(selected).map(|row| row.pid)
-}
-
-fn resolve_selected_index(
-    processes: &[ProcRow],
-    preferred_pid: Option<Pid>,
-    fallback_index: usize,
-) -> usize {
-    if processes.is_empty() {
-        return 0;
-    }
-    if let Some(pid) = preferred_pid {
-        if let Some(index) = processes.iter().position(|row| row.pid == pid) {
-            return index;
-        }
-    }
-    fallback_index.min(processes.len() - 1)
-}
-
-fn compare_process_rows(a: &ProcRow, b: &ProcRow, sort: SortKey) -> Ordering {
-    match sort {
-        SortKey::Cpu => a
-            .cpu
-            .partial_cmp(&b.cpu)
-            .unwrap_or(Ordering::Equal)
-            .then_with(|| a.mem_kb.cmp(&b.mem_kb))
-            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32()))
-            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
-        SortKey::Mem => a
-            .mem_kb
-            .cmp(&b.mem_kb)
-            .then_with(|| a.cpu.partial_cmp(&b.cpu).unwrap_or(Ordering::Equal))
-            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32()))
-            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
-        SortKey::Pid => a
-            .pid
-            .cmp(&b.pid)
-            .then_with(|| a.cpu.partial_cmp(&b.cpu).unwrap_or(Ordering::Equal))
-            .then_with(|| a.mem_kb.cmp(&b.mem_kb))
-            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
-    }
 }
 
 struct App {
@@ -244,7 +72,7 @@ impl App {
 
     fn sort_processes_with_selection(&mut self, preferred_pid: Option<Pid>, fallback_index: usize) {
         self.processes
-            .sort_by(|a, b| compare_process_rows(a, b, self.sort));
+            .sort_by(|a, b| compare_proc_rows(a, b, self.sort));
         if self.desc {
             self.processes.reverse();
         }
@@ -343,13 +171,12 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<(), 
                         }
                         KeyCode::Char('k') => {
                             if let Some(row) = app.processes.get(app.selected) {
-                                match kill_process(row.pid.as_u32() as i32) {
-                                    Ok(()) => {
+                                if let Some(process) = sys.process(row.pid) {
+                                    if process.kill() {
                                         app.status = format!("killed PID {}", row.pid);
                                         do_refresh(&mut sys, &mut app);
-                                    }
-                                    Err(e) => {
-                                        app.status = format!("kill PID {} failed: {}", row.pid, e);
+                                    } else {
+                                        app.status = format!("failed to kill PID {}", row.pid);
                                     }
                                 }
                             }
@@ -407,25 +234,14 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<(), 
 }
 
 fn collect_processes(sys: &System) -> Vec<ProcRow> {
-    let mut v = Vec::new();
-    for (pid, p) in sys.processes() {
-        v.push(ProcRow {
+    sys.processes()
+        .iter()
+        .map(|(pid, p)| ProcRow {
             pid: *pid,
             name: p.name().to_string(),
             cpu: p.cpu_usage(),
-            mem_kb: p.memory(),
-        });
-    }
-    v
-}
-
-fn filter_processes(v: Vec<ProcRow>, filter: &str) -> Vec<ProcRow> {
-    if filter.is_empty() {
-        return v;
-    }
-    let needle = filter.to_lowercase();
-    v.into_iter()
-        .filter(|p| p.name.to_lowercase().contains(&needle))
+            mem_mb: p.memory() / 1024, // KiB -> MiB
+        })
         .collect()
 }
 
@@ -533,7 +349,6 @@ fn draw_process_table(
     } else {
         "PID".into()
     };
-    let name_h = "NAME".to_string();
     let cpu_h = if matches!(app.sort, SortKey::Cpu) {
         format!("CPU% {arrow}")
     } else {
@@ -544,7 +359,7 @@ fn draw_process_table(
     } else {
         "MEM(MB)".into()
     };
-    let header = Row::new(vec![pid_h, name_h, cpu_h, mem_h]).style(
+    let header = Row::new(vec![pid_h, "NAME".to_string(), cpu_h, mem_h]).style(
         Style::default()
             .fg(Color::Yellow)
             .add_modifier(Modifier::BOLD),
@@ -568,40 +383,77 @@ fn draw_process_table(
     frame.render_stateful_widget(table, area, table_state);
 }
 
+fn draw_process_details(frame: &mut ratatui::Frame<'_>, area: Rect, sys: &System, app: &App) {
+    if app.processes.is_empty() {
+        let para = Paragraph::new("No process selected")
+            .block(Block::default().borders(Borders::ALL).title("Details"));
+        frame.render_widget(para, area);
+        return;
+    }
+    let row = match app.processes.get(app.selected) {
+        Some(r) => r,
+        None => {
+            let para = Paragraph::new("No process selected")
+                .block(Block::default().borders(Borders::ALL).title("Details"));
+            frame.render_widget(para, area);
+            return;
+        }
+    };
+    let pid = row.pid;
+    let (name, status, cpu, mem_mb, exe, cmd) = if let Some(p) = sys.process(pid) {
+        let name = p.name().to_string();
+        let status = format!("{:?}", p.status());
+        let cpu = format!("{:.1}", p.cpu_usage());
+        let mem_mb = format!("{:.1}", p.memory() as f64 / 1024.0);
+        let exe = format!("{}", p.exe().display());
+        let cmd = if p.cmd().is_empty() {
+            String::from("")
+        } else {
+            p.cmd().join(" ")
+        };
+        (name, status, cpu, mem_mb, exe, cmd)
+    } else {
+        (
+            row.name.clone(),
+            String::from("Unknown"),
+            format!("{:.1}", row.cpu),
+            format!("{:.1}", row.mem_mb),
+            String::from(""),
+            String::from(""),
+        )
+    };
+
+    let lines = vec![
+        Line::from(vec![
+            Span::styled(
+                format!(" PID: {}  ", row.pid),
+                Style::default().fg(Color::Yellow),
+            ),
+            Span::raw(format!("Status: {}", status)),
+        ]),
+        Line::from(format!(" Name: {}", name)),
+        Line::from(format!(" CPU%: {}  Mem: {} MB", cpu, mem_mb)),
+        Line::from(format!(" Exe: {}", exe)),
+        Line::from(format!(" Cmd: {}", cmd)),
+    ];
+    let para = Paragraph::new(lines)
+        .wrap(Wrap { trim: true })
+        .block(Block::default().borders(Borders::ALL).title("Details"));
+    frame.render_widget(para, area);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sysinfo::PidExt;
 
-    fn proc_row(pid: u32, name: &str, cpu: f32, mem_kb: u64) -> ProcRow {
+    fn proc_row(pid: u32, name: &str, cpu: f32, mem_mb: u64) -> ProcRow {
         ProcRow {
             pid: Pid::from_u32(pid),
             name: name.to_string(),
             cpu,
-            mem_kb,
+            mem_mb,
         }
-    }
-
-    #[test]
-    fn test_filter_processes_case_insensitive() {
-        let rows = vec![
-            proc_row(1, "bash", 1.0, 100),
-            proc_row(2, "Python", 2.0, 200),
-            proc_row(3, "nginx", 3.0, 300),
-        ];
-
-        let filtered = filter_processes(rows, "PY");
-        assert_eq!(filtered.len(), 1);
-        assert_eq!(filtered[0].pid.as_u32(), 2);
-    }
-
-    #[test]
-    fn test_filter_processes_empty_returns_all() {
-        let rows = vec![
-            proc_row(1, "bash", 1.0, 100),
-            proc_row(2, "python", 2.0, 200),
-        ];
-        let filtered = filter_processes(rows.clone(), "");
-        assert_eq!(filtered.len(), rows.len());
     }
 
     #[test]
@@ -645,24 +497,5 @@ mod tests {
 
         let pids: Vec<u32> = app.processes.iter().map(|row| row.pid.as_u32()).collect();
         assert_eq!(pids, vec![10, 20, 30]);
-    }
-
-    #[test]
-    fn test_resolve_selected_index_prefers_existing_pid() {
-        let rows = vec![proc_row(11, "a", 1.0, 100), proc_row(22, "b", 2.0, 200)];
-        assert_eq!(resolve_selected_index(&rows, Some(Pid::from_u32(22)), 0), 1);
-    }
-
-    #[test]
-    fn test_resolve_selected_index_falls_back_when_pid_missing() {
-        let rows = vec![proc_row(11, "a", 1.0, 100), proc_row(22, "b", 2.0, 200)];
-        assert_eq!(resolve_selected_index(&rows, Some(Pid::from_u32(99)), 1), 1);
-        assert_eq!(resolve_selected_index(&rows, Some(Pid::from_u32(99)), 8), 1);
-    }
-
-    #[test]
-    fn test_resolve_selected_index_empty_rows() {
-        let rows = Vec::new();
-        assert_eq!(resolve_selected_index(&rows, Some(Pid::from_u32(99)), 3), 0);
     }
 }

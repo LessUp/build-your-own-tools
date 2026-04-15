@@ -318,6 +318,9 @@ dependencies = [
 [[package]]
 name = "dos2unix-rust"
 version = "0.2.0"
+dependencies = [
+ "anyhow",
+]
 
 [[package]]
 name = "either"
@@ -385,6 +388,15 @@ name = "htop-rust"
 version = "0.1.0"
 dependencies = [
  "crossterm 0.29.0",
+ "htop-shared",
+ "ratatui",
+ "sysinfo",
+]
+
+[[package]]
+name = "htop-shared"
+version = "0.1.0"
+dependencies = [
  "ratatui",
  "sysinfo",
 ]
@@ -395,6 +407,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "crossterm 0.29.0",
+ "htop-shared",
  "ratatui",
  "sysinfo",
 ]

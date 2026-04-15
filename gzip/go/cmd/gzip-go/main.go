@@ -19,6 +19,7 @@ type options struct {
 	recursive  bool
 	stdout     bool
 	force      bool
+	keep       bool
 	level      int
 	workers    int
 }
@@ -102,7 +103,7 @@ func main() {
 	for _, src := range inputs {
 		sem <- struct{}{}
 		wg.Add(1)
-		go func() {
+		go func(src string) {
 			defer wg.Done()
 			defer func() { <-sem }()
 
@@ -122,6 +123,11 @@ func main() {
 					errCh <- fmt.Errorf("解压失败 %s -> %s: %w", src, dest, err)
 					return
 				}
+				if !opts.keep {
+					if err := os.Remove(src); err != nil {
+						fmt.Fprintf(os.Stderr, "警告: 删除源文件失败 %s: %v\n", src, err)
+					}
+				}
 				fmt.Fprintf(os.Stderr, "完成: %s -> %s\n", src, dest)
 			} else {
 				dest := src + ".gz"
@@ -135,9 +141,14 @@ func main() {
 					errCh <- fmt.Errorf("压缩失败 %s -> %s: %w", src, dest, err)
 					return
 				}
+				if !opts.keep {
+					if err := os.Remove(src); err != nil {
+						fmt.Fprintf(os.Stderr, "警告: 删除源文件失败 %s: %v\n", src, err)
+					}
+				}
 				fmt.Fprintf(os.Stderr, "完成: %s -> %s\n", src, dest)
 			}
-		}()
+		}(src)
 	}
 
 	wg.Wait()
@@ -161,6 +172,7 @@ func parseFlags() options {
 	flag.BoolVar(&opts.recursive, "r", false, "递归处理目录")
 	flag.BoolVar(&opts.stdout, "stdout", false, "输出到标准输出")
 	flag.BoolVar(&opts.force, "f", false, "覆盖已存在的目标文件")
+	flag.BoolVar(&opts.keep, "k", false, "保留源文件（不删除）")
 	flag.IntVar(&opts.level, "l", gzip.DefaultCompression, "压缩级别 0-9 (默认-1)")
 	flag.IntVar(&opts.workers, "p", runtime.NumCPU(), "并行 worker 数量")
 	flag.Parse()

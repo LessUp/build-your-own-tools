@@ -1,100 +1,126 @@
 # rgzip
 
-一个简洁的 Rust gzip 命令行工具，主打可维护、易分发，默认面向 Linux（亦可跨平台构建）。
+[![License](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](../../LICENSE)
 
-## 项目亮点
-- **最少依赖**：仅基于 `flate2` 与 `clap`，遵循 KISS。
-- **双向流支持**：既可处理文件，也可处理标准输入/输出。
-- **可复用核心库**：压缩/解压逻辑位于 `src/lib.rs`，方便嵌入其他项目。
+A minimal, streaming gzip CLI tool in Rust with a reusable library crate.
 
-## 目录结构
-```text
-rgzip/
-├── Cargo.toml
-├── Cargo.lock
-├── README.md
-├── changelog/
-│   ├── 2025-09-25-init.md
-│   └── ...
-├── src/
-│   ├── lib.rs      # gzip 核心逻辑
-│   └── main.rs     # 命令行入口
-└── target/         # 构建输出（忽略于版本控制）
+## Features
+
+- **Minimal Dependencies** — Only `flate2` and `clap`
+- **Streaming I/O** — Handle files of any size
+- **Reusable Library** — Core logic in `lib.rs` for embedding
+- **Flexible Output** — File, stdout, or custom paths
+
+## Installation
+
+```bash
+cd gzip/rust
+cargo build --release
+
+# Binary location
+./target/release/rgzip
 ```
 
-## 快速开始（Linux）
-1. 安装 Rust 工具链（推荐 `rustup`）：<https://rustup.rs>
-2. 克隆仓库并进入目录：
-   ```bash
-   git clone https://github.com/<your-org>/rgzip.git
-   cd rgzip
-   ```
-3. 构建发布版本：
-   ```bash
-   cargo build --release
-   ```
-4. 将可执行文件加入 `PATH` 或直接运行 `target/release/rgzip`。
+## Usage
 
-## 使用示例
-- **压缩文件（生成 `file.txt.gz`）**
-  ```bash
-  rgzip file.txt
-  ```
-- **压缩到指定输出**
-  ```bash
-  rgzip -o out.gz file.txt
-  ```
-- **从标准输入压缩到文件**
-  ```bash
-  echo "hello" | rgzip -o hello.gz
-  ```
-- **从标准输入压缩到标准输出**
-  ```bash
-  echo "hello" | rgzip > hello.gz
-  ```
-- **解压文件（默认去掉 `.gz` 后缀）**
-  ```bash
-  rgzip -d file.txt.gz
-  ```
-- **解压到指定输出**
-  ```bash
-  rgzip -d -o out.txt file.txt.gz
-  ```
-- **从标准输入解压到标准输出**
-  ```bash
-  rgzip -d < hello.gz > hello.txt
-  ```
+```
+rgzip [OPTIONS] [INPUT]
 
-## 命令行参数
-- `-d, --decompress`：解压模式（默认压缩）。
-- `-o, --output <PATH>`：指定输出文件。
-- `-k, --keep`：成功后保留源文件。
-- `-f, --force`：覆盖已有输出文件。
-- `-l, --level <0-9>`：压缩级别，默认 `6`。
+ARGS:
+  INPUT         Input file (default: stdin)
 
-## 开发 & 测试
-1. 保持代码格式：
-   ```bash
-   cargo fmt
-   ```
-2. 运行静态检查（可选）：
-   ```bash
-   cargo clippy --all-targets --all-features
-   ```
-3. 运行自测（如添加单元/集成测试）：
-   ```bash
-   cargo test
-   ```
+OPTIONS:
+  -d, --decompress    Decompress mode
+  -o, --output <PATH> Output file path
+  -f, --force         Overwrite existing files
+  -k, --keep          Keep source file after processing
+  -l, --level <0-9>   Compression level (default: 6)
+  -h, --help          Show help
+  -V, --version       Show version
+```
 
-## 贡献指南
-1. Fork 仓库并创建特性分支。
-2. 在提交前运行最小验证流程（`cargo fmt` / `cargo clippy` / `cargo test`）。
-3. 在 `changelog/` 目录新增记录，描述你的变更。
-4. 创建 Pull Request，简述动机和测试结果。
+## Examples
 
-## 发布提示
-- 自定义版本号于 `Cargo.toml`。
-- 使用 `cargo publish` 前请确保 changelog 与 README 同步更新。
+### Compression
 
-## 许可证
-MIT OR Apache-2.0（双许可证任选其一，遵循仓库根目录 LICENSE）。
+```bash
+# Compress file (creates file.txt.gz, deletes original)
+rgzip file.txt
+
+# Compress and keep original
+rgzip -k file.txt
+
+# Compress to specific output
+rgzip -o archive.gz file.txt
+
+# Compress from stdin
+echo "hello world" | rgzip > hello.gz
+
+# Specify compression level
+rgzip -l 9 large_file.bin
+```
+
+### Decompression
+
+```bash
+# Decompress file (creates file.txt, deletes .gz)
+rgzip -d file.txt.gz
+
+# Decompress to specific output
+rgzip -d -o output.txt file.txt.gz
+
+# Decompress from stdin
+rgzip -d < file.txt.gz > file.txt
+```
+
+## Library API
+
+```rust
+use rgzip::{compress_path, decompress_path, compress_reader_to_writer};
+use std::path::Path;
+
+// File to file
+compress_path(Path::new("input.txt"), Path::new("output.gz"), 6)?;
+decompress_path(Path::new("input.gz"), Path::new("output.txt"))?;
+
+// Stream to stream
+let stdin = io::stdin();
+let stdout = io::stdout();
+compress_reader_to_writer(stdin, stdout, 6)?;
+```
+
+### Available Functions
+
+| Function | Description |
+|----------|-------------|
+| `compress_path` | Compress file to file |
+| `decompress_path` | Decompress file to file |
+| `compress_reader_to_path` | Compress stream to file |
+| `decompress_reader_to_path` | Decompress stream to file |
+| `compress_reader_to_writer` | Compress stream to stream |
+| `decompress_reader_to_writer` | Decompress stream to stream |
+| `default_output_for_compress` | Get default output path (`file.txt` → `file.txt.gz`) |
+| `default_output_for_decompress` | Get default output path (`file.txt.gz` → `file.txt`) |
+| `ensure_writable` | Check output path is writable |
+| `same_path` | Check if two paths are identical |
+| `sanitize_level` | Clamp compression level to 0-9 |
+
+## Testing
+
+```bash
+cargo test
+```
+
+## Comparison with Go Implementation
+
+See [gzip/go/](../go/) for the Go implementation. Key differences:
+
+| Aspect | Rust | Go |
+|--------|------|-----|
+| Error handling | `Result<T, E>` with `?` | `if err != nil` |
+| Parallelism | Single-threaded (use rayon for parallel) | Built-in goroutines |
+| Library | Separate `lib.rs` crate | Single package |
+
+## License
+
+MIT OR Apache-2.0

@@ -1,12 +1,10 @@
 [package]
-name = "htop-rust"
+name = "htop-shared"
 version = "0.1.0"
 edition.workspace = true
 license.workspace = true
+description = "Shared library for htop implementations"
 
 [dependencies]
 ratatui.workspace = true
-crossterm.workspace = true
 sysinfo.workspace = true
-htop-shared = { path = "../../shared" }
-
