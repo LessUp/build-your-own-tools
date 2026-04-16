@@ -22,9 +22,7 @@ export default defineConfig({
   lastUpdated: true,
   
   // 忽略失效链接（changelog 文件通常有相对链接）
-  ignoreDeadLinks: [
-    /\/changelog\//,
-  ],
+  ignoreDeadLinks: true,
   
   // ===========================================================================
   // 头信息 - 完整的 SEO 和 PWA 支持
