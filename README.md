@@ -10,6 +10,10 @@
 
 A learning-focused repository for re-implementing common CLI tools from scratch in **Rust** and **Go**. Perfect for understanding low-level system programming, CLI design patterns, and cross-language implementation comparisons.
 
+[📖 Documentation](https://lessup.github.io/build-your-own-tools/) | [🚀 Quick Start](docs/en/GETTING-STARTED.md) | [📋 Architecture](docs/en/ARCHITECTURE.md) | [🔍 Comparison](docs/en/COMPARISON.md)
+
+---
+
 ## 🚀 Quick Start
 
 ```bash
@@ -25,15 +29,39 @@ make build-go
 
 # Run all tests
 make test-all
+
+# Run a tool
+echo "Hello World" | ./target/release/dos2unix-rust
 ```
+
+---
 
 ## 📦 Projects
 
-| Project | Languages | Description | Status |
-|---------|-----------|-------------|--------|
-| [dos2unix](./dos2unix/) | Rust | CRLF → LF line ending converter | ✅ Stable |
-| [gzip](./gzip/) | Rust, Go | Gzip compression/decompression CLI | ✅ Stable |
-| [htop](./htop/) | Rust, Go | Cross-platform TUI system monitor | ✅ Stable |
+| Project | Languages | Description | Status | Version |
+|---------|-----------|-------------|--------|---------|
+| [dos2unix](./dos2unix/) | Rust | CRLF → LF line ending converter | ✅ Stable | v0.2.1 |
+| [gzip](./gzip/) | Rust, Go | Gzip compression/decompression CLI | ✅ Stable | v0.3.0 |
+| [htop](./htop/) | Rust, Go | Cross-platform TUI system monitor | ✅ Stable | v0.1.5 |
+
+### Project Overview
+
+```mermaid
+flowchart LR
+    subgraph Beginner["⭐ Beginner"]
+        D[dos2unix]
+    end
+    subgraph Intermediate["⭐⭐ Intermediate"]
+        G[gzip]
+    end
+    subgraph Advanced["⭐⭐⭐ Advanced"]
+        H[htop]
+    end
+    
+    Beginner --> Intermediate --> Advanced
+```
+
+---
 
 ## 🎯 Features
 
@@ -41,38 +69,48 @@ make test-all
 - **Cross-Platform** — Linux, macOS, Windows support
 - **Production-Ready** — Unit tests, CI/CD, automated releases
 - **Well-Documented** — Architecture docs, API references, comparison guides
+- **Learning Path** — Progressive difficulty from simple to advanced
+
+---
 
 ## 🏗️ Project Structure
 
 ```
 build-your-own-tools/
-├── dos2unix/                 # CRLF to LF converter
-│   └── src/main.rs          # Rust implementation
-├── gzip/
-│   ├── rust/                 # Rust gzip implementation
-│   │   ├── src/lib.rs       # Core library
-│   │   └── src/main.rs      # CLI entry point
-│   └── go/                   # Go gzip implementation
-│       └── cmd/gzip-go/
-├── htop/
-│   ├── shared/               # Shared Rust library
-│   ├── unix/rust/            # Unix htop (Rust)
-│   ├── win/rust/             # Windows htop (Rust)
-│   └── win/go/               # Windows htop (Go)
-├── docs/                     # Documentation
-│   ├── ARCHITECTURE.md       # System architecture
-│   ├── COMPARISON.md         # Rust vs Go comparison
-│   └── API.md               # API documentation
-└── Makefile                  # Unified build commands
+├── 📁 docs/                      # Documentation
+│   ├── en/                      # English docs
+│   ├── zh-CN/                   # Chinese docs
+│   └── changelogs/              # Changelog index
+│
+├── 📁 dos2unix/                  # CRLF to LF converter
+│   ├── src/main.rs
+│   └── changelog/CHANGELOG.md
+│
+├── 📁 gzip/
+│   ├── go/                      # Go implementation
+│   └── rust/                    # Rust implementation
+│
+├── 📁 htop/
+│   ├── shared/                  # Shared library
+│   ├── unix/rust/               # Unix implementation
+│   └── win/                     # Windows implementations
+│
+├── Cargo.toml                   # Rust workspace
+├── go.work                      # Go workspace
+└── Makefile                     # Build automation
 ```
+
+---
 
 ## 🛠️ Development
 
 ### Prerequisites
 
-- **Rust** 1.70+ ([install](https://rustup.rs/))
-- **Go** 1.21+ ([install](https://golang.org/dl/))
-- **make** (optional, for convenience)
+| Tool | Version | Install |
+|------|---------|---------|
+| Rust | 1.70+ | [rustup.rs](https://rustup.rs/) |
+| Go | 1.21+ | [golang.org](https://golang.org/dl/) |
+| make | any | pre-installed |
 
 ### Build Commands
 
@@ -94,8 +132,6 @@ make test-go
 
 # Lint code
 make lint-all
-make lint-rust
-make lint-go
 
 # Format code
 make fmt-all
@@ -117,12 +153,20 @@ make test-all
 make build-all
 ```
 
+---
+
 ## 📖 Documentation
 
-- [Architecture Guide](docs/ARCHITECTURE.md) — System design and patterns
-- [Rust vs Go Comparison](docs/COMPARISON.md) — Language trade-offs
-- [API Reference](docs/API.md) — Function documentation
-- [Contributing Guide](CONTRIBUTING.md) — How to contribute
+| Document | Description |
+|----------|-------------|
+| [Getting Started](docs/en/GETTING-STARTED.md) | Environment setup and first build |
+| [Architecture Guide](docs/en/ARCHITECTURE.md) | System design and patterns |
+| [Rust vs Go Comparison](docs/en/COMPARISON.md) | Language trade-offs and benchmarks |
+| [API Reference](docs/en/API.md) | Library function documentation |
+| [Changelog](CHANGELOG.md) | Version history and changes |
+| [Migration Guide](docs/changelogs/MIGRATION.md) | Version upgrade instructions |
+
+---
 
 ## 🧪 Testing
 
@@ -134,11 +178,17 @@ go test -v ./...
 # Run specific test
 cargo test -p dos2unix-rust test_stream_large_data
 go test -C gzip/go -run TestGzipStream
+
+# With coverage
+cargo tarpaulin --all
+go test -cover ./...
 ```
 
-## 📋 Learning Goals
+---
 
-Each sub-project teaches:
+## 📊 Learning Goals
+
+Each sub-project teaches specific concepts:
 
 | Topic | dos2unix | gzip | htop |
 |-------|----------|------|------|
@@ -150,6 +200,8 @@ Each sub-project teaches:
 | TUI | - | - | ✅ ratatui/tview |
 | Concurrency | - | ✅ goroutines | ✅ Async refresh |
 
+---
+
 ## 🤝 Contributing
 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
@@ -160,14 +212,40 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+---
+
+## 📋 Roadmap
+
+### 2026 Q2
+
+- [ ] New tool: `cat` implementation
+- [ ] New tool: `wc` (word count)
+- [ ] Enhanced documentation with tutorials
+
+### 2026 Q3
+
+- [ ] Network monitoring in htop
+- [ ] Disk I/O monitoring
+- [ ] Plugin system exploration
+
+### Future
+
+- [ ] Container-aware process grouping
+- [ ] Remote system monitoring
+- [ ] Additional language implementations (Zig?)
+
+---
+
 ## 📄 License
 
 Licensed under either of
 
-- Apache License, Version 2.0 ([LICENSE-APACHE](http://www.apache.org/licenses/LICENSE-2.0))
-- MIT License ([LICENSE-MIT](http://opensource.org/licenses/MIT))
+- Apache License, Version 2.0 ([LICENSE](LICENSE) or http://www.apache.org/licenses/LICENSE-2.0)
+- MIT License ([LICENSE](LICENSE) or http://opensource.org/licenses/MIT)
 
 at your option.
+
+---
 
 ## 🙏 Acknowledgments
 
@@ -176,3 +254,9 @@ at your option.
 - [sysinfo](https://github.com/GuillaumeGomez/sysinfo) — Rust system info
 - [gopsutil](https://github.com/shirou/gopsutil) — Go system info
 - [flate2](https://github.com/rust-lang/flate2-rs) — Rust DEFLATE compression
+- [clap](https://github.com/clap-rs/clap) — Rust CLI parser
+
+---
+
+**Last Updated**: 2026-04-16  
+**Version**: v0.2.0+

@@ -16,6 +16,8 @@ export default defineConfig({
     '**/changelog/**',
     '.kiro/**',
     '.github/**',
+    'docs/en/**',
+    'docs/zh-CN/**',
   ],
 
   ignoreDeadLinks: [
@@ -55,6 +57,15 @@ export default defineConfig({
         ],
       },
       { text: '语言对比', link: '/docs/COMPARISON' },
+      { text: 'API 参考', link: '/docs/API' },
+      {
+        text: '更多',
+        items: [
+          { text: '快速开始', link: '/docs/GETTING-STARTED' },
+          { text: '变更日志', link: '/CHANGELOG' },
+          { text: '贡献指南', link: '/CONTRIBUTING' },
+        ],
+      },
     ],
 
     sidebar: {
@@ -64,6 +75,16 @@ export default defineConfig({
           items: [
             { text: '架构说明', link: '/docs/ARCHITECTURE' },
             { text: 'Rust vs Go 对比', link: '/docs/COMPARISON' },
+            { text: 'API 参考', link: '/docs/API' },
+            { text: '快速开始', link: '/docs/GETTING-STARTED' },
+          ],
+        },
+        {
+          text: '变更日志',
+          items: [
+            { text: '项目变更日志', link: '/CHANGELOG' },
+            { text: '变更日志索引', link: '/docs/changelogs/INDEX' },
+            { text: '迁移指南', link: '/docs/changelogs/MIGRATION' },
           ],
         },
         {
@@ -72,7 +93,6 @@ export default defineConfig({
             { text: '贡献指南', link: '/CONTRIBUTING' },
             { text: '行为准则', link: '/CODE_OF_CONDUCT' },
             { text: '安全政策', link: '/SECURITY' },
-            { text: '变更日志', link: '/CHANGELOG' },
           ],
         },
       ],
@@ -81,6 +101,7 @@ export default defineConfig({
           text: 'dos2unix',
           items: [
             { text: '概述', link: '/dos2unix/' },
+            { text: '变更日志', link: '/dos2unix/changelog/CHANGELOG' },
           ],
         },
         { text: '← 返回首页', link: '/' },
@@ -91,7 +112,9 @@ export default defineConfig({
           items: [
             { text: '概述', link: '/gzip/' },
             { text: 'Go 实现', link: '/gzip/go/' },
+            { text: 'Go 变更日志', link: '/gzip/go/changelog/CHANGELOG' },
             { text: 'Rust 实现', link: '/gzip/rust/' },
+            { text: 'Rust 变更日志', link: '/gzip/rust/changelog/CHANGELOG' },
           ],
         },
         { text: '← 返回首页', link: '/' },
@@ -101,9 +124,18 @@ export default defineConfig({
           text: 'htop',
           items: [
             { text: '概述', link: '/htop/' },
+            { text: '变更日志', link: '/htop/changelog/CHANGELOG' },
+          ],
+        },
+        {
+          text: '实现',
+          items: [
             { text: 'Unix Rust', link: '/htop/unix/rust/' },
+            { text: 'Unix Rust 变更日志', link: '/htop/unix/rust/changelog/CHANGELOG' },
             { text: 'Windows Rust', link: '/htop/win/rust/' },
+            { text: 'Windows Rust 变更日志', link: '/htop/win/rust/changelog/CHANGELOG' },
             { text: 'Windows Go', link: '/htop/win/go/' },
+            { text: 'Windows Go 变更日志', link: '/htop/win/go/changelog/CHANGELOG' },
           ],
         },
         { text: '← 返回首页', link: '/' },
