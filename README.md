@@ -10,7 +10,7 @@
 
 A learning-focused repository for re-implementing common CLI tools from scratch in **Rust** and **Go**. Perfect for understanding low-level system programming, CLI design patterns, and cross-language implementation comparisons.
 
-[📖 Documentation](https://lessup.github.io/build-your-own-tools/) | [🚀 Quick Start](docs/en/GETTING-STARTED.md) | [📋 Architecture](docs/en/ARCHITECTURE.md) | [🔍 Comparison](docs/en/COMPARISON.md)
+[📖 Documentation](https://lessup.github.io/build-your-own-tools/) | [🚀 Quick Start](docs/setup/GETTING-STARTED.md) | [📋 Architecture](docs/architecture/ARCHITECTURE.md) | [🔍 Comparison](docs/tutorials/COMPARISON.md)
 
 ---
 
@@ -159,10 +159,10 @@ make build-all
 
 | Document | Description |
 |----------|-------------|
-| [Getting Started](docs/en/GETTING-STARTED.md) | Environment setup and first build |
-| [Architecture Guide](docs/en/ARCHITECTURE.md) | System design and patterns |
-| [Rust vs Go Comparison](docs/en/COMPARISON.md) | Language trade-offs and benchmarks |
-| [API Reference](docs/en/API.md) | Library function documentation |
+| [Getting Started](docs/setup/GETTING-STARTED.md) | Environment setup and first build |
+| [Architecture Guide](docs/architecture/ARCHITECTURE.md) | System design and patterns |
+| [Rust vs Go Comparison](docs/tutorials/COMPARISON.md) | Language trade-offs and benchmarks |
+| [API Reference](docs/architecture/API.md) | Library function documentation |
 | [Changelog](CHANGELOG.md) | Version history and changes |
 | [Migration Guide](docs/changelogs/MIGRATION.md) | Version upgrade instructions |
 

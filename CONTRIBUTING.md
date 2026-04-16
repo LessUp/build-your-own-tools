@@ -1,103 +1,132 @@
-# 贡献指南
+# Contributing Guide
 
-感谢你对 Build-Your-Own-Tools 项目的关注！我们欢迎各种形式的贡献。
+Thank you for your interest in contributing to Build-Your-Own-Tools! We welcome contributions of all kinds.
 
-## 📋 目录
+**English** | [简体中文](CONTRIBUTING.zh-CN.md)
 
-- [行为准则](#行为准则)
-- [如何贡献](#如何贡献)
-- [开发流程](#开发流程)
-- [代码规范](#代码规范)
-- [提交规范](#提交规范)
-- [Pull Request 流程](#pull-request-流程)
+## 📋 Table of Contents
 
-## 行为准则
+- [Code of Conduct](#code-of-conduct)
+- [How to Contribute](#how-to-contribute)
+- [Spec-Driven Development](#spec-driven-development)
+- [Development Workflow](#development-workflow)
+- [Code Standards](#code-standards)
+- [Commit Conventions](#commit-conventions)
+- [Pull Request Process](#pull-request-process)
 
-参与本项目即表示你同意遵守我们的 [行为准则](CODE_OF_CONDUCT.md)。请确保你的行为符合社区标准。
+## Code of Conduct
 
-## 如何贡献
+This project adheres to our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
-### 报告 Bug
+## How to Contribute
 
-1. 在 [Issues](https://github.com/LessUp/build-your-own-tools/issues) 中搜索是否已有相同问题
-2. 如果没有，创建新 Issue 并使用 Bug Report 模板
-3. 提供详细的复现步骤和环境信息
+### Reporting Bugs
 
-### 提出新功能
+1. Search the [Issues](https://github.com/LessUp/build-your-own-tools/issues) to see if the bug has already been reported
+2. If not, create a new issue using the Bug Report template
+3. Provide detailed reproduction steps and environment information
 
-1. 在 Issues 中搜索是否已有相同建议
-2. 创建新 Issue 并使用 Feature Request 模板
-3. 描述功能的使用场景和预期行为
+### Suggesting Features
 
-### 提交代码
+1. Search existing issues for similar suggestions
+2. Create a new issue using the Feature Request template
+3. Describe the use case and expected behavior
 
-1. Fork 本仓库
-2. 创建功能分支
-3. 编写代码和测试
-4. 提交 Pull Request
+### Submitting Code
 
-## 开发流程
+1. Fork the repository
+2. Create a feature branch
+3. Write code and tests
+4. Submit a Pull Request
 
-### 环境准备
+## Spec-Driven Development
+
+This project follows **Spec-Driven Development (SDD)** methodology. All implementations must be based on the specification documents in the `/specs` directory.
+
+### Spec Directory Structure
+
+```
+specs/
+├── product/        # Product requirements and acceptance criteria
+├── rfc/            # Technical design documents (RFCs)
+├── api/            # API/CLI interface definitions
+├── db/             # Data model specifications
+└── testing/        # BDD test case specifications
+```
+
+### AI Agent Workflow
+
+When developing new features, modifying existing functionality, or fixing bugs:
+
+1. **Review Specs First**: Read relevant product docs, RFCs, and API definitions in `/specs`
+2. **Spec-First Update**: For new features or interface changes, propose spec modifications first
+3. **Implementation**: Code must 100% comply with specs (no gold-plating)
+4. **Test Verification**: Write tests based on acceptance criteria in `/specs/testing/`
+
+See [AGENTS.md](AGENTS.md) for the complete SDD workflow.
+
+## Development Workflow
+
+### Environment Setup
 
 ```bash
-# 克隆你的 fork
+# Clone your fork
 git clone https://github.com/<your-username>/build-your-own-tools.git
 cd build-your-own-tools
 
-# 添加上游仓库
+# Add upstream repository
 git remote add upstream https://github.com/LessUp/build-your-own-tools.git
 
-# 安装依赖
+# Install dependencies
 # Rust: https://rustup.rs/
 # Go: https://golang.org/dl/
 ```
 
-### 创建分支
+### Creating a Branch
 
 ```bash
-# 同步上游代码
+# Sync with upstream
 git fetch upstream
 git checkout main
 git merge upstream/main
 
-# 创建功能分支
+# Create feature branch
 git checkout -b feature/your-feature-name
 ```
 
-### 本地测试
+### Local Testing
 
 ```bash
-# Rust 项目
+# Rust projects
 cargo fmt --all
 cargo clippy --all-targets -- -D warnings
 cargo test --all
 
-# Go 项目
+# Go projects
 gofmt -w .
 go vet ./...
 go test ./...
 ```
 
-## 代码规范
+## Code Standards
 
 ### Rust
 
-- 使用 `rustfmt` 格式化代码
-- 使用 `clippy` 进行静态分析
-- 遵循 [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
-- 公共 API 必须有文档注释
+- Use `rustfmt` for code formatting
+- Use `clippy` for static analysis
+- Follow [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
+- Public APIs must have documentation
 
 ```rust
-/// 将 CRLF 换行符转换为 LF
+/// Converts CRLF line endings to LF
 ///
 /// # Arguments
 ///
-/// * `input` - 输入字符串
+/// * `input` - Input string
 ///
 /// # Returns
 ///
-/// 转换后的字符串
+/// String with all CRLF replaced by LF
 pub fn convert_crlf_to_lf(input: &str) -> String {
     input.replace("\r\n", "\n")
 }
@@ -105,10 +134,10 @@ pub fn convert_crlf_to_lf(input: &str) -> String {
 
 ### Go
 
-- 使用 `gofmt` 格式化代码
-- 使用 `go vet` 进行静态分析
-- 遵循 [Effective Go](https://golang.org/doc/effective_go)
-- 导出的函数必须有文档注释
+- Use `gofmt` for code formatting
+- Use `go vet` for static analysis
+- Follow [Effective Go](https://golang.org/doc/effective_go)
+- Exported functions must have documentation
 
 ```go
 // ConvertCRLFToLF converts Windows line endings to Unix line endings.
@@ -117,18 +146,18 @@ func ConvertCRLFToLF(input string) string {
 }
 ```
 
-### 通用规范
+### General Standards
 
-- 使用 UTF-8 编码
-- 使用 LF 换行符
-- 文件末尾保留一个空行
-- 删除行尾空白字符
+- Use UTF-8 encoding
+- Use LF line endings
+- Preserve trailing newline at end of files
+- Remove trailing whitespace
 
-## 提交规范
+## Commit Conventions
 
-我们使用 [Conventional Commits](https://www.conventionalcommits.org/) 规范。
+We use [Conventional Commits](https://www.conventionalcommits.org/) specification.
 
-### 格式
+### Format
 
 ```
 <type>(<scope>): <subject>
@@ -140,24 +169,25 @@ func ConvertCRLFToLF(input string) string {
 
 ### Type
 
-- `feat`: 新功能
-- `fix`: Bug 修复
-- `docs`: 文档更新
-- `style`: 代码格式（不影响功能）
-- `refactor`: 重构（不是新功能或 Bug 修复）
-- `perf`: 性能优化
-- `test`: 测试相关
-- `chore`: 构建/工具相关
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation updates
+- `style`: Code formatting (no functional change)
+- `refactor`: Refactoring (not a feature or bug fix)
+- `perf`: Performance optimization
+- `test`: Test related
+- `chore`: Build/tooling related
 
 ### Scope
 
-- `dos2unix`: dos2unix 子项目
-- `gzip`: gzip 子项目
-- `htop`: htop 子项目
-- `ci`: CI/CD 相关
-- `docs`: 文档相关
+- `dos2unix`: dos2unix sub-project
+- `gzip`: gzip sub-project
+- `htop`: htop sub-project
+- `ci`: CI/CD related
+- `docs`: Documentation related
+- `specs`: Specifications related
 
-### 示例
+### Examples
 
 ```
 feat(dos2unix): add support for recursive directory processing
@@ -174,53 +204,55 @@ Previously, empty files would cause a panic. Now they are handled
 gracefully with an appropriate error message.
 ```
 
-## Pull Request 流程
+## Pull Request Process
 
-### 提交前检查
+### Pre-submission Checklist
 
-- [ ] 代码通过所有测试
-- [ ] 代码通过格式化检查
-- [ ] 代码通过 lint 检查
-- [ ] 更新了相关文档
-- [ ] 添加了 changelog 条目（如适用）
+- [ ] Code passes all tests
+- [ ] Code passes formatting checks
+- [ ] Code passes lint checks
+- [ ] Related documentation is updated
+- [ ] Changelog entries added (if applicable)
 
-### PR 描述
+### PR Description
 
-请在 PR 描述中包含：
+Please include in your PR description:
 
-1. 变更的目的和背景
-2. 主要改动内容
-3. 测试方法
-4. 关联的 Issue（如有）
+1. Purpose and background for the changes
+2. Summary of changes
+3. Testing methodology
+4. Related issues (if any)
 
-### 代码审查
+### Code Review
 
-- 所有 PR 需要至少一位维护者审查
-- 请及时回复审查意见
-- 必要时更新代码并推送
+- All PRs require review by at least one maintainer
+- Please respond to review comments promptly
+- Update code as needed based on feedback
 
-### 合并
+### Merging
 
-- PR 通过审查后由维护者合并
-- 使用 Squash and Merge 保持提交历史整洁
+- PRs are merged by maintainers after review
+- Use Squash and Merge to keep history clean
 
 ## 📝 Changelog
 
-每次功能变更请在对应子项目的 `changelog/` 目录添加条目：
+For feature changes, please add entries to the corresponding sub-project's `changelog/` directory:
 
 ```markdown
-# YYYY-MM-DD: 简短描述
+## [Unreleased]
+### Added
+- Brief description of the change
 
-## 变更内容
-
-- 具体变更 1
-- 具体变更 2
-
-## 影响
-
-描述此变更对用户的影响
+### Fixed
+- Brief description of the fix
 ```
 
-## 🙏 感谢
+## 🙏 Thank You
 
-感谢你花时间阅读贡献指南，期待你的贡献！
+Thank you for taking the time to read this guide. We look forward to your contributions!
+
+---
+
+## 中文版本
+
+请访问 [CONTRIBUTING.zh-CN.md](CONTRIBUTING.zh-CN.md) 查看中文版本的贡献指南。
