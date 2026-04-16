@@ -1,8 +1,7 @@
 # Markdownlint CLI 2 Configuration
 # https://github.com/DavidAnson/markdownlint-cli2
 
-# Rules configuration
-rules:
+config:
   # MD013: Line length - Allow longer lines
   MD013:
     line_length: 159
@@ -15,6 +14,12 @@ rules:
     allow_different_nesting: true
     siblings_only: true
 
+  # MD025: Single title - Allow multiple H1 in templates with frontmatter
+  MD025: false
+
+  # MD031: Blanks around fenced code
+  MD031: true
+
   # MD032: Blanks around lists
   MD032: true
 
@@ -23,9 +28,3 @@ rules:
 
   # MD041: First line should be heading - disable for templates
   MD041: false
-
-# Ignore patterns
-ignores:
-  - "**/node_modules/**"
-  - "**/target/**"
-  - "**/.vitepress/dist/**"
