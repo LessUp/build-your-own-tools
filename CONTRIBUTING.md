@@ -41,7 +41,9 @@ This project adheres to our [Code of Conduct](CODE_OF_CONDUCT.md). By participat
 
 ## Spec-Driven Development
 
-This project follows **Spec-Driven Development (SDD)** methodology. All implementations must be based on the specification documents in the `/specs` directory.
+This project follows **Spec-Driven Development (SDD)** methodology.
+
+All implementations must be based on the specification documents in the `/specs` directory.
 
 ### Spec Directory Structure
 

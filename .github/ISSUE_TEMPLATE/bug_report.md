@@ -6,6 +6,8 @@ labels: bug
 assignees: ''
 ---
 
+# Bug Report
+
 ## 问题描述
 
 简要描述遇到的问题。
@@ -33,7 +35,7 @@ assignees: ''
 
 ## 错误日志
 
-```
+```text
 粘贴相关错误日志
 ```
 

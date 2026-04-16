@@ -2,7 +2,7 @@
 
 > 所有库和模块的完整 API 文档
 
-[English](../en/API.md) | **简体中文**
+**简体中文** | [English](API.md)
 
 ---
 

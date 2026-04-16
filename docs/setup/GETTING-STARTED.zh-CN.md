@@ -2,7 +2,7 @@
 
 > build-your-own-tools 的构建和贡献快速入门指南
 
-[English](../en/GETTING-STARTED.md) | **简体中文**
+[English](GETTING-STARTED.md) | **简体中文**
 
 ---
 

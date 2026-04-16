@@ -10,7 +10,7 @@
 
 一个用 **Rust** 和 **Go** 手写常用命令行工具的学习仓库，用于练习底层系统编程、命令行设计模式以及跨语言实现对比。
 
-[📖 在线文档](https://lessup.github.io/build-your-own-tools/) | [🚀 快速开始](docs/zh-CN/GETTING-STARTED.md) | [📋 架构说明](docs/zh-CN/ARCHITECTURE.md) | [🔍 语言对比](docs/zh-CN/COMPARISON.md)
+[📖 在线文档](https://lessup.github.io/build-your-own-tools/) | [🚀 快速开始](docs/setup/GETTING-STARTED.zh-CN.md) | [📋 架构说明](docs/architecture/ARCHITECTURE.zh-CN.md) | [🔍 语言对比](docs/tutorials/COMPARISON.zh-CN.md)
 
 ---
 
@@ -154,11 +154,11 @@ make build-all
 
 | 文档 | 中文 | 英文 | 描述 |
 |------|------|------|----------|
-| 快速开始 | [zh-CN](docs/zh-CN/GETTING-STARTED.md) | [en](docs/en/GETTING-STARTED.md) | 环境搭建和首次构建 |
-| 架构指南 | [zh-CN](docs/zh-CN/ARCHITECTURE.md) | [en](docs/en/ARCHITECTURE.md) | 系统设计和模式 |
-| 语言对比 | [zh-CN](docs/zh-CN/COMPARISON.md) | [en](docs/en/COMPARISON.md) | 语言权衡和基准测试 |
-| API 参考 | [zh-CN](docs/zh-CN/API.md) | [en](docs/en/API.md) | 库函数文档 |
-| 变更日志 | [zh-CN](docs/changelogs/INDEX.zh-CN.md) | [en](docs/changelogs/INDEX.md) | 版本历史和变更 |
+| 快速开始 | [中文](docs/setup/GETTING-STARTED.zh-CN.md) | [English](docs/setup/GETTING-STARTED.md) | 环境搭建和首次构建 |
+| 架构指南 | [中文](docs/architecture/ARCHITECTURE.zh-CN.md) | [English](docs/architecture/ARCHITECTURE.md) | 系统设计和模式 |
+| 语言对比 | [中文](docs/tutorials/COMPARISON.zh-CN.md) | [English](docs/tutorials/COMPARISON.md) | 语言权衡和基准测试 |
+| API 参考 | [中文](docs/architecture/API.zh-CN.md) | [English](docs/architecture/API.md) | 库函数文档 |
+| 变更日志 | [中文](docs/changelogs/INDEX.zh-CN.md) | [English](docs/changelogs/INDEX.md) | 版本历史和变更 |
 | 迁移指南 | [双语](docs/changelogs/MIGRATION.md) | | 版本升级说明 |
 
 ---

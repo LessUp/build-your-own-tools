@@ -2,7 +2,7 @@
 
 > 所有项目中 Rust 和 Go 实现的全面比较
 
-[English](../en/COMPARISON.md) | **简体中文**
+[English](COMPARISON.md) | **简体中文**
 
 ---
 

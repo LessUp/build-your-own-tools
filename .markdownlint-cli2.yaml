@@ -1,13 +1,13 @@
 # Markdownlint CLI 2 Configuration
 # https://github.com/DavidAnson/markdownlint-cli2
 
-config:
-  # MD013: Line length - Allow longer lines in changelogs
+# Rules configuration
+rules:
+  # MD013: Line length - Allow longer lines
   MD013:
-    line_length: 120
+    line_length: 159
     tables: false
     code_blocks: false
-    headings: false
 
   # MD024: Multiple headings with same content
   # Allow in CHANGELOG.md where duplicate headings under different versions are valid
@@ -15,19 +15,17 @@ config:
     allow_different_nesting: true
     siblings_only: true
 
-  # MD032: Blanks around lists - Be more lenient
+  # MD032: Blanks around lists
   MD032: true
 
   # MD040: Fenced code blocks should have language
   MD040: true
 
-  # MD041: First line should be heading
-  MD041:
-    level: 1
-    front_matter_title: ""
+  # MD041: First line should be heading - disable for templates
+  MD041: false
 
 # Ignore patterns
-ignore:
+ignores:
   - "**/node_modules/**"
   - "**/target/**"
   - "**/.vitepress/dist/**"

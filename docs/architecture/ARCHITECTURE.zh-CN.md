@@ -2,7 +2,7 @@
 
 > build-your-own-tools 的系统设计、模式和实现细节
 
-[English](../en/ARCHITECTURE.md) | **简体中文**
+**简体中文** | [English](ARCHITECTURE.md)
 
 ---
 

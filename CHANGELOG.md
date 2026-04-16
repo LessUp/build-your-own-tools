@@ -23,6 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added 🎉
 
+#### Documentation
+
+- **Spec-Driven Development (SDD)**: Complete documentation restructure following SDD best practices
+  - New `/specs/` directory with product/, rfc/, api/, db/, testing/ subdirectories
+  - Updated AGENTS.md with comprehensive AI Agent workflow instructions
+  - All spec documents now follow standardized format
+
 #### htop/shared
 
 - New shared library crate for common htop code
@@ -52,6 +59,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Default behavior unchanged (always keep source)
 
 ### Changed 🔧
+
+#### Documentation
+
+- **Fixed**: Corrected all documentation links in README.zh-CN.md and docs/README.zh-CN.md
+  - Links now correctly point to docs/setup/, docs/architecture/, docs/tutorials/
+  - README.md defaults to English with Chinese link at top
 
 #### dos2unix
 
@@ -172,6 +185,7 @@ Rust implementation of CRLF to LF converter
 Multi-language gzip implementation
 
 **Go (`gzip-go`)**:
+
 - Parallel file processing with goroutines
 - Recursive directory support (`-r`)
 - Compression level control (`-l 0-9`)
@@ -179,6 +193,7 @@ Multi-language gzip implementation
 - Force overwrite flag (`-f`)
 
 **Rust (`rgzip`)**:
+
 - Library crate (`lib.rs`) for embedding
 - Streaming compression/decompression
 - CLI with clap derive macros
@@ -190,6 +205,7 @@ Multi-language gzip implementation
 Cross-platform system monitor
 
 **Unix/Rust**:
+
 - Real-time CPU and memory monitoring
 - Process list with sorting (CPU, Memory, PID, Name)
 - Interactive TUI with ratatui
@@ -198,11 +214,13 @@ Cross-platform system monitor
 - Adjustable refresh interval
 
 **Windows/Rust**:
+
 - All Unix features plus sparkline history
 - CPU usage trends visualization
 - Memory usage graphs
 
 **Windows/Go**:
+
 - Equivalent functionality using gopsutil
 - tview-based TUI
 - Cross-compilation support

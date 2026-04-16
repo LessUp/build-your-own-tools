@@ -12,39 +12,43 @@
 
 ## 文档结构
 
+遵循 [GitHub 社区最佳实践](https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/creating-a-default-community-health-file)：
+
 ```
 docs/
-├── README.md              # 本文档 - 文档索引
-├── README.zh-CN.md        # 本文档（中文）
-├── en/                    # 英文文档
-│   ├── ARCHITECTURE.md    # 系统架构和设计
-│   ├── COMPARISON.md      # Rust vs Go 对比
-│   ├── API.md            # API 参考
-│   └── GETTING-STARTED.md # 快速开始指南
-├── zh-CN/                 # 简体中文文档
-│   ├── ARCHITECTURE.md    # 系统架构
-│   ├── COMPARISON.md      # Rust vs Go 对比
-│   ├── API.md            # API 参考
-│   └── GETTING-STARTED.md # 快速开始
-└── changelogs/            # 变更日志资源
-    ├── INDEX.md          # 所有变更日志索引
-    ├── INDEX.zh-CN.md    # 变更日志索引
-    └── MIGRATION.md      # 版本迁移指南
+├── README.md                 # 本文档 - 文档索引
+├── README.zh-CN.md           # 本文档（中文）
+├── setup/                    # 环境搭建指南
+│   ├── GETTING-STARTED.md    # 快速开始指南（英文）
+│   └── GETTING-STARTED.zh-CN.md  # 快速开始（中文）
+├── tutorials/                # 用户教程和对比
+│   ├── COMPARISON.md         # Rust vs Go 对比（英文）
+│   └── COMPARISON.zh-CN.md   # Rust vs Go 对比（中文）
+├── architecture/             # 高层架构规范
+│   ├── ARCHITECTURE.md       # 系统架构（英文）
+│   ├── ARCHITECTURE.zh-CN.md # 系统架构（中文）
+│   ├── API.md                # API 参考（英文）
+│   └── API.zh-CN.md          # API 参考（中文）
+├── assets/                   # 图片、UML 图、静态资源
+└── changelogs/               # 变更日志资源
+    ├── INDEX.md              # 所有变更日志索引
+    ├── INDEX.zh-CN.md        # 变更日志索引（中文）
+    └── MIGRATION.md          # 版本迁移指南
 ```
 
 ## 快速开始
 
 初次接触 build-your-own-tools？从这里开始：
 
-1. **[快速开始](zh-CN/GETTING-STARTED.md)** - 设置环境并构建你的第一个工具
-2. **[架构指南](zh-CN/ARCHITECTURE.md)** - 理解系统设计和项目结构
-3. **[语言对比](zh-CN/COMPARISON.md)** - 了解 Rust 和 Go 实现的区别
+1. **[快速开始](setup/GETTING-STARTED.zh-CN.md)** - 设置环境并构建你的第一个工具
+2. **[架构指南](architecture/ARCHITECTURE.zh-CN.md)** - 理解系统设计和项目结构
+3. **[语言对比](tutorials/COMPARISON.zh-CN.md)** - 了解 Rust 和 Go 实现的区别
 
 ## API 参考
 
 查找函数文档？查看 API 参考：
 
-- **[API 参考](zh-CN/API.md)** - 所有库模块的完整 API 文档
+- **[API 参考](architecture/API.zh-CN.md)** - 所有库模块的完整 API 文档
 
 ## 变更日志
 
@@ -57,8 +61,8 @@ docs/
 
 选择你的首选语言：
 
-- 🇺🇸 **English** - [Architecture](en/ARCHITECTURE.md) | [Comparison](en/COMPARISON.md) | [API](en/API.md) | [Getting Started](en/GETTING-STARTED.md)
-- 🇨🇳 **简体中文** - [架构指南](zh-CN/ARCHITECTURE.md) | [语言对比](zh-CN/COMPARISON.md) | [API参考](zh-CN/API.md) | [快速开始](zh-CN/GETTING-STARTED.md)
+- 🇺🇸 **English** - [Architecture](architecture/ARCHITECTURE.md) | [Comparison](tutorials/COMPARISON.md) | [API](architecture/API.md) | [Getting Started](setup/GETTING-STARTED.md)
+- 🇨🇳 **简体中文** - [架构指南](architecture/ARCHITECTURE.zh-CN.md) | [语言对比](tutorials/COMPARISON.zh-CN.md) | [API参考](architecture/API.zh-CN.md) | [快速开始](setup/GETTING-STARTED.zh-CN.md)
 
 ## 快速链接
 
@@ -113,5 +117,5 @@ docs/
 
 ---
 
-**最后更新**: 2026-04-16  
-**文档版本**: 2.0
+**最后更新**: 2026-04-17  
+**文档版本**: 2.1

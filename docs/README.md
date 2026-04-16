@@ -102,5 +102,5 @@ We welcome documentation improvements! Please see [CONTRIBUTING.md](../CONTRIBUT
 
 ---
 
-**Last Updated**: 2026-04-16  
-**Documentation Version**: 2.0
+**Last Updated**: 2026-04-17  
+**Documentation Version**: 2.1
