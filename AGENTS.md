@@ -2,13 +2,15 @@
 
 ## Project Philosophy: Spec-Driven Development (SDD)
 
-本项目严格遵循**规范驱动开发（Spec-Driven Development）**范式。所有的代码实现必须以 `/specs` 目录下的规范文档为唯一事实来源（Single Source of Truth）。
+本项目严格遵循**规范驱动开发（Spec-Driven Development）**范式。
+
+所有的代码实现必须以 `/specs` 目录下的规范文档为唯一事实来源。
 
 ---
 
 ## Directory Context (目录说明)
 
-```
+```text
 build-your-own-tools/
 ├── specs/                      # 核心：规范文档存放地
 │   ├── product/                # 产品功能定义与验收标准 (PRD)
