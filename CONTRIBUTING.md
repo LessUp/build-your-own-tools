@@ -47,7 +47,7 @@ All implementations must be based on the specification documents in the `/specs`
 
 ### Spec Directory Structure
 
-```
+```text
 specs/
 ├── product/        # Product requirements and acceptance criteria
 ├── rfc/            # Technical design documents (RFCs)
@@ -161,7 +161,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/) specificatio
 
 ### Format
 
-```
+```text
 <type>(<scope>): <subject>
 
 <body>
@@ -191,7 +191,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/) specificatio
 
 ### Examples
 
-```
+```text
 feat(dos2unix): add support for recursive directory processing
 
 Add -r/--recursive flag to process all files in a directory tree.
@@ -199,7 +199,7 @@ Add -r/--recursive flag to process all files in a directory tree.
 Closes #123
 ```
 
-```
+```text
 fix(gzip): handle empty input files correctly
 
 Previously, empty files would cause a panic. Now they are handled

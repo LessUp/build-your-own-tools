@@ -51,7 +51,8 @@ build-your-own-tools/
 - 如果用户指令与现有 Spec 冲突，应立即停止编码，并指出冲突点，询问用户是否需要先更新 Spec。
 
 **必须阅读的文档**：
-```
+
+```text
 /specs/product/project-standardization.md   # 产品需求
 /specs/rfc/0001-project-architecture.md     # 架构设计
 /specs/api/cli-interfaces.md                # 接口定义
@@ -64,6 +65,7 @@ build-your-own-tools/
 - 等待用户确认 Spec 的修改后，才能进入代码编写阶段。
 
 **Spec 更新流程**：
+
 1. 新功能 → 先更新 `/specs/product/`
 2. 接口变更 → 先更新 `/specs/api/`
 3. 架构变更 → 先创建 `/specs/rfc/NNNN-xxx.md`
@@ -76,6 +78,7 @@ build-your-own-tools/
 - 遵循项目现有的代码风格和约定。
 
 **代码风格要求**：
+
 - Rust: 使用 `cargo fmt` 格式化，通过 `cargo clippy -- -D warnings` 检查
 - Go: 使用 `gofmt` 格式化，通过 `go vet` 检查
 
@@ -85,6 +88,7 @@ build-your-own-tools/
 - 确保测试用例覆盖了 Spec 中描述的所有边界情况。
 
 **测试要求**：
+
 ```bash
 # 运行所有测试
 make test-all
