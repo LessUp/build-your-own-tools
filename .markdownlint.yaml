@@ -1,0 +1,30 @@
+# Markdownlint CLI 2 Configuration
+# https://github.com/DavidAnson/markdownlint-cli2
+
+config:
+  # MD013: Line length - Allow longer lines
+  MD013:
+    line_length: 159
+    tables: false
+    code_blocks: false
+
+  # MD024: Multiple headings with same content
+  # Allow in CHANGELOG.md where duplicate headings under different versions are valid
+  MD024:
+    allow_different_nesting: true
+    siblings_only: true
+
+  # MD025: Single title - Allow multiple H1 in templates with frontmatter
+  MD025: false
+
+  # MD031: Blanks around fenced code
+  MD031: true
+
+  # MD032: Blanks around lists
+  MD032: true
+
+  # MD040: Fenced code blocks should have language
+  MD040: true
+
+  # MD041: First line should be heading - disable for templates
+  MD041: false
