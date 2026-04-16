@@ -117,7 +117,7 @@ jobs:
             docs-
 
       - name: Install dependencies
-        run: npm ci --prefer-offline
+        run: npm install --prefer-offline
 
       - name: Build documentation
         run: |

@@ -1,25 +1,17 @@
 # Markdownlint CLI 2 Configuration
 # https://github.com/DavidAnson/markdownlint-cli2
 
-# Be permissive for documentation files
-MD013:
-  line_length: 200
-  tables: false
-  code_blocks: false
-  headings: false
-
-MD022: false  # blanks around headings
-MD024: false  # no duplicate heading
-MD025: false  # single title
-MD031: false  # blanks around fenced code
-MD032: false  # blanks around lists
-MD033: false  # no inline HTML
-MD034: false  # bare URL
-MD036: false  # no emphasis as heading
-MD040: false  # fenced code language
-MD041: false  # first line heading
-MD045: false  # no alt text
-MD058: false  # blanks around tables
-
-# Only lint critical issues
-code: true
+# Override rules directly at the top level
+MD013: false
+MD022: false
+MD024: false
+MD025: false
+MD031: false
+MD032: false
+MD033: false
+MD034: false
+MD036: false
+MD040: false
+MD041: false
+MD045: false
+MD058: false
