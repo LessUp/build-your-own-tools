@@ -1,47 +1,111 @@
-# htop (Windows/Unix)
+# htop
 
-跨平台 htop 学习/演示项目，包含 `unix/rust/` 与 `win/rust/`、`win/go/` 子模块。
+[![License](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](../LICENSE)
 
-## 特性
-- 轻量、可学习
-- Windows 与 Unix 双平台示例
-- Rust 与 Go 实现对比
+A cross-platform htop clone for learning system programming and TUI development.
 
-## 目录结构
+## Features
+
+- **Cross-Platform** — Unix and Windows support
+- **Multi-Language** — Rust and Go implementations
+- **Real-time Monitoring** — CPU and memory usage
+- **Process Management** — View, sort, search, and kill processes
+- **Interactive TUI** — Keyboard-driven interface
+
+## Implementations
+
+| Platform | Language | Directory | Features |
+|----------|----------|-----------|----------|
+| Unix | Rust | `unix/rust/` | Full features, SIGTERM→SIGKILL |
+| Windows | Rust | `win/rust/` | Full features, sparkline history |
+| Windows | Go | `win/go/` | Basic features, sort controls |
+
+## Project Structure
+
 ```
 htop/
-  unix/
-    rust/
-  win/
-    rust/
-    go/
-  changelog/
+├── shared/           # Shared Rust library (htop_shared)
+│   └── src/lib.rs
+├── unix/rust/        # Unix Rust implementation
+│   └── src/main.rs
+├── win/
+│   ├── rust/         # Windows Rust implementation
+│   │   └── src/main.rs
+│   └── go/           # Windows Go implementation
+│       └── cmd/htop-win-go/
+└── changelog/
+    └── CHANGELOG.md
 ```
 
-## 构建与运行
-- Rust（Unix 或 Windows）
+## Quick Start
+
+### Unix (Rust)
+
 ```bash
-# 在对应子目录执行
-cargo build --release
-cargo run
+cd htop/unix/rust
+cargo run --release
 ```
-- Go（Windows 示例）
+
+### Windows (Rust)
+
+```powershell
+cd htop\win\rust
+cargo run --release
+```
+
+### Windows (Go)
+
+```powershell
+cd htop\win\go
+go run ./cmd/htop-win-go
+```
+
+## Shared Library
+
+The `htop_shared` crate provides common functionality:
+
+| Function | Description |
+|----------|-------------|
+| `ProcRow` | Process data struct |
+| `SortKey` | Sort column enum |
+| `compare_proc_rows()` | Compare processes for sorting |
+| `filter_processes()` | Filter by search term |
+| `color_for_ratio()` | Color based on usage percentage |
+| `highlight_style()` | Table row highlight style |
+
+## Common Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `q` | Quit |
+| `↑`/`↓` | Navigate |
+| `s` | Cycle sort column |
+| `r` | Reverse sort |
+| `/` | Search |
+| `p` | Pause refresh |
+| `k` | Kill process |
+
+## Comparison
+
+| Feature | Unix Rust | Win Rust | Win Go |
+|---------|-----------|----------|--------|
+| Process list | ✅ | ✅ | ✅ |
+| CPU/memory | ✅ | ✅ | ✅ |
+| Process kill | ✅ | ✅ | ❌ |
+| Search/filter | ✅ | ✅ | ❌ |
+| Sparkline | ❌ | ✅ | ❌ |
+| Shared lib | ✅ | ✅ | ❌ |
+
+## Testing
+
 ```bash
-# 在 win/go 目录执行
-go build ./...
+# Rust
+cargo test --all
+
+# Go
+cd win/go && go test ./...
 ```
 
-## 贡献
-- 提交前请运行格式化与基本检查
-```bash
-cargo fmt && cargo clippy
-# 或
-gofmt -w . && go vet ./...
-```
-- 提交 PR 前附上动机与变更简述
+## License
 
-## 许可
-- 遵循仓库根目录 `LICENSE` 文件，采用 `MIT OR Apache-2.0` 双许可证。
-
-## 变更日志
-- 见 `changelog/CHANGELOG.md`
+MIT OR Apache-2.0

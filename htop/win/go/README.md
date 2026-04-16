@@ -1,78 +1,128 @@
 # htop-win-go
 
-Windows 11 下使用 Go 实现的简洁版 htop。基于 tview+tcell 构建终端 TUI，使用 gopsutil 采集系统与进程信息。
+[![License](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](../../../LICENSE)
 
-## 功能
+A minimal htop clone for Windows built with Go and tview.
 
-- 简洁系统概览：CPU 使用率、内存使用情况。
-- 进程列表（默认按 CPU% 降序）：PID、Name、CPU%、RSS、Mem%、Start 时间。
-- 操作：
-  - q / Esc 退出。
-  - C/M/P/N 切换排序：CPU%、Mem%、PID、Name。
-  - 刷新间隔：1s。
+## Features
 
-## 快速开始
+- **Real-time Monitoring** — CPU and memory usage with visual gauges
+- **Process Management** — View and sort processes
+- **Interactive TUI** — Built with tview for responsive terminal UI
+- **Sort Controls** — Quick keyboard shortcuts for column sorting
 
-前置：
-- Windows 11
-- Go 1.21+（建议 1.22）
-- Windows Terminal/PowerShell
-
-步骤：
+## Installation
 
 ```powershell
-# 安装依赖
-cd d:\htop-win-go
-go mod tidy
-
-# 运行
-go run ./cmd/htop-win-go
-```
-
-编译：
-
-```powershell
+cd htop\win\go
 go build -o bin\htop-win-go.exe ./cmd/htop-win-go
 ```
 
-## 目录结构
+### Prerequisites
+
+- Go 1.21+ (1.22+ recommended)
+- Windows Terminal or PowerShell
+
+## Usage
+
+```powershell
+# Run directly
+go run ./cmd/htop-win-go
+
+# Or run the built binary
+.\bin\htop-win-go.exe
+```
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `q` / `Esc` | Quit |
+| `C` | Sort by CPU% |
+| `M` | Sort by Memory% |
+| `P` | Sort by PID |
+| `N` | Sort by Name |
+
+## Display
+
+### Header
+- **Title** — `htop-win-go`
+- **CPU Gauge** — Visual bar with percentage
+- **Memory Gauge** — Visual bar with usage
+- **Process Count** — Number of processes
+
+### Process Table
+| Column | Description |
+|--------|-------------|
+| PID | Process ID |
+| NAME | Process name |
+| CPU% | CPU usage percentage |
+| RSS | Resident Set Size |
+| MEM% | Memory percentage |
+| START | Process start time |
+
+## CPU% Calculation
+
+CPU percentage is calculated by:
+1. Getting process CPU time (user + system)
+2. Measuring wall clock time difference
+3. Dividing by `runtime.NumCPU()` for total percentage
+
+## Dependencies
+
+- **gopsutil** — System and process information
+- **tview** — Terminal UI framework
+- **tcell** — Terminal handling (tview dependency)
+
+## Project Structure
 
 ```
 htop-win-go/
-├─ cmd/
-│  └─ htop-win-go/
-│     └─ main.go
-├─ internal/
-│  ├─ metrics/
-│  │  ├─ system.go
-│  │  └─ processes.go
-│  └─ ui/
-│     └─ ui.go
-├─ changelog/
-│  └─ 2025-09-25-init.md
-└─ go.mod
+├── cmd/
+│   └── htop-win-go/
+│       └── main.go
+├── internal/
+│   ├── metrics/
+│   │   ├── system.go
+│   │   └── processes.go
+│   └── ui/
+│       └── ui.go
+├── changelog/
+│   └── CHANGELOG.md
+├── go.mod
+└── Makefile
 ```
 
-## 实现要点
+## Known Limitations
 
-- CPU% 计算：通过进程 `Times`（user+system）与 wall clock 的时间差估算，除以 `runtime.NumCPU()` 得到总占比。
-- 内存：显示 RSS 与内存占比（gopsutil 的 MemoryPercent）。
-- 设计：KISS，仅保留最常用字段与交互。
+- Some system processes may fail to report information (permission denied)
+- First refresh may show 0% CPU, subsequent refreshes show accurate values
+- No process kill functionality yet
 
-## 注意事项
+## Testing
 
-- 某些系统进程可能因权限或瞬态状态导致信息获取失败，程序会跳过这些进程并继续渲染。
-- 首次刷新时 CPU% 可能为 0，随后每秒更新将显示趋势。
+```powershell
+go test ./...
+```
 
-## Roadmap（可选）
+## Comparison with Rust Implementation
 
-- 进程排序切换（CPU/Mem/Name/PID）。
-- 搜索/过滤。
-- 进程终止（需确认并谨慎使用）。
-- 每核 CPU 与历史折线小图。
-- 自定义刷新间隔与最大显示行数。
+| Feature | Go | Rust |
+|---------|-----|------|
+| TUI Framework | tview | ratatui |
+| Sparkline history | ❌ | ✅ |
+| Process kill | ❌ | ✅ |
+| Search/filter | ❌ | ✅ |
+| System info | gopsutil | sysinfo |
 
-## 致谢
+## Roadmap
 
-- [gopsutil](https://github.com/shirou/gopsutil)
-- [tview](https://github.com/rivo/tview) 与 [tcell](https://github.com/gdamore/tcell)
+- [ ] Search/filter processes
+- [ ] Process termination
+- [ ] Adjustable refresh interval
+- [ ] Per-core CPU display
+- [ ] Disk/network metrics
+
+## License
+
+MIT OR Apache-2.0

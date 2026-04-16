@@ -1,170 +1,160 @@
-# 架构说明
+# Architecture
 
-本文档描述 build-your-own-tools 项目的整体架构和设计理念。
+This document describes the overall architecture and design philosophy of the build-your-own-tools project.
 
-## 项目概述
+## Overview
 
-build-your-own-tools 是一个学习型项目，通过手写常用命令行工具来深入理解系统编程、命令行设计和跨语言实现对比。
+**build-your-own-tools** is a learning-focused repository that re-implements common CLI tools from scratch in Rust and Go. Perfect for understanding low-level system programming, CLI design patterns, and cross-language implementation comparisons.
 
-## 设计理念
+## Design Philosophy
 
-### 1. 学习优先
+### 1. Learning First
 
-- 代码清晰易读，便于学习和理解
-- 每个工具都有详细的注释和文档
-- 优先考虑可读性，其次是性能优化
+- Clean, readable code optimized for understanding
+- Detailed comments and documentation for each tool
+- Prioritize readability over micro-optimizations
 
-### 2. 多语言实现
+### 2. Multi-Language Implementation
 
-- 使用 Rust 和 Go 两种语言实现相同功能
-- 对比不同语言的特性和最佳实践
-- 展示各语言在系统编程中的优势
+- Same tool implemented in both Rust and Go
+- Side-by-side comparison of language features
+- Demonstrates strengths of each language in system programming
 
-### 3. 跨平台支持
+### 3. Cross-Platform Support
 
-- 支持 Linux、macOS、Windows 三大平台
-- 处理平台差异，提供一致的用户体验
-- 使用条件编译处理平台特定代码
+- Support for Linux, macOS, and Windows
+- Handle platform differences gracefully
+- Use conditional compilation for platform-specific code
 
-## 项目结构
+## Project Structure
 
 ```
 build-your-own-tools/
-├── dos2unix/           # CRLF 转 LF 工具
-│   └── src/            # Rust 实现
-├── gzip/               # 压缩/解压工具
-│   ├── go/             # Go 实现
-│   └── rust/           # Rust 实现
-├── htop/               # 系统监控工具
-│   ├── unix/rust/      # Unix Rust 实现
-│   └── win/
-│       ├── go/         # Windows Go 实现
-│       └── rust/       # Windows Rust 实现
-├── docs/               # 项目文档
-└── .github/            # GitHub 配置
+├── dos2unix/                 # CRLF → LF converter (Rust)
+│   ├── src/main.rs
+│   └── changelog/CHANGELOG.md
+├── gzip/
+│   ├── go/                   # Go implementation
+│   │   ├── cmd/gzip-go/
+│   │   └── changelog/CHANGELOG.md
+│   └── rust/                 # Rust implementation
+│       ├── src/{lib.rs, main.rs}
+│       └── changelog/CHANGELOG.md
+├── htop/
+│   ├── shared/               # Shared Rust library
+│   │   └── src/lib.rs
+│   ├── unix/rust/            # Unix Rust implementation
+│   │   └── src/main.rs
+│   ├── win/
+│   │   ├── go/               # Windows Go implementation
+│   │   │   └── cmd/htop-win-go/
+│   │   └── rust/             # Windows Rust implementation
+│   │       └── src/main.rs
+│   └── changelog/CHANGELOG.md
+├── docs/
+│   ├── ARCHITECTURE.md       # This file
+│   └── COMPARISON.md         # Rust vs Go comparison
+├── .github/
+│   ├── workflows/
+│   │   ├── ci.yml            # CI pipeline
+│   │   ├── release.yml       # Release automation
+│   │   └── pages.yml         # Docs deployment
+│   └── ISSUE_TEMPLATE/
+└── .kiro/specs/              # Project specification docs
 ```
 
-## 架构图
+## Architecture Diagram
 
-```mermaid
-graph TB
-    subgraph "build-your-own-tools"
-        subgraph "dos2unix"
-            D1[Rust 实现]
-            D1 --> D1a[文件 I/O]
-            D1 --> D1b[换行符转换]
-        end
-        
-        subgraph "gzip"
-            G1[Rust 实现]
-            G2[Go 实现]
-            G1 --> G1a[DEFLATE 压缩]
-            G2 --> G2a[DEFLATE 压缩]
-        end
-        
-        subgraph "htop"
-            H1[Unix Rust]
-            H2[Windows Rust]
-            H3[Windows Go]
-            H1 --> H1a[sysinfo]
-            H2 --> H2a[sysinfo]
-            H3 --> H3a[gopsutil]
-            H1 --> TUI1[ratatui TUI]
-            H2 --> TUI2[ratatui TUI]
-            H3 --> TUI3[tview TUI]
-        end
-    end
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   build-your-own-tools                       │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
+│  │  dos2unix   │  │      gzip       │  │      htop       │  │
+│  │   (Rust)    │  │                 │  │                 │  │
+│  │             │  │  ┌─────┐ ┌────┐ │  │  ┌─────┐ ┌────┐ │  │
+│  │ • File I/O  │  │  │ Go  │ │Rust│ │  │  │Unix │ │Win │ │  │
+│  │ • Streaming │  │  └─────┘ └────┘ │  │  │Rust │ │Rust│ │  │
+│  │ • CRLF→LF   │  │                 │  │  └─────┘ └────┘ │  │
+│  └─────────────┘  │  • DEFLATE      │  │                 │  │
+│                   │  • Streaming    │  │  ┌─────┐ ┌────┐ │  │
+│                   │  • Parallel     │  │  │ Go  │ │shared│ │  │
+│                   └─────────────────┘  │  │(Win)│ │lib │ │  │
+│                                        │  └─────┘ └────┘ │  │
+│                                        │                 │  │
+│                                        │  • TUI          │  │
+│                                        │  • Process info │  │
+│                                        │  • Real-time    │  │
+│                                        └─────────────────┘  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## 子项目架构
+## Sub-Project Details
 
 ### dos2unix
 
-简单的文本处理工具，演示基本的文件 I/O 操作。
+A simple text processing tool demonstrating basic file I/O and streaming.
 
-```
-dos2unix/
-├── src/
-│   └── main.rs         # 主程序入口
-├── Cargo.toml          # Rust 依赖配置
-└── README.md           # 使用说明
-```
+**Key Features:**
+- Streaming processing for large files
+- Cross-buffer CRLF detection
+- Check mode (detect without modify)
+- stdin/stdout support
 
-核心功能：
-- 读取文件内容
-- 检测并转换 CRLF 为 LF
-- 支持标准输入/输出
-- 支持检测模式（不修改文件）
+**Dependencies:** `anyhow`
 
 ### gzip
 
-文件压缩工具，演示数据压缩算法和流处理。
+File compression tool demonstrating DEFLATE algorithm and stream processing.
 
-```
-gzip/
-├── go/
-│   ├── cmd/gzip-go/    # Go 主程序
-│   └── go.mod          # Go 模块配置
-└── rust/
-    ├── src/
-    │   └── main.rs     # Rust 主程序
-    └── Cargo.toml      # Rust 依赖配置
-```
+**Rust (`rgzip`):**
+- Library crate (`lib.rs`) for embedding
+- Streaming compression/decompression
+- CLI with clap
 
-核心功能：
-- DEFLATE 压缩算法
-- 流式处理大文件
-- 保持文件元数据
+**Go (`gzip-go`):**
+- Parallel file processing
+- Recursive directory support
+- Built-in goroutines for concurrency
+
+**Dependencies:** `flate2` (Rust), `compress/gzip` (Go)
 
 ### htop
 
-系统监控工具，演示系统信息获取和 TUI 开发。
+System monitor demonstrating TUI development and system information APIs.
 
-```
-htop/
-├── unix/rust/          # Unix 平台 Rust 实现
-│   └── src/main.rs
-└── win/
-    ├── go/             # Windows Go 实现
-    │   └── cmd/htop-win-go/
-    └── rust/           # Windows Rust 实现
-        └── src/main.rs
-```
+**Shared Library (`htop_shared`):**
+- `ProcRow` struct for process data
+- `SortKey` enum for sorting
+- `color_for_ratio()` for usage coloring
 
-核心功能：
-- 实时 CPU/内存监控
-- 进程列表和管理
-- 交互式 TUI 界面
-- 进程排序和过滤
+**Unix Rust:**
+- Uses `sysinfo` for process info
+- `ratatui` for TUI
+- SIGTERM → SIGKILL for process kill
 
-## 技术栈
+**Windows Rust:**
+- Same stack as Unix
+- Sparkline history for CPU/memory
 
-### Rust
+**Windows Go:**
+- Uses `gopsutil` for process info
+- `tview` for TUI
 
-- **sysinfo**: 跨平台系统信息获取
-- **ratatui**: 终端 UI 框架
-- **crossterm**: 跨平台终端操作
-- **flate2**: DEFLATE 压缩库
-- **clap**: 命令行参数解析
+**Dependencies:** `sysinfo`, `ratatui`, `crossterm` (Rust), `gopsutil`, `tview` (Go)
 
-### Go
-
-- **gopsutil**: 系统信息获取
-- **tview**: 终端 UI 框架
-- **compress/gzip**: 标准库压缩
-
-## 构建系统
+## Build System
 
 ### Cargo Workspace (Rust)
 
-使用 Cargo workspace 管理多个 Rust 子项目：
-
 ```toml
-# Cargo.toml
 [workspace]
 members = [
     "dos2unix",
     "gzip/rust",
+    "htop/shared",
     "htop/unix/rust",
     "htop/win/rust",
 ]
@@ -172,11 +162,8 @@ members = [
 
 ### Go Workspace
 
-使用 Go workspace 管理多个 Go 模块：
-
-```
-# go.work
-go 1.23.0
+```go
+go 1.23
 
 use (
     ./gzip/go
@@ -184,42 +171,64 @@ use (
 )
 ```
 
-## CI/CD 流程
+### Makefile Targets
 
-```mermaid
-graph LR
-    A[Push/PR] --> B[CI Pipeline]
-    B --> C[Format Check]
-    B --> D[Lint Check]
-    B --> E[Unit Tests]
-    B --> F[Cross-platform Build]
-    
-    G[Tag Push] --> H[Release Pipeline]
-    H --> I[Build Binaries]
-    I --> J[Create Release]
-    J --> K[Upload Artifacts]
+```bash
+make build-all      # Build all projects
+make test-all       # Run all tests
+make lint-all       # Lint all code
+make fmt-all        # Format all code
 ```
 
-## 扩展指南
+## CI/CD Pipeline
 
-### 添加新工具
+```
+Push/PR ──► CI Pipeline
+              │
+              ├── Rust (Linux, macOS, Windows)
+              │   ├── cargo fmt --check
+              │   ├── cargo clippy
+              │   ├── cargo test
+              │   └── cargo build --release
+              │
+              ├── Go gzip (Linux, macOS)
+              │   ├── gofmt
+              │   ├── go vet
+              │   ├── go test
+              │   └── go build
+              │
+              └── Go htop (Windows)
+                  └── (same as above)
 
-1. 创建子项目目录
-2. 添加到 Cargo workspace 或 Go workspace
-3. 创建 README.md 和 changelog 目录
-4. 更新根目录 README.md
-5. 添加 CI 配置
+Tag Push ──► Release Pipeline
+              │
+              ├── Build binaries (all platforms)
+              ├── Package artifacts
+              └── Create GitHub Release
+```
 
-### 添加新语言实现
+## Extension Guide
 
-1. 在现有工具目录下创建语言子目录
-2. 实现相同的功能接口
-3. 添加对应的构建配置
-4. 更新文档和 CI
+### Adding a New Tool
 
-## 参考资源
+1. Create subdirectory at project root
+2. Add to Cargo workspace or Go workspace
+3. Create `README.md` and `changelog/CHANGELOG.md`
+4. Update root `README.md` projects table
+5. Add to CI matrix if needed
+
+### Adding a New Language Implementation
+
+1. Create language subdirectory in existing tool
+2. Implement same functionality
+3. Add build configuration
+4. Update documentation
+
+## References
 
 - [Rust Book](https://doc.rust-lang.org/book/)
 - [Go Documentation](https://golang.org/doc/)
 - [ratatui](https://github.com/ratatui-org/ratatui)
 - [tview](https://github.com/rivo/tview)
+- [sysinfo](https://github.com/GuillaumeGomez/sysinfo)
+- [gopsutil](https://github.com/shirou/gopsutil)

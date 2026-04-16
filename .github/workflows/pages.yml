@@ -37,7 +37,6 @@ jobs:
             htop
             index.md
             package.json
-            package-lock.json
             CHANGELOG.md
             CONTRIBUTING.md
             CODE_OF_CONDUCT.md

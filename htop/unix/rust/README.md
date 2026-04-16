@@ -1,69 +1,125 @@
-# htop-rust
+# htop-rust (Unix)
 
-一个用 Rust 编写的极简版 htop（终端 TUI），遵循 KISS 原则：
-- 显示 CPU 平均使用率、内存使用/总量
-- 进程表（PID、NAME、CPU%、MEM(MB)）
-- 支持滚动、排序、搜索/过滤、暂停/手动刷新、刷新间隔调节
-- 进程详情面板、结束进程（Windows）
+[![License](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](../../../LICENSE)
 
-## 快速开始
+A minimal htop clone for Unix systems built with Rust and ratatui.
 
-要求：Rust 稳定版（建议最新 stable）。
+## Features
 
-构建与运行：
+- **Real-time Monitoring** — CPU usage, memory consumption
+- **Process Management** — View, search, sort, and kill processes
+- **Interactive TUI** — Built with ratatui for responsive terminal UI
+- **Process Details** — View detailed process information
+- **Flexible Refresh** — Adjustable refresh interval
+
+## Installation
+
 ```bash
-cargo run
+cd htop/unix/rust
+cargo build --release
+
+# Binary location
+./target/release/htop-unix-rust
 ```
-Windows PowerShell：
-```powershell
-cargo run
+
+## Usage
+
+Run directly:
+```bash
+cargo run --release
 ```
 
-首次运行会自动下载依赖，请保持联网。
+## Keyboard Shortcuts
 
-## 键位
-- q：退出
-- ↑/↓：选择行
-- PgUp/PgDn：快速翻页
-- s：切换排序键（CPU → MEM → PID）
-- r：切换升/降序
-- /：进入搜索模式，输入关键字进行过滤（不区分大小写）
-- Enter：退出搜索模式（保留过滤）
-- Backspace：删除一个字符
-- Esc：清除过滤并返回普通模式
-- p：暂停/继续自动刷新
-- F5：手动刷新一次
-- - / + / =：调整刷新间隔（100ms ~ 5000ms）
-- Enter 或 d：显示/隐藏进程详情面板
-- k：结束选中进程（Windows 调用 taskkill，Unix 调用 kill；请谨慎使用）
+### Navigation
+| Key | Action |
+|-----|--------|
+| `↑`/`↓` | Select previous/next process |
+| `PgUp`/`PgDn` | Page up/down |
+| `Home`/`End` | Jump to first/last |
 
-## 功能说明
-- CPU：显示所有核心的平均使用率与核心数量
-- 内存：显示已用/总量（GiB）和百分比
-- 进程表：
-  - CPU% 来自 sysinfo，周期性刷新
-  - MEM(MB) 基于 KiB 转 MiB 的简单换算
-- 搜索/过滤：
-  - 在顶部摘要显示当前 Filter 与 Mode
-  - 过滤条件为进程名包含（大小写不敏感）
-- 暂停与刷新：
-  - 可暂停自动刷新以稳定观测
-  - 支持手动刷新与刷新间隔动态调整
-- 详情面板：
-  - 显示选中进程的名称、状态、CPU%、内存、可执行路径、命令行
-- 结束进程：
-  - Windows：调用 taskkill，先普通后 /F 强制
-  - Unix：先 SIGTERM，失败后 SIGKILL
+### Sorting
+| Key | Action |
+|-----|--------|
+| `s` | Cycle sort column (CPU → MEM → PID → Name) |
+| `r` | Reverse sort order |
 
-## 已知注意事项
-- CPU 使用率需要刷新间隔才能稳定，程序内已做初始预热（150ms）
-- 进程列表默认刷新间隔为 500ms，可按需动态调整
-- Windows 下正在运行的可执行文件会锁定，若需要重新构建请先在 TUI 中按 q 退出
+### Search/Filter
+| Key | Action |
+|-----|--------|
+| `/` | Enter search mode |
+| `Enter` | Apply filter |
+| `Esc` | Clear filter |
+| `Backspace` | Delete character |
 
-## 路线图
-- 颜色高亮与主题
-- CPU/内存历史曲线
-- 导出进程列表（CSV/JSON）
+### Refresh Control
+| Key | Action |
+|-----|--------|
+| `p` | Pause/resume refresh |
+| `F5` | Force refresh |
+| `-` | Slow down (max 5000ms) |
+| `+`/`=` | Speed up (min 100ms) |
 
-## 许可
-MIT OR Apache-2.0（遵循仓库根目录 LICENSE）。
+### Process Actions
+| Key | Action |
+|-----|--------|
+| `k` | Kill selected process (SIGTERM → SIGKILL) |
+| `d`/`Enter` | Show/hide process details |
+
+### General
+| Key | Action |
+|-----|--------|
+| `q` | Quit |
+| `Esc` | Close popup/cancel input |
+
+## Process Kill Behavior
+
+On Unix systems:
+1. First sends `SIGTERM` for graceful termination
+2. If process still alive after 2 seconds, sends `SIGKILL`
+
+**Note:** Some system processes require root privileges to kill.
+
+## Display
+
+### Header
+- CPU: Average usage across all cores
+- Memory: Used/Total (MiB) with percentage
+
+### Process Table
+| Column | Description |
+|--------|-------------|
+| PID | Process ID |
+| NAME | Process name |
+| CPU% | CPU usage percentage |
+| MEM(MiB) | Memory usage in MiB |
+
+### Process Details
+- Name and status
+- CPU% and memory
+- Executable path
+- Command line arguments
+
+## Dependencies
+
+- **ratatui** — Terminal UI framework
+- **crossterm** — Cross-platform terminal manipulation
+- **sysinfo** — System information
+
+## Testing
+
+```bash
+cargo test
+```
+
+## Comparison with Windows Implementation
+
+| Feature | Unix | Windows |
+|---------|------|---------|
+| Process kill | SIGTERM → SIGKILL | taskkill |
+| Sparkline history | ❌ | ✅ |
+| Shared library | ✅ htop_shared | ✅ htop_shared |
+
+## License
+
+MIT OR Apache-2.0
