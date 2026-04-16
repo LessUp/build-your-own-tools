@@ -365,9 +365,6 @@ export default defineConfig({
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
-          manualChunks: {
-            'group-vendor': ['vue', '@vue/runtime-dom'],
-          },
           assetFileNames: (assetInfo) => {
             const info = assetInfo.name.split('.')
             const ext = info[info.length - 1]
