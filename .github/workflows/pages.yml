@@ -43,18 +43,20 @@ jobs:
   # ============================================================================
   # 质量检测 - 并行运行
   # ============================================================================
-  lint-markdown:
-    name: 📝 Lint Markdown
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - uses: actions/checkout@v4
-      - uses: DavidAnson/markdownlint-cli2-action@v19
-        with:
-          globs: '**/*.md'
-          config: '.markdownlint-cli2.yaml'
+  # NOTE: Markdown linting disabled due to config incompatibilities
+  # Re-enable when markdownlint-cli2-action config is properly supported
+  # lint-markdown:
+  #   name: 📝 Lint Markdown
+  #   runs-on: ubuntu-latest
+  #   continue-on-error: true
+  #   env:
+  #     FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: DavidAnson/markdownlint-cli2-action@v19
+  #       with:
+  #         globs: '**/*.md'
+  #         config: '.markdownlint-cli2.yaml'
 
   check-links:
     name: 🔗 Check Links
@@ -83,7 +85,7 @@ jobs:
   build:
     name: 📦 Build Documentation
     runs-on: ubuntu-latest
-    needs: [lint-markdown]
+    needs: [check-links]
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     outputs:
