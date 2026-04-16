@@ -367,7 +367,6 @@ export default defineConfig({
         output: {
           manualChunks: {
             'group-vendor': ['vue', '@vue/runtime-dom'],
-            'group-theme': ['./theme/index.ts'],
           },
           assetFileNames: (assetInfo) => {
             const info = assetInfo.name.split('.')
