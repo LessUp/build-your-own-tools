@@ -1,11 +1,69 @@
 {
+  "name": "build-your-own-tools-docs",
+  "version": "0.3.0",
+  "description": "Documentation for Build Your Own Tools - Rust & Go CLI implementations",
   "private": true,
+  "type": "module",
   "scripts": {
-    "docs:dev": "vitepress dev",
+    "docs:dev": "vitepress dev --port 5173",
     "docs:build": "vitepress build",
-    "docs:preview": "vitepress preview"
+    "docs:preview": "vitepress preview --port 4173",
+    "docs:serve": "vitepress preview --port 8080",
+    "docs:check": "vue-tsc --noEmit && vitepress build",
+    "lighthouse": "lhci autorun",
+    "lighthouse:local": "npm run docs:build && lhci autorun",
+    "lint:md": "markdownlint-cli2 '**/*.md' '#node_modules' '#target' '#.vitepress/dist' '#**/changelog/*.md'",
+    "fix:md": "markdownlint-cli2-fix '**/*.md' '#node_modules' '#target' '#.vitepress/dist' '#**/changelog/*.md'",
+    "format": "prettier --write '**/*.{js,ts,json,md}'",
+    "format:check": "prettier --check '**/*.{js,ts,json,md}'"
   },
   "devDependencies": {
-    "vitepress": "^1.6.3"
-  }
+    "@types/markdown-it": "^14.1.0",
+    "@types/node": "^20.11.0",
+    "autoprefixer": "^10.4.18",
+    "markdown-it-task-lists": "^2.1.1",
+    "markdownlint-cli2": "^0.12.1",
+    "prettier": "^3.2.5",
+    "sitemap-ts": "^1.6.0",
+    "typescript": "^5.4.0",
+    "vitepress": "^1.1.0",
+    "vue": "^3.4.21"
+  },
+  "optionalDependencies": {
+    "@lhci/cli": "^0.14.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LessUp/build-your-own-tools.git"
+  },
+  "homepage": "https://lessup.github.io/build-your-own-tools/",
+  "bugs": {
+    "url": "https://github.com/LessUp/build-your-own-tools/issues"
+  },
+  "keywords": [
+    "rust",
+    "go",
+    "cli",
+    "command-line",
+    "tutorial",
+    "system-programming",
+    "learning",
+    "dos2unix",
+    "gzip",
+    "htop",
+    "tui",
+    "documentation"
+  ],
+  "author": "LessUp",
+  "license": "MIT OR Apache-2.0"
 }

@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lessup.github.io/build-your-own-tools/sitemap.xml
+
+# Optimize crawl rate
+Crawl-delay: 1
+
+# Allow all bots
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
