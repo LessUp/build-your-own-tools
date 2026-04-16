@@ -211,11 +211,12 @@ impl App {
 
         // 维护历史（百分比 0-100）
         let cpu_pct = self.cpu_usage.clamp(0.0, 100.0) as u64;
-        let mem_pct = if self.mem_total_mb == 0 {
-            0
-        } else {
-            ((self.mem_used_mb * 100) / self.mem_total_mb).min(100)
-        };
+        let mem_pct = self
+            .mem_used_mb
+            .checked_mul(100)
+            .and_then(|v| v.checked_div(self.mem_total_mb))
+            .unwrap_or(0)
+            .min(100);
         push_capped(&mut self.cpu_hist, cpu_pct, self.hist_capacity);
         push_capped(&mut self.mem_hist, mem_pct, self.hist_capacity);
 
