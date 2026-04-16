@@ -1,6 +1,6 @@
 # rgzip
 
-[![License](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](../../LICENSE)
+[![License](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](https://github.com/LessUp/build-your-own-tools/blob/master/LICENSE)
 
 A minimal, streaming gzip CLI tool in Rust with a reusable library crate.
 
@@ -113,7 +113,7 @@ cargo test
 
 ## Comparison with Go Implementation
 
-See [gzip/go/](../go/) for the Go implementation. Key differences:
+See [gzip/go/](../go/) for the Go implementation.
 
 | Aspect | Rust | Go |
 |--------|------|-----|
