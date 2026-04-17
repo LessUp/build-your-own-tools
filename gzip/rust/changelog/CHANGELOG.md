@@ -13,6 +13,14 @@ _No changes yet._
 
 ---
 
+## [0.3.0] - 2026-04-16
+
+### Changed 🔧
+
+- **Version**: Bumped to 0.3.0 for consistency with project-wide version tracking
+
+---
+
 ## [0.1.1] - 2026-02-13
 
 ### Changed 🔧

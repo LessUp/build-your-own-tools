@@ -1,0 +1,122 @@
+#!/bin/sh
+#
+# Pre-commit hook for Build-Your-Own-Tools
+# This hook runs formatting, linting, and tests before each commit
+#
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+echo "================================"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Track overall success
+FAILED=0
+
+# Function to run a check
+run_check() {
+    local name="$1"
+    local cmd="$2"
+    
+    echo ""
+    echo "📋 $name"
+    echo "------------------------"
+    
+    if eval "$cmd"; then
+        echo -e "${GREEN}✅ $name passed${NC}"
+        return 0
+    else
+        echo -e "${RED}❌ $name failed${NC}"
+        return 1
+    fi
+}
+
+# ============================================================================
+# Rust Checks
+# ============================================================================
+echo ""
+echo "🦀 Rust Checks"
+echo "=============="
+
+# Check if there are any staged Rust files
+STAGED_RUST=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.rs$' || true)
+
+if [ -n "$STAGED_RUST" ]; then
+    run_check "Rust Formatting" "cargo fmt --all -- --check" || FAILED=1
+    run_check "Rust Clippy" "cargo clippy --all-targets -- -D warnings" || FAILED=1
+    run_check "Rust Tests" "cargo test --all --all-features" || FAILED=1
+else
+    echo -e "${YELLOW}⚠️  No staged Rust files, skipping Rust checks${NC}"
+fi
+
+# ============================================================================
+# Go Checks
+# ============================================================================
+echo ""
+echo "🐹 Go Checks"
+echo "=============="
+
+# Check if there are any staged Go files
+STAGED_GO=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.go$' || true)
+
+if [ -n "$STAGED_GO" ]; then
+    # Check gzip/go
+    if echo "$STAGED_GO" | grep -q "gzip/go"; then
+        run_check "gofmt (gzip)" "test -z \$(gofmt -l gzip/go)" || FAILED=1
+        run_check "go vet (gzip)" "go vet -C gzip/go ./..." || FAILED=1
+        run_check "go test (gzip)" "go test -C gzip/go ./..." || FAILED=1
+    fi
+    
+    # Check htop/win/go
+    if echo "$STAGED_GO" | grep -q "htop/win/go"; then
+        run_check "gofmt (htop)" "test -z \$(gofmt -l htop/win/go)" || FAILED=1
+        run_check "go vet (htop)" "go vet -C htop/win/go ./..." || FAILED=1
+        run_check "go test (htop)" "go test -C htop/win/go ./..." || FAILED=1
+    fi
+else
+    echo -e "${YELLOW}⚠️  No staged Go files, skipping Go checks${NC}"
+fi
+
+# ============================================================================
+# Documentation Checks
+# ============================================================================
+echo ""
+echo "📚 Documentation Checks"
+echo "======================"
+
+# Check if there are any staged markdown files
+STAGED_MD=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.md$' || true)
+
+if [ -n "$STAGED_MD" ]; then
+    if command -v markdownlint-cli2 &> /dev/null; then
+        run_check "Markdown Lint" "markdownlint-cli2 \$STAGED_MD" || FAILED=1
+    else
+        echo -e "${YELLOW}⚠️  markdownlint-cli2 not installed, skipping${NC}"
+    fi
+else
+    echo -e "${YELLOW}⚠️  No staged markdown files, skipping docs checks${NC}"
+fi
+
+# ============================================================================
+# Summary
+# ============================================================================
+echo ""
+echo "================================"
+if [ $FAILED -eq 0 ]; then
+    echo -e "${GREEN}✅ All pre-commit checks passed!${NC}"
+    echo "Proceeding with commit..."
+    exit 0
+else
+    echo -e "${RED}❌ Some pre-commit checks failed!${NC}"
+    echo ""
+    echo "Please fix the issues above before committing."
+    echo ""
+    echo "To bypass this hook (not recommended), use:"
+    echo "  git commit --no-verify"
+    exit 1
+fi

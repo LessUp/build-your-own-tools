@@ -1,0 +1,215 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - '**/Cargo.toml'
+      - '**/Cargo.lock'
+      - '**/go.mod'
+      - '**/go.sum'
+      - '.github/workflows/security.yml'
+  pull_request:
+    paths:
+      - '**/Cargo.toml'
+      - '**/Cargo.lock'
+      - '**/go.mod'
+      - '**/go.sum'
+      - '.github/workflows/security.yml'
+  schedule:
+    # Run every Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  # ============================================================================
+  # Rust Security Audit
+  # ============================================================================
+  rust-audit:
+    name: Rust Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run cargo audit
+        uses: rustsec/audit-check@v1.4.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check Cargo.lock freshness
+        run: |
+          if ! cargo verify-project 2>/dev/null; then
+            echo "⚠️  Some Cargo.lock files may be out of date"
+          fi
+
+  # ============================================================================
+  # Go Security Scan
+  # ============================================================================
+  go-security:
+    name: Go Security Scan
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module:
+          - path: 'gzip/go'
+            name: 'gzip-go'
+          - path: 'htop/win/go'
+            name: 'htop-win-go'
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: true
+          cache-dependency-path: ${{ matrix.module.path }}/go.sum
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Run govulncheck
+        working-directory: ${{ matrix.module.path }}
+        run: govulncheck ./...
+
+      - name: Run go mod verify
+        working-directory: ${{ matrix.module.path }}
+        run: go mod verify
+
+  # ============================================================================
+  # Trivy File System Scan
+  # ============================================================================
+  trivy-scan:
+    name: Trivy Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # ============================================================================
+  # Secret Detection
+  # ============================================================================
+  secret-detection:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for secrets with truffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  # ============================================================================
+  # License Check
+  # ============================================================================
+  license-check:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-deny
+        run: cargo install cargo-deny
+
+      - name: Run cargo deny check
+        run: |
+          # Create deny.toml if it doesn't exist
+          if [ ! -f deny.toml ]; then
+            cat > deny.toml << 'EOF'
+[graph]
+targets = [
+    { triple = "x86_64-unknown-linux-gnu" },
+    { triple = "aarch64-unknown-linux-gnu" },
+    { triple = "x86_64-apple-darwin" },
+    { triple = "aarch64-apple-darwin" },
+    { triple = "x86_64-pc-windows-msvc" },
+]
+
+[licenses]
+version = 2
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-DFS-2016",
+]
+confidence-threshold = 0.8
+
+[advisories]
+version = 2
+ignore = []
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "allow"
+highlight = "all"
+EOF
+          fi
+          cargo deny check
+
+  # ============================================================================
+  # Security Summary
+  # ============================================================================
+  security-summary:
+    name: Security Summary
+    needs: [rust-audit, go-security, trivy-scan, secret-detection, license-check]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check security scan results
+        run: |
+          echo "🔒 Security Scan Summary"
+          echo "======================="
+          echo "Rust Audit: ${{ needs.rust-audit.result }}"
+          echo "Go Security: ${{ needs.go-security.result }}"
+          echo "Trivy Scan: ${{ needs.trivy-scan.result }}"
+          echo "Secret Detection: ${{ needs.secret-detection.result }}"
+          echo "License Check: ${{ needs.license-check.result }}"
+          
+          if [[ "${{ needs.rust-audit.result }}" == "failure" ]] || \
+             [[ "${{ needs.go-security.result }}" == "failure" ]] || \
+             [[ "${{ needs.trivy-scan.result }}" == "failure" ]] || \
+             [[ "${{ needs.secret-detection.result }}" == "failure" ]] || \
+             [[ "${{ needs.license-check.result }}" == "failure" ]]; then
+            echo "❌ Some security checks failed"
+            exit 1
+          fi
+          
+          echo "✅ All security checks passed"

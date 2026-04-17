@@ -1,0 +1,138 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ============================================================================
+  # Rust Coverage
+  # ============================================================================
+  rust-coverage:
+    name: Rust Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install cargo-tarpaulin
+        run: |
+          if ! command -v cargo-tarpaulin &> /dev/null; then
+            cargo install cargo-tarpaulin
+          fi
+
+      - name: Generate coverage
+        run: |
+          cargo tarpaulin --all-features --workspace --timeout 120 --out Xml --out Html --output-dir coverage/rust
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/rust/cobertura.xml
+          flags: rust
+          name: rust-coverage
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-coverage-report
+          path: coverage/rust/
+          retention-days: 7
+
+  # ============================================================================
+  # Go Coverage
+  # ============================================================================
+  go-coverage:
+    name: Go Coverage
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module:
+          - path: 'gzip/go'
+            name: 'gzip-go'
+          - path: 'htop/win/go'
+            name: 'htop-win-go'
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: true
+          cache-dependency-path: ${{ matrix.module.path }}/go.sum
+
+      - name: Run tests with coverage
+        working-directory: ${{ matrix.module.path }}
+        run: |
+          go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+          go tool cover -html=coverage.out -o coverage.html
+          go tool cover -func=coverage.out | grep total | awk '{print "Total coverage: " $3}'
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ${{ matrix.module.path }}/coverage.out
+          flags: go-${{ matrix.module.name }}
+          name: go-coverage-${{ matrix.module.name }}
+          fail_ci_if_error: false
+          verbose: true
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-coverage-${{ matrix.module.name }}
+          path: |
+            ${{ matrix.module.path }}/coverage.out
+            ${{ matrix.module.path }}/coverage.html
+          retention-days: 7
+
+  # ============================================================================
+  # Coverage Summary
+  # ============================================================================
+  coverage-summary:
+    name: Coverage Summary
+    needs: [rust-coverage, go-coverage]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Coverage Summary
+        run: |
+          echo "📊 Code Coverage Summary"
+          echo "========================"
+          echo "Rust Coverage: ${{ needs.rust-coverage.result }}"
+          echo "Go Coverage: ${{ needs.go-coverage.result }}"
+          
+          if [[ "${{ needs.rust-coverage.result }}" == "failure" ]] || \
+             [[ "${{ needs.go-coverage.result }}" == "failure" ]]; then
+            echo "❌ Some coverage jobs failed"
+            exit 1
+          fi
+          
+          echo "✅ All coverage jobs completed"

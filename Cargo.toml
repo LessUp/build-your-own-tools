@@ -19,3 +19,34 @@ sysinfo = "0.29"
 clap = { version = "4.5", features = ["derive"] }
 flate2 = "1.0"
 anyhow = "1.0"
+
+# ============================================================================
+# Profile Optimizations
+# ============================================================================
+
+[profile.release]
+# Optimize for size and speed
+opt-level = 3
+# Enable link-time optimization to reduce binary size
+lto = true
+# Use a single codegen unit for better optimization
+codegen-units = 1
+# Strip symbols to reduce binary size
+strip = true
+# Abort on panic instead of unwinding (smaller binary)
+panic = "abort"
+
+[profile.release-with-debug]
+inherits = "release"
+# Keep debug symbols for debugging
+strip = false
+panic = "unwind"
+
+[profile.dev]
+# Faster build times during development
+opt-level = 0
+debug = true
+
+[profile.test]
+opt-level = 0
+debug = true

@@ -254,10 +254,10 @@ For detailed changes in each sub-project, see:
 |---------|-----------|----------------|
 | dos2unix | [dos2unix/changelog/CHANGELOG.md](dos2unix/changelog/CHANGELOG.md) | v0.2.1 |
 | gzip (Go) | [gzip/go/changelog/CHANGELOG.md](gzip/go/changelog/CHANGELOG.md) | v0.3.0 |
-| gzip (Rust) | [gzip/rust/changelog/CHANGELOG.md](gzip/rust/changelog/CHANGELOG.md) | v0.1.1 |
+| gzip (Rust) | [gzip/rust/changelog/CHANGELOG.md](gzip/rust/changelog/CHANGELOG.md) | v0.3.0 |
 | htop (shared) | [htop/changelog/CHANGELOG.md](htop/changelog/CHANGELOG.md) | v0.1.0 |
 | htop (Unix/Rust) | [htop/unix/rust/changelog/CHANGELOG.md](htop/unix/rust/changelog/CHANGELOG.md) | v0.1.5 |
-| htop (Win/Rust) | [htop/win/rust/changelog/CHANGELOG.md](htop/win/rust/changelog/CHANGELOG.md) | v0.1.0 |
+| htop (Win/Rust) | [htop/win/rust/changelog/CHANGELOG.md](htop/win/rust/changelog/CHANGELOG.md) | v0.1.5 |
 | htop (Win/Go) | [htop/win/go/changelog/CHANGELOG.md](htop/win/go/changelog/CHANGELOG.md) | v0.1.3 |
 
 See [docs/changelogs/INDEX.md](docs/changelogs/INDEX.md) for the complete index.
