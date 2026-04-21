@@ -81,8 +81,9 @@ n- 跨语言实现对比
 ```
 build-your-own-tools/
 ├── 📁 docs/                      # 文档
-│   ├── en/                      # 英文文档
-│   ├── zh-CN/                   # 中文文档
+│   ├── setup/                   # 环境搭建指南
+│   ├── architecture/            # 架构文档
+│   ├── tutorials/               # 教程和对比
 │   └── changelogs/              # 变更日志索引
 │
 ├── 📁 dos2unix/                  # CRLF → LF 转换器
@@ -380,7 +381,7 @@ func windowsSpecific() { }
 
 4. **更新文档**:
    - 添加到根目录 README.md 项目表
-   - 添加到 docs/en/API.md 和 docs/zh-CN/API.md
+   - 添加到 docs/architecture/API.md 和 docs/architecture/API.zh-CN.md
    - 如需，添加 CI 工作流
 
 5. **添加 Makefile 目标**:

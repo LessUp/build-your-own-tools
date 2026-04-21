@@ -5,15 +5,15 @@
 #### Documentation Overhaul
 
 - **Bilingual Documentation**: Complete documentation now available in both English and Chinese
-  - English: `docs/en/` - 4 comprehensive guides
-  - 中文: `docs/zh-CN/` - 4 comprehensive guides
+  - English: `docs/setup/`, `docs/architecture/`, `docs/tutorials/` - comprehensive guides
+  - 中文: Same directories with `.zh-CN.md` suffix - comprehensive guides
   - Documentation index with language switching
 
 - **New Documentation**:
-  - [Getting Started Guide](docs/en/GETTING-STARTED.md) - Environment setup, debugging, troubleshooting
-  - [API Reference](docs/en/API.md) - Complete library API documentation
-  - [Architecture Guide](docs/en/ARCHITECTURE.md) - Mermaid diagrams, system design details
-  - [Enhanced Comparison](docs/en/COMPARISON.md) - Performance benchmarks, code statistics
+  - [Getting Started Guide](docs/setup/GETTING-STARTED.md) - Environment setup, debugging, troubleshooting
+  - [API Reference](docs/architecture/API.md) - Complete library API documentation
+  - [Architecture Guide](docs/architecture/ARCHITECTURE.md) - Mermaid diagrams, system design details
+  - [Enhanced Comparison](docs/tutorials/COMPARISON.md) - Performance benchmarks, code statistics
 
 #### Changelog Improvements
 
@@ -63,15 +63,15 @@ mv dos2unix-rust-linux-amd64 /usr/local/bin/dos2unix-rust
 #### 文档全面重构
 
 - **双语文档**：现在提供完整的中英文双语文档
-  - 英文：`docs/en/` - 4 份全面指南
-  - 中文：`docs/zh-CN/` - 4 份全面指南
+  - 英文：`docs/setup/`, `docs/architecture/`, `docs/tutorials/` - 全面指南
+  - 中文：同一目录下 `.zh-CN.md` 后缀 - 全面指南
   - 文档索引支持语言切换
 
 - **新增文档**：
-  - [快速开始指南](docs/zh-CN/GETTING-STARTED.md) - 环境搭建、调试、故障排除
-  - [API 参考](docs/zh-CN/API.md) - 完整库 API 文档
-  - [架构指南](docs/zh-CN/ARCHITECTURE.md) - Mermaid 图表、系统设计详情
-  - [增强对比](docs/zh-CN/COMPARISON.md) - 性能基准、代码统计
+  - [快速开始指南](docs/setup/GETTING-STARTED.zh-CN.md) - 环境搭建、调试、故障排除
+  - [API 参考](docs/architecture/API.zh-CN.md) - 完整库 API 文档
+  - [架构指南](docs/architecture/ARCHITECTURE.zh-CN.md) - Mermaid 图表、系统设计详情
+  - [增强对比](docs/tutorials/COMPARISON.zh-CN.md) - 性能基准、代码统计
 
 #### 变更日志改进
 

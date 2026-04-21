@@ -114,8 +114,8 @@ See [MIGRATION.md](MIGRATION.md) for detailed migration instructions between ver
 
 | From Version | To Version | Guide |
 |--------------|------------|-------|
-| v0.1.x | v0.2.0 | [Migration Guide](MIGRATION.md#v010-to-v020) |
-| Initial | v0.1.0 | [Getting Started](../en/GETTING-STARTED.md) |
+| v0.1.x | v0.2.0 | [Migration Guide](MIGRATION.md#v01x-to-v020) |
+| Initial | v0.1.0 | [Getting Started](../setup/GETTING-STARTED.md) |
 
 ---
 

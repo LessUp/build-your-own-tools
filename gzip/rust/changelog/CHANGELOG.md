@@ -201,7 +201,7 @@ decompress_file(input_path, output_path)?;
 
 - [Go Implementation](../../go/changelog/CHANGELOG.md) - gzip-go changelog
 - [Main Changelog](../../../CHANGELOG.md) - Project-wide changes
-- [API Documentation](../../../docs/en/API.md) - Library API reference
+- [API Documentation](../../../docs/architecture/API.md) - Library API reference
 - [GitHub Releases](https://github.com/LessUp/build-your-own-tools/releases)
 
 ---

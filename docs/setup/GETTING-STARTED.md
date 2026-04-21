@@ -1,8 +1,8 @@
-# 快速开始
+# Getting Started
 
-> build-your-own-tools 的构建和贡献快速入门指南
+> Quick start guide for building and contributing to build-your-own-tools
 
-[English](../en/GETTING-STARTED.md) | **简体中文**
+**English** | [简体中文](GETTING-STARTED.zh-CN.md)
 
 ---
 

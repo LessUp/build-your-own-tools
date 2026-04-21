@@ -271,7 +271,7 @@ See [docs/changelogs/MIGRATION.md](docs/changelogs/MIGRATION.md) for detailed mi
 | Version Range | Migration Guide |
 |---------------|-----------------|
 | v0.1.x → v0.2.0 | [Migration Guide](docs/changelogs/MIGRATION.md#v01x-to-v020) |
-| Initial → v0.1.0 | [Getting Started](docs/en/GETTING-STARTED.md) |
+| Initial → v0.1.0 | [Getting Started](docs/setup/GETTING-STARTED.md) |
 
 ---
 

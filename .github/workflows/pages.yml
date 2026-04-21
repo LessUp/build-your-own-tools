@@ -5,29 +5,19 @@ on:
     branches: [master, main]
     paths:
       - "docs/**"
-      - "dos2unix/**/*.md"
-      - "gzip/**/*.md"
-      - "htop/**/*.md"
-      - "*.md"
+      - "public/**"
+      - "**/*.md"
       - ".vitepress/**"
-      - ".github/workflows/pages.yml"
       - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/pages.yml"
   pull_request:
-    types: [opened, synchronize, reopened, closed]
     paths:
       - "docs/**"
+      - "public/**"
+      - "**/*.md"
       - ".vitepress/**"
-      - "*.md"
   workflow_dispatch:
-    inputs:
-      deploy_target:
-        description: 'Deploy target'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-          - production
-          - preview
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -126,47 +116,6 @@ jobs:
           npm run docs:build
           echo "Build completed"
           ls -la .vitepress/dist/
-
-      - name: Create CNAME file
-        run: echo "lessup.github.io/build-your-own-tools" > .vitepress/dist/CNAME
-
-      - name: Generate sitemap.xml
-        run: |
-          cat > .vitepress/dist/sitemap.xml << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-            <url>
-              <loc>https://lessup.github.io/build-your-own-tools/</loc>
-              <changefreq>daily</changefreq>
-              <priority>1.0</priority>
-            </url>
-            <url>
-              <loc>https://lessup.github.io/build-your-own-tools/docs/ARCHITECTURE</loc>
-              <changefreq>weekly</changefreq>
-              <priority>0.9</priority>
-            </url>
-            <url>
-              <loc>https://lessup.github.io/build-your-own-tools/docs/COMPARISON</loc>
-              <changefreq>weekly</changefreq>
-              <priority>0.9</priority>
-            </url>
-            <url>
-              <loc>https://lessup.github.io/build-your-own-tools/docs/API</loc>
-              <changefreq>weekly</changefreq>
-              <priority>0.8</priority>
-            </url>
-            <url>
-              <loc>https://lessup.github.io/build-your-own-tools/docs/GETTING-STARTED</loc>
-              <changefreq>weekly</changefreq>
-              <priority>0.8</priority>
-            </url>
-            <url>
-              <loc>https://lessup.github.io/build-your-own-tools/CHANGELOG</loc>
-              <changefreq>weekly</changefreq>
-              <priority>0.7</priority>
-            </url>
-          </urlset>
-          EOF
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4

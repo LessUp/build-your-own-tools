@@ -141,7 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [Main Changelog](../../CHANGELOG.md) - Project-wide changes
 - [GitHub Releases](https://github.com/LessUp/build-your-own-tools/releases)
-- [Documentation](../../docs/en/ARCHITECTURE.md)
+- [Documentation](../../docs/architecture/ARCHITECTURE.md)
 
 ---
 

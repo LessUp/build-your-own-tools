@@ -185,7 +185,7 @@ All implementations target 60 FPS with adaptive refresh:
 ## Related
 
 - [Main Changelog](../../CHANGELOG.md) - Project-wide changes
-- [API Documentation](../../docs/en/API.md) - htop_shared API reference
+- [API Documentation](../../docs/architecture/API.md) - htop_shared API reference
 - [GitHub Releases](https://github.com/LessUp/build-your-own-tools/releases)
 
 ---

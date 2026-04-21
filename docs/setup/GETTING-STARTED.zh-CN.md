@@ -587,9 +587,9 @@ go build -p 4 ./...
 
 ### 了解更多
 
-- 📖 [架构指南](ARCHITECTURE.md) - 系统设计和模式
-- 📊 [对比指南](COMPARISON.md) - Rust vs Go 分析
-- 📚 [API 参考](API.md) - 库文档
+- 📖 [架构指南](../architecture/ARCHITECTURE.zh-CN.md) - 系统设计和模式
+- 📊 [对比指南](../tutorials/COMPARISON.zh-CN.md) - Rust vs Go 分析
+- 📚 [API 参考](../architecture/API.zh-CN.md) - 库文档
 
 ### 贡献
 

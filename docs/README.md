@@ -25,9 +25,9 @@ docs/
 │   ├── COMPARISON.md         # Rust vs Go comparison (EN)
 │   └── COMPARISON.zh-CN.md   # Rust vs Go 对比（中文）
 ├── architecture/             # High-level architecture specs
-│   ├── ARCHITECTURE.md       # System architecture (EN)
+│   ├── ARCHITECTURE.md       # System architecture (中文)
 │   ├── ARCHITECTURE.zh-CN.md # 系统架构（中文）
-│   ├── API.md                # API reference (EN)
+│   ├── API.md                # API reference (中文)
 │   └── API.zh-CN.md          # API 参考（中文）
 ├── assets/                   # Images, UML diagrams, static resources
 └── changelogs/               # Changelog resources

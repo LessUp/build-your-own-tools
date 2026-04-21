@@ -35,7 +35,7 @@ export default defineConfig({
     ['meta', { name: 'apple-mobile-web-app-capable', content: 'yes' }],
     ['meta', { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' }],
     ['meta', { name: 'apple-mobile-web-app-title', content: 'BYOT' }],
-    ['meta', { name: 'msapplication-TileImage', content: '/build-your-own-tools/logo-144.png' }],
+    ['meta', { name: 'msapplication-TileImage', content: '/build-your-own-tools/logo.svg' }],
     
     // 搜索引擎
     ['meta', { name: 'robots', content: 'index, follow' }],
@@ -75,7 +75,6 @@ export default defineConfig({
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/build-your-own-tools/logo.svg' }],
     ['link', { rel: 'alternate icon', href: '/build-your-own-tools/favicon.ico' }],
     ['link', { rel: 'mask-icon', href: '/build-your-own-tools/logo.svg', color: '#f59e0b' }],
-    ['link', { rel: 'apple-touch-icon', sizes: '180x180', href: '/build-your-own-tools/logo-180.png' }],
     
     // PWA Manifest
     ['link', { rel: 'manifest', href: '/build-your-own-tools/manifest.json' }],
