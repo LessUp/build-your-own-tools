@@ -163,12 +163,18 @@ jobs:
             echo '    "BSD-3-Clause",' >> deny.toml
             echo '    "ISC",' >> deny.toml
             echo '    "Unicode-DFS-2016",' >> deny.toml
+            echo '    "Zlib",' >> deny.toml
+            echo '    "Unicode-3.0",' >> deny.toml
             echo ']' >> deny.toml
             echo 'confidence-threshold = 0.8' >> deny.toml
             echo '' >> deny.toml
             echo '[advisories]' >> deny.toml
             echo 'version = 2' >> deny.toml
-            echo 'ignore = []' >> deny.toml
+            echo 'ignore = [' >> deny.toml
+            echo '    # paste crate is unmaintained but no upgrade available yet' >> deny.toml
+            echo '    # used by ratatui, see RUSTSEC-2024-0436' >> deny.toml
+            echo '    "RUSTSEC-2024-0436"' >> deny.toml
+            echo ']' >> deny.toml
             echo '' >> deny.toml
             echo '[sources]' >> deny.toml
             echo 'unknown-registry = "deny"' >> deny.toml
