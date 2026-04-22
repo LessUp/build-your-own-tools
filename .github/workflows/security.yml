@@ -141,49 +141,48 @@ jobs:
       - name: Install cargo-deny
         run: cargo install cargo-deny
 
-      - name: Run cargo deny check
+      - name: Create deny.toml
         run: |
-          # Create deny.toml if it doesn't exist
           if [ ! -f deny.toml ]; then
-            cat > deny.toml << 'EOF'
-[graph]
-targets = [
-    { triple = "x86_64-unknown-linux-gnu" },
-    { triple = "aarch64-unknown-linux-gnu" },
-    { triple = "x86_64-apple-darwin" },
-    { triple = "aarch64-apple-darwin" },
-    { triple = "x86_64-pc-windows-msvc" },
-]
-
-[licenses]
-version = 2
-allow = [
-    "MIT",
-    "Apache-2.0",
-    "Apache-2.0 WITH LLVM-exception",
-    "BSD-2-Clause",
-    "BSD-3-Clause",
-    "ISC",
-    "Unicode-DFS-2016",
-]
-confidence-threshold = 0.8
-
-[advisories]
-version = 2
-ignore = []
-
-[sources]
-unknown-registry = "deny"
-unknown-git = "deny"
-allow-registry = ["https://github.com/rust-lang/crates.io-index"]
-
-[bans]
-multiple-versions = "warn"
-wildcards = "allow"
-highlight = "all"
-EOF
+            echo '[graph]' > deny.toml
+            echo 'targets = [' >> deny.toml
+            echo '    { triple = "x86_64-unknown-linux-gnu" },' >> deny.toml
+            echo '    { triple = "aarch64-unknown-linux-gnu" },' >> deny.toml
+            echo '    { triple = "x86_64-apple-darwin" },' >> deny.toml
+            echo '    { triple = "aarch64-apple-darwin" },' >> deny.toml
+            echo '    { triple = "x86_64-pc-windows-msvc" },' >> deny.toml
+            echo ']' >> deny.toml
+            echo '' >> deny.toml
+            echo '[licenses]' >> deny.toml
+            echo 'version = 2' >> deny.toml
+            echo 'allow = [' >> deny.toml
+            echo '    "MIT",' >> deny.toml
+            echo '    "Apache-2.0",' >> deny.toml
+            echo '    "Apache-2.0 WITH LLVM-exception",' >> deny.toml
+            echo '    "BSD-2-Clause",' >> deny.toml
+            echo '    "BSD-3-Clause",' >> deny.toml
+            echo '    "ISC",' >> deny.toml
+            echo '    "Unicode-DFS-2016",' >> deny.toml
+            echo ']' >> deny.toml
+            echo 'confidence-threshold = 0.8' >> deny.toml
+            echo '' >> deny.toml
+            echo '[advisories]' >> deny.toml
+            echo 'version = 2' >> deny.toml
+            echo 'ignore = []' >> deny.toml
+            echo '' >> deny.toml
+            echo '[sources]' >> deny.toml
+            echo 'unknown-registry = "deny"' >> deny.toml
+            echo 'unknown-git = "deny"' >> deny.toml
+            echo 'allow-registry = ["https://github.com/rust-lang/crates.io-index"]' >> deny.toml
+            echo '' >> deny.toml
+            echo '[bans]' >> deny.toml
+            echo 'multiple-versions = "warn"' >> deny.toml
+            echo 'wildcards = "allow"' >> deny.toml
+            echo 'highlight = "all"' >> deny.toml
           fi
-          cargo deny check
+
+      - name: Run cargo deny check
+        run: cargo deny check
 
   # ============================================================================
   # Security Summary
