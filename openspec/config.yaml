@@ -1,0 +1,70 @@
+# OpenSpec configuration for Build Your Own Tools
+
+schema: cli-tool
+
+project:
+  name: build-your-own-tools
+  description: Learning-focused CLI tool implementations in Rust and Go, now being stabilized for a low-maintenance final state
+  version: 0.3.0
+
+domains:
+  - dos2unix
+  - gzip
+  - htop
+  - project
+
+context: |
+  ## Project objective
+  Build Your Own Tools is a learning-oriented repository that re-implements a small
+  set of CLI tools in Rust and Go. The project is in a stabilization / close-out
+  phase: prefer finishing and hardening existing work over expanding the surface area.
+
+  ## Current scope
+  - dos2unix: Rust only
+  - gzip: Rust + Go
+  - htop: Rust (Unix + Windows) and Go (Windows)
+
+  ## Repo priorities
+  1. Keep OpenSpec as the planning and scope-control layer.
+  2. Keep documentation high-signal and non-duplicative.
+  3. Keep automation meaningful and low-noise.
+  4. Keep GitHub Pages and GitHub metadata aligned.
+  5. Avoid new tools/features unless explicitly approved.
+
+  ## Quality gates
+  - `make lint-all`
+  - `make test-all`
+  - `npm run docs:check`
+  - `npm run docs:build`
+
+  ## Public surfaces
+  - `README.md` explains the repository and how to navigate it.
+  - `index.md` and `.vitepress/` define the Pages landing experience.
+  - `docs/` contains supporting detail, not parallel product messaging.
+
+rules:
+  proposal:
+    - State whether the change is stabilization, bug fix, docs/process cleanup, or approved feature work.
+    - For repo-wide changes, describe effects on docs, automation, AI workflow, and public presentation.
+    - Any expansion of scope beyond the existing tool set must be explicitly justified.
+
+  specs:
+    - Use RFC 2119 language for normative behavior.
+    - Put repo-wide governance, docs, workflow, and presentation requirements under the `project` domain.
+    - For cleanup work, specify what becomes canonical and what should be removed or deprecated.
+    - Each requirement must include at least one testable scenario.
+
+  design:
+    - Include design docs for cross-cutting, ambiguous, or workflow-heavy changes.
+    - Document trade-offs when simplifying automation, docs, or AI tooling.
+    - Record rollback or containment steps for any risky repo-wide change.
+
+  tasks:
+    - Break work into small, verifiable batches.
+    - Group project-wide work by Governance, Docs, AI Workflow, Automation, Site/Metadata, and Verification.
+    - Include explicit verification tasks that map to existing repository commands.
+
+archive:
+  dateFormat: YYYY-MM-DD
+  preserveHistory: true
+  path: openspec/changes/archive

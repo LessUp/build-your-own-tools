@@ -1,0 +1,154 @@
+# CLI Tool Development Workflow
+# Custom schema for build-your-own-tools project
+# Based on OpenSpec spec-driven schema with CLI tool extensions
+
+name: cli-tool
+version: 1
+description: Spec-driven development workflow for CLI tools with dual-language (Rust/Go) implementations
+
+artifacts:
+  - id: proposal
+    generates: proposal.md
+    description: Feature proposal with intent and scope
+    template: proposal.md
+    instruction: |
+      Create a proposal for a CLI tool feature or change.
+
+      Focus on:
+      1. **WHY** - The problem this solves (1-2 sentences)
+      2. **WHAT** - The scope of changes (bullet list, mark breaking changes with **BREAKING**)
+      3. **CAPABILITIES** - Which specs will be created/modified
+      4. **IMPACT** - Affected tools, languages, APIs, dependencies
+
+      For dual-language implementations, note which languages are affected.
+
+      Capabilities Section Format:
+      - **New Capabilities**: List capabilities being introduced (each becomes `specs/<name>/spec.md`)
+      - **Modified Capabilities**: List existing capabilities whose requirements are changing
+
+      Keep it concise (1-2 pages). Focus on the "why" not the "how".
+    requires: []
+
+  - id: specs
+    generates: "specs/**/spec.md"
+    description: Requirements and scenarios for the change
+    template: spec.md
+    instruction: |
+      Create specification files using Requirements and Scenarios format.
+
+      Create one spec file per capability listed in the proposal's Capabilities section.
+
+      **Delta Operations** (when modifying existing specs):
+
+      - `## ADDED Requirements` - New capabilities
+      - `## MODIFIED Requirements` - Changed behavior (MUST include FULL updated content, not just diffs)
+      - `## REMOVED Requirements` - Deprecated features (MUST include Reason and Migration)
+      - `## RENAMED Requirements` - Name changes only (use FROM:/TO: format)
+
+      **Format Requirements**:
+      - Each requirement: `### Requirement: <name>` followed by description
+      - Use RFC 2119 keywords (SHALL, MUST, SHOULD, MAY) - avoid should/may for normative requirements
+      - Each scenario: `#### Scenario: <name>` with GIVEN/WHEN/THEN format
+      - **CRITICAL**: Scenarios MUST use exactly 4 hashtags (`####`)
+      - Every requirement MUST have at least one scenario
+
+      **For CLI tools, include**:
+      - Command-line interface specs (args, flags, exit codes)
+      - Behavior specs (what the tool does)
+      - Performance specs (throughput, memory)
+      - Language comparison table (Rust vs Go differences)
+      - Cross-platform specs (Unix vs Windows differences)
+
+      Specs should be testable - each scenario is a potential test case.
+    requires:
+      - proposal
+
+  - id: design
+    generates: design.md
+    description: Technical design and architecture
+    template: design.md
+    instruction: |
+      Create a technical design document that explains HOW to implement the change.
+
+      **When to include design.md** (create if any apply):
+      - Cross-cutting change (multiple services/modules)
+      - New external dependency or significant data model changes
+      - Security, performance, or migration complexity
+      - Ambiguity that benefits from technical decisions before coding
+
+      **Sections to Include**:
+
+      1. **Context** - Background, current state, constraints, stakeholders
+      2. **Goals / Non-Goals** - What this design achieves and explicitly excludes
+      3. **Decisions** - Key technical choices with rationale (why X over Y?)
+      4. **Data Structures** - Rust and Go definitions
+      5. **Algorithms** - Key algorithms and complexity
+      6. **File Organization** - Module structure for both languages
+      7. **Error Handling** - Per-language strategies
+      8. **Testing Strategy** - Unit, integration, performance tests
+      9. **Risks / Trade-offs** - Known limitations, things that could go wrong
+      10. **Open Questions** - Outstanding decisions or unknowns to resolve
+
+      For dual-language implementations:
+      - Show both Rust and Go versions
+      - Compare idiomatic approaches in each language
+      - Note shared logic vs language-specific
+    requires:
+      - proposal
+
+  - id: tasks
+    generates: tasks.md
+    description: Implementation checklist
+    template: tasks.md
+    instruction: |
+      Create a detailed implementation checklist.
+
+      **CRITICAL**: Use checkbox format for tracking. Tasks not using `- [ ]` won't be tracked:
+      ```
+      ## 1. Setup
+      - [ ] 1.1 Create new module structure
+      - [ ] 1.2 Add dependencies to package.json
+
+      ## 2. Core Implementation
+      - [ ] 2.1 Implement data export function
+      ```
+
+      **Group tasks by**:
+      1. Setup - Create structure, add dependencies
+      2. Core Implementation - Shared logic
+      3. Rust Implementation - Rust-specific
+      4. Go Implementation - Go-specific (if applicable)
+      5. Testing - Unit, integration tests
+      6. Documentation - README, comments
+      7. Quality Assurance - fmt, lint, test
+      8. CI/CD - Update workflows if needed
+
+      **Guidelines**:
+      - Each task should be completable in one session
+      - Order tasks by dependency (what must be done first?)
+      - Use hierarchical numbering (1.1, 1.2, etc.)
+      - Each task should be verifiable - you know when it's done
+
+      Reference specs for what needs to be built, design for how to build it.
+    requires:
+      - specs
+      - design
+
+apply:
+  requires: [tasks]
+  tracks: tasks.md
+  instruction: |
+    Read context files (proposal, specs, design, tasks).
+    Work through pending tasks in order.
+    Mark tasks complete with `- [x]` as you go.
+
+    **For dual-language implementations**:
+    - Complete Rust implementation first (if both needed)
+    - Run quality checks after each major component
+
+    **Quality gates**:
+    - After Rust tasks: `cargo fmt && cargo clippy -- -D warnings && cargo test`
+    - After Go tasks: `gofmt -w . && go vet ./... && go test ./...`
+    - Final: `make fmt-all && make lint-all && make test-all`
+
+    Pause if you encounter blockers or need clarification.
