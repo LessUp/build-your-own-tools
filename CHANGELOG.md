@@ -21,96 +21,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added 🎉
+### Changed
 
-#### Documentation
+- Re-centered the repository around a single OpenSpec cleanup change: `stabilize-project-finalization`
+- Rewrote project governance docs (`AGENTS.md`, `CLAUDE.md`, Copilot instructions, project spec, OpenSpec config)
+- Reworked README and Pages home content so the public site is no longer just a README-style mirror
+- Simplified GitHub Actions responsibilities and added tracked Copilot setup steps
+- Added shared editor/LSP recommendations and tracked security policy config (`deny.toml`)
 
-- **Spec-Driven Development (SDD)**: Complete documentation restructure following SDD best practices
-  - New `/specs/` directory with product/, rfc/, api/, db/, testing/ subdirectories
-  - Updated AGENTS.md with comprehensive AI Agent workflow instructions
-  - All spec documents now follow standardized format
+### Fixed
 
-#### htop/shared
-
-- New shared library crate for common htop code
-  - `ProcRow` struct with `as_row()` method for table rendering
-  - `SortKey` enum for process sorting (PID, Name, CPU, Memory)
-  - `compare_proc_rows()` - Flexible sorting comparison function
-  - `filter_processes()` - Case-insensitive search/filter functionality
-  - `resolve_selected_index()` - Bounds-safe index resolution
-  - `selected_pid()` - Safe PID retrieval from selection
-  - `color_for_ratio()` - Usage-based color coding (green/yellow/red)
-  - `highlight_style()` - Consistent table row highlighting
-
-#### dos2unix
-
-- Added comprehensive streaming test suite
-  - `test_stream_empty` - Empty input handling
-  - `test_stream_no_crlf` - Pass-through verification
-  - `test_stream_with_crlf` - Basic conversion test
-  - `test_stream_mixed` - Mixed line ending handling
-  - `test_stream_large_data` - Buffer boundary edge case
-  - `test_stream_lone_cr_preserved` - Standalone CR preservation
-
-#### gzip/go
-
-- Added `-k` flag to keep source files after compression
-  - Matches Rust implementation behavior
-  - Default behavior unchanged (always keep source)
-
-### Changed 🔧
-
-#### Documentation
-
-- **Fixed**: Corrected all documentation links in README.zh-CN.md and docs/README.zh-CN.md
-  - Links now correctly point to docs/setup/, docs/architecture/, docs/tutorials/
-  - README.md defaults to English with Chinese link at top
-
-#### dos2unix
-
-- **Improved**: Fixed streaming function to handle CRLF at buffer boundaries
-  - Added `prev_was_cr` state tracking for cross-buffer detection
-  - Removed redundant first-pass loop in `convert_crlf_to_lf_stream()`
-  - 20% performance improvement on large files
-
-- **Dependencies**: Migrated to `anyhow` for error handling
-  - Cleaner error propagation with `?` operator
-  - `real_main()` pattern for proper error exit codes
-
-#### htop/win/rust
-
-- **Refactoring**: Removed duplicate `color_for_ratio()` function
-  - Now imports from `htop_shared` library
-  - Reduces code duplication by ~50 lines
-
-#### htop/unix/rust
-
-- **Cleanup**: Removed shell-based kill implementation
-  - Now uses `sysinfo::Process::kill()` directly
-  - More reliable process termination
-
-- **Standardization**: Memory units standardized to MiB
-  - Consistent display across all implementations
-
-### Fixed 🐛
-
-#### dos2unix
-
-- Fixed clippy warning `needless_range_loop` in buffer processing
-- Fixed clippy warning `byte_char_slices` in pattern matching
-- Fixed streaming test for CRLF at buffer boundary condition
-
-#### All Projects
-
-- Fixed formatting issues across all source files
-- Consistent line ending handling in CI
-
-### Performance ⚡
-
-| Project | Metric | Before | After |
-|---------|--------|--------|-------|
-| dos2unix | Large file throughput | 100 MB/s | 120 MB/s |
-| htop/shared | Sorting speed | O(n log n) | O(n log n) optimized |
+- Restored `npm run docs:check` by adding the missing `vue-tsc` dependency
+- Corrected English/Chinese architecture document drift
+- Removed stale active OpenSpec feature scope (`add-cat-tool`) from the working backlog
 
 ---
 
