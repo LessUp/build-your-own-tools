@@ -1,270 +1,93 @@
-name: 🚀 Deploy Docs
+name: Docs
 
 on:
   push:
     branches: [master, main]
     paths:
+      - "index.md"
+      - "README.md"
+      - "README.zh-CN.md"
+      - "CHANGELOG.md"
+      - "CONTRIBUTING.md"
+      - "CODE_OF_CONDUCT.md"
+      - "SECURITY.md"
       - "docs/**"
+      - "en/**"
       - "public/**"
-      - "**/*.md"
+      - "dos2unix/**/*.md"
+      - "gzip/**/*.md"
+      - "htop/**/*.md"
       - ".vitepress/**"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/pages.yml"
   pull_request:
     paths:
+      - "index.md"
+      - "README.md"
+      - "README.zh-CN.md"
+      - "CHANGELOG.md"
+      - "CONTRIBUTING.md"
+      - "CODE_OF_CONDUCT.md"
+      - "SECURITY.md"
       - "docs/**"
+      - "en/**"
       - "public/**"
-      - "**/*.md"
+      - "dos2unix/**/*.md"
+      - "gzip/**/*.md"
+      - "htop/**/*.md"
       - ".vitepress/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
   pages: write
   id-token: write
-  pull-requests: write
 
 jobs:
-  # ============================================================================
-  # 质量检测 - 并行运行
-  # ============================================================================
-  # NOTE: Markdown linting disabled due to config incompatibilities
-  # Re-enable when markdownlint-cli2-action config is properly supported
-  # lint-markdown:
-  #   name: 📝 Lint Markdown
-  #   runs-on: ubuntu-latest
-  #   continue-on-error: true
-  #   env:
-  #     FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: DavidAnson/markdownlint-cli2-action@v19
-  #       with:
-  #         globs: '**/*.md'
-  #         config: '.markdownlint-cli2.yaml'
-
-  check-links:
-    name: 🔗 Check Links
-    runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check markdown links
-        uses: lycheeverse/lychee-action@v2
-        with:
-          args: >
-            --exclude-path node_modules
-            --exclude-path target
-            --exclude-path .vitepress/dist
-            --exclude "https://github.com/LessUp/build-your-own-tools/(edit|releases|issues|compare)/"
-            --timeout 30
-            --retry 3
-            --accept 200,201,204,301,302,304,429
-            .
-        continue-on-error: true
-
-  # ============================================================================
-  # 构建阶段 - 优化缓存
-  # ============================================================================
   build:
-    name: 📦 Build Documentation
+    name: Build documentation
     runs-on: ubuntu-latest
-    needs: [check-links]
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    outputs:
-      cache-key: ${{ steps.cache-key.outputs.key }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
-
-      - name: Generate cache key
-        id: cache-key
-        run: echo "key=docs-${{ hashFiles('package.json', '.vitepress/**', 'docs/**') }}" >> $GITHUB_OUTPUT
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
-          cache-dependency-path: 'package.json'
-
-      - name: Cache VitePress build
-        uses: actions/cache@v4
-        id: vitepress-cache
-        with:
-          path: |
-            .vitepress/dist
-            node_modules/.vite
-          key: ${{ steps.cache-key.outputs.key }}
-          restore-keys: |
-            docs-
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm install --prefer-offline
+        run: npm ci --prefer-offline
 
-      - name: Build documentation
-        run: |
-          npm run docs:build
-          echo "Build completed"
-          ls -la .vitepress/dist/
+      - name: Validate and build docs
+        run: npm run docs:check
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: docs-build
           path: .vitepress/dist/
-          retention-days: 1
-          overwrite: true
 
-  # ============================================================================
-  # 性能检测 - Lighthouse CI
-  # ============================================================================
-  lighthouse:
-    name: 🚨 Lighthouse CI
+  deploy:
+    name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: docs-build
-          path: dist
-
-      - name: Install Lighthouse CI
-        run: npm install -g @lhci/cli@0.14.x
-
-      - name: Run Lighthouse CI
-        run: |
-          lhci autorun --config=./lighthouserc.js || true
-        continue-on-error: true
-        env:
-          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-
-  # ============================================================================
-  # 部署到预览环境 - PR 专用
-  # ============================================================================
-  deploy-preview:
-    name: 🌐 Deploy Preview
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'pull_request'
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    environment:
-      name: github-pages-preview
-      url: ${{ steps.preview-url.outputs.url }}
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: docs-build
-          path: dist
-
-      - name: Inject preview metadata
-        run: |
-          echo "<meta name='environment' content='preview'>" >> dist/head.html
-          echo "<meta name='pr-number' content='${{ github.event.number }}'>" >> dist/head.html
-
-      - name: Deploy to preview
-        id: deployment
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          personal_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          destination_dir: preview/pr-${{ github.event.number }}
-          external_repository: ${{ github.repository }}
-          publish_branch: gh-pages
-
-      - name: Generate preview URL
-        id: preview-url
-        run: |
-          echo "url=https://lessup.github.io/build-your-own-tools/preview/pr-${{ github.event.number }}/" >> $GITHUB_OUTPUT
-
-      - name: Comment PR with preview URL
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const url = `https://lessup.github.io/build-your-own-tools/preview/pr-${{ github.event.number }}/`;
-            const body = `🚀 **Preview deployment is ready!**\n\n🔗 Preview URL: ${url}\n\n*This preview will be updated automatically when you push new commits.*`;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: body
-            });
-
-  # ============================================================================
-  # 部署到生产环境
-  # ============================================================================
-  deploy-production:
-    name: 🚀 Deploy Production
-    runs-on: ubuntu-latest
-    needs: [build, lighthouse]
-    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: docs-build
-          path: dist
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload to GitHub Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./dist
-
-      - name: Deploy to GitHub Pages
+      - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-
-      - name: Notify deployment
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { data: release } = await github.rest.repos.getLatestRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo
-            });
-            
-            console.log(`✅ Documentation deployed to: https://lessup.github.io/build-your-own-tools/`);
-            console.log(`📦 Latest release: ${release.tag_name}`);
-
-  # ============================================================================
-  # 清理预览环境 - PR 关闭时
-  # ============================================================================
-  cleanup-preview:
-    name: 🧹 Cleanup Preview
-    runs-on: ubuntu-latest
-    if: github.event.action == 'closed'
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    steps:
-      - name: Remove preview directory
-        run: |
-          git clone --branch gh-pages https://github.com/${{ github.repository }} gh-pages
-          cd gh-pages
-          rm -rf preview/pr-${{ github.event.number }}
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Remove preview for PR #${{ github.event.number }}" || true
-          git push || true

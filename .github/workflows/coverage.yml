@@ -1,10 +1,6 @@
 name: Code Coverage
 
 on:
-  push:
-    branches: [master, main]
-  pull_request:
-    branches: [master, main]
   workflow_dispatch:
 
 permissions:
@@ -15,9 +11,6 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # ============================================================================
-  # Rust Coverage
-  # ============================================================================
   rust-coverage:
     name: Rust Coverage
     runs-on: ubuntu-latest
@@ -41,13 +34,12 @@ jobs:
 
       - name: Install cargo-tarpaulin
         run: |
-          if ! command -v cargo-tarpaulin &> /dev/null; then
+          if ! command -v cargo-tarpaulin >/dev/null 2>&1; then
             cargo install cargo-tarpaulin
           fi
 
       - name: Generate coverage
-        run: |
-          cargo tarpaulin --all-features --workspace --timeout 120 --out Xml --out Html --output-dir coverage/rust
+        run: cargo tarpaulin --all-features --workspace --timeout 120 --out Xml --out Html --output-dir coverage/rust
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -65,20 +57,17 @@ jobs:
           path: coverage/rust/
           retention-days: 7
 
-  # ============================================================================
-  # Go Coverage
-  # ============================================================================
   go-coverage:
     name: Go Coverage
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         module:
-          - path: 'gzip/go'
-            name: 'gzip-go'
-          - path: 'htop/win/go'
-            name: 'htop-win-go'
-      fail-fast: false
+          - path: "gzip/go"
+            name: "gzip-go"
+          - path: "htop/win/go"
+            name: "htop-win-go"
     steps:
       - uses: actions/checkout@v4
 
@@ -112,27 +101,3 @@ jobs:
             ${{ matrix.module.path }}/coverage.out
             ${{ matrix.module.path }}/coverage.html
           retention-days: 7
-
-  # ============================================================================
-  # Coverage Summary
-  # ============================================================================
-  coverage-summary:
-    name: Coverage Summary
-    needs: [rust-coverage, go-coverage]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Coverage Summary
-        run: |
-          echo "📊 Code Coverage Summary"
-          echo "========================"
-          echo "Rust Coverage: ${{ needs.rust-coverage.result }}"
-          echo "Go Coverage: ${{ needs.go-coverage.result }}"
-          
-          if [[ "${{ needs.rust-coverage.result }}" == "failure" ]] || \
-             [[ "${{ needs.go-coverage.result }}" == "failure" ]]; then
-            echo "❌ Some coverage jobs failed"
-            exit 1
-          fi
-          
-          echo "✅ All coverage jobs completed"

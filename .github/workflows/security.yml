@@ -4,22 +4,23 @@ on:
   push:
     branches: [master, main]
     paths:
-      - '**/Cargo.toml'
-      - '**/Cargo.lock'
-      - '**/go.mod'
-      - '**/go.sum'
-      - '.github/workflows/security.yml'
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+      - "**/go.mod"
+      - "**/go.sum"
+      - "deny.toml"
+      - ".github/workflows/security.yml"
   pull_request:
     branches: [master, main]
     paths:
-      - '**/Cargo.toml'
-      - '**/Cargo.lock'
-      - '**/go.mod'
-      - '**/go.sum'
-      - '.github/workflows/security.yml'
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+      - "**/go.mod"
+      - "**/go.sum"
+      - "deny.toml"
+      - ".github/workflows/security.yml"
   schedule:
-    # Run every Monday at 00:00 UTC
-    - cron: '0 0 * * 1'
+    - cron: "0 0 * * 1"
   workflow_dispatch:
 
 permissions:
@@ -28,9 +29,6 @@ permissions:
   actions: read
 
 jobs:
-  # ============================================================================
-  # Rust Security Audit
-  # ============================================================================
   rust-audit:
     name: Rust Security Audit
     runs-on: ubuntu-latest
@@ -42,26 +40,23 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check Cargo.lock freshness
-        run: |
-          if ! cargo verify-project 2>/dev/null; then
-            echo "⚠️  Some Cargo.lock files may be out of date"
-          fi
+      - name: Install cargo-deny
+        run: cargo install cargo-deny
 
-  # ============================================================================
-  # Go Security Scan
-  # ============================================================================
+      - name: Run cargo deny check
+        run: cargo deny check
+
   go-security:
     name: Go Security Scan
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         module:
-          - path: 'gzip/go'
-            name: 'gzip-go'
-          - path: 'htop/win/go'
-            name: 'htop-win-go'
-      fail-fast: false
+          - path: "gzip/go"
+            name: "gzip-go"
+          - path: "htop/win/go"
+            name: "htop-win-go"
     steps:
       - uses: actions/checkout@v4
 
@@ -83,9 +78,6 @@ jobs:
         working-directory: ${{ matrix.module.path }}
         run: go mod verify
 
-  # ============================================================================
-  # Trivy File System Scan
-  # ============================================================================
   trivy-scan:
     name: Trivy Vulnerability Scan
     runs-on: ubuntu-latest
@@ -95,22 +87,19 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: 'fs'
+          scan-type: "fs"
           ignore-unfixed: true
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '0'
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
+          exit-code: "0"
 
       - name: Upload Trivy scan results
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: trivy-results.sarif
 
-  # ============================================================================
-  # Secret Detection
-  # ============================================================================
   secret-detection:
     name: Secret Detection
     runs-on: ubuntu-latest
@@ -127,95 +116,19 @@ jobs:
           head: HEAD
           extra_args: --debug --only-verified
 
-  # ============================================================================
-  # License Check
-  # ============================================================================
-  license-check:
-    name: License Compliance
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - name: Install cargo-deny
-        run: cargo install cargo-deny
-
-      - name: Create deny.toml
-        run: |
-          if [ ! -f deny.toml ]; then
-            echo '[graph]' > deny.toml
-            echo 'targets = [' >> deny.toml
-            echo '    { triple = "x86_64-unknown-linux-gnu" },' >> deny.toml
-            echo '    { triple = "aarch64-unknown-linux-gnu" },' >> deny.toml
-            echo '    { triple = "x86_64-apple-darwin" },' >> deny.toml
-            echo '    { triple = "aarch64-apple-darwin" },' >> deny.toml
-            echo '    { triple = "x86_64-pc-windows-msvc" },' >> deny.toml
-            echo ']' >> deny.toml
-            echo '' >> deny.toml
-            echo '[licenses]' >> deny.toml
-            echo 'version = 2' >> deny.toml
-            echo 'allow = [' >> deny.toml
-            echo '    "MIT",' >> deny.toml
-            echo '    "Apache-2.0",' >> deny.toml
-            echo '    "Apache-2.0 WITH LLVM-exception",' >> deny.toml
-            echo '    "BSD-2-Clause",' >> deny.toml
-            echo '    "BSD-3-Clause",' >> deny.toml
-            echo '    "ISC",' >> deny.toml
-            echo '    "Unicode-DFS-2016",' >> deny.toml
-            echo '    "Zlib",' >> deny.toml
-            echo '    "Unicode-3.0",' >> deny.toml
-            echo ']' >> deny.toml
-            echo 'confidence-threshold = 0.8' >> deny.toml
-            echo '' >> deny.toml
-            echo '[advisories]' >> deny.toml
-            echo 'version = 2' >> deny.toml
-            echo 'ignore = [' >> deny.toml
-            echo '    # paste crate is unmaintained but no upgrade available yet' >> deny.toml
-            echo '    # used by ratatui, see RUSTSEC-2024-0436' >> deny.toml
-            echo '    "RUSTSEC-2024-0436"' >> deny.toml
-            echo ']' >> deny.toml
-            echo '' >> deny.toml
-            echo '[sources]' >> deny.toml
-            echo 'unknown-registry = "deny"' >> deny.toml
-            echo 'unknown-git = "deny"' >> deny.toml
-            echo 'allow-registry = ["https://github.com/rust-lang/crates.io-index"]' >> deny.toml
-            echo '' >> deny.toml
-            echo '[bans]' >> deny.toml
-            echo 'multiple-versions = "warn"' >> deny.toml
-            echo 'wildcards = "allow"' >> deny.toml
-            echo 'highlight = "all"' >> deny.toml
-          fi
-
-      - name: Run cargo deny check
-        run: cargo deny check
-
-  # ============================================================================
-  # Security Summary
-  # ============================================================================
   security-summary:
     name: Security Summary
-    needs: [rust-audit, go-security, trivy-scan, secret-detection, license-check]
+    needs: [rust-audit, go-security, trivy-scan, secret-detection]
     runs-on: ubuntu-latest
     if: always()
     steps:
       - name: Check security scan results
         run: |
-          echo "🔒 Security Scan Summary"
-          echo "======================="
-          echo "Rust Audit: ${{ needs.rust-audit.result }}"
-          echo "Go Security: ${{ needs.go-security.result }}"
-          echo "Trivy Scan: ${{ needs.trivy-scan.result }}"
-          echo "Secret Detection: ${{ needs.secret-detection.result }}"
-          echo "License Check: ${{ needs.license-check.result }}"
-          
           if [[ "${{ needs.rust-audit.result }}" == "failure" ]] || \
              [[ "${{ needs.go-security.result }}" == "failure" ]] || \
              [[ "${{ needs.trivy-scan.result }}" == "failure" ]] || \
-             [[ "${{ needs.secret-detection.result }}" == "failure" ]] || \
-             [[ "${{ needs.license-check.result }}" == "failure" ]]; then
-            echo "❌ Some security checks failed"
+             [[ "${{ needs.secret-detection.result }}" == "failure" ]]; then
+            echo "Some security checks failed"
             exit 1
           fi
-          
-          echo "✅ All security checks passed"
+          echo "All security checks passed"
