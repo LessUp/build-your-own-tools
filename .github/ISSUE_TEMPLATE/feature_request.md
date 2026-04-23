@@ -1,44 +1,39 @@
 ---
-name: Feature Request
-about: Suggest an idea for this project
-title: '[FEATURE] '
+name: Stabilization request
+about: Suggest a scoped improvement that helps finalize or harden the repository
+title: "[proposal] "
 labels: enhancement
-assignees: ''
+assignees: ""
 ---
 
-# Feature Request
+# Stabilization request
 
-## 功能描述
+## Why is this needed?
 
-简要描述你希望添加的功能。
+Explain the maintenance, quality, docs, workflow, or presentation problem this would solve.
 
-## 使用场景
+## Proposed change
 
-描述这个功能的使用场景，为什么需要它？
+Describe the smallest useful change.
 
-**示例:**
-作为一个 [用户类型]，我希望 [功能]，以便 [目的]。
+## Scope
 
-## 可能的实现方案
+- [ ] bug fix / hardening
+- [ ] docs / Pages quality
+- [ ] automation / workflow simplification
+- [ ] OpenSpec / process cleanup
+- [ ] GitHub metadata / public presentation
 
-如果你有实现思路，请在这里描述。
+## Why now?
 
-## 替代方案
+Explain why this belongs in the project's close-out phase.
 
-描述你考虑过的其他替代方案。
+## Alternatives considered
 
-## 相关子项目
+What smaller or simpler options did you consider?
 
-- [ ] dos2unix
-- [ ] gzip
-- [ ] htop
-- [ ] 其他/通用
+## Checklist
 
-## 附加信息
-
-添加任何其他有助于理解需求的信息，如截图、参考链接等。
-
-## 检查清单
-
-- [ ] 我已搜索现有 Issues，确认没有重复
-- [ ] 我已清楚描述功能需求和使用场景
+- [ ] I searched for an existing issue first
+- [ ] This request supports stabilization rather than unrelated feature expansion
+- [ ] I described a concrete repo-specific payoff

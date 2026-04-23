@@ -1,50 +1,51 @@
 ---
-name: Bug Report
-about: Create a report to help us improve
-title: '[BUG] '
+name: Bug report
+about: Report a defect in the current toolset, docs, workflows, or public site
+title: "[bug] "
 labels: bug
-assignees: ''
+assignees: ""
 ---
 
-# Bug Report
+# Bug report
 
-## 问题描述
+## Area
 
-简要描述遇到的问题。
+- [ ] dos2unix
+- [ ] gzip
+- [ ] htop
+- [ ] docs / Pages
+- [ ] OpenSpec / workflow
+- [ ] CI / release / automation
 
-## 复现步骤
+## What broke?
 
-1. 执行 '...'
-2. 输入 '...'
-3. 查看错误
+Describe the bug clearly and concisely.
 
-## 期望行为
+## Steps to reproduce
 
-描述你期望发生的行为。
+1. 
+2. 
+3. 
 
-## 实际行为
+## Expected behavior
 
-描述实际发生的行为。
+What should have happened instead?
 
-## 环境信息
+## Environment
 
-- **操作系统**: [e.g., Ubuntu 22.04, macOS 14, Windows 11]
-- **工具版本**: [e.g., dos2unix-rust 0.1.0]
-- **Rust 版本** (如适用): [e.g., 1.75.0]
-- **Go 版本** (如适用): [e.g., 1.21.0]
+- OS:
+- Tool / command:
+- Rust version (if relevant):
+- Go version (if relevant):
 
-## 错误日志
+## Logs or screenshots
 
 ```text
-粘贴相关错误日志
+Paste any relevant output here.
 ```
 
-## 附加信息
+## Checklist
 
-添加任何其他有助于理解问题的信息。
-
-## 检查清单
-
-- [ ] 我已搜索现有 Issues，确认没有重复
-- [ ] 我已提供完整的复现步骤
-- [ ] 我已提供环境信息
+- [ ] I searched for an existing issue first
+- [ ] I included a reproducible case or clear failure signal
+- [ ] I kept the report focused on the current supported scope
