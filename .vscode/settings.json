@@ -1,0 +1,39 @@
+{
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.cargo.allTargets": true,
+  "rust-analyzer.cargo.features": "all",
+  "rust-analyzer.procMacro.enable": true,
+  "gopls": {
+    "staticcheck": true,
+    "usePlaceholders": true,
+    "ui.semanticTokens": true,
+    "analyses": {
+      "shadow": true,
+      "unusedparams": true
+    }
+  },
+  "[go]": {
+    "editor.defaultFormatter": "golang.Go"
+  },
+  "[markdown]": {
+    "editor.wordWrap": "bounded",
+    "editor.wordWrapColumn": 100,
+    "editor.quickSuggestions": false
+  },
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml"
+  },
+  "search.exclude": {
+    "**/target": true,
+    "**/node_modules": true,
+    ".vitepress/dist": true,
+    ".vitepress/cache": true
+  }
+}
