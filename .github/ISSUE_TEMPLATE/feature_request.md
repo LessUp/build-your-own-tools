@@ -37,3 +37,4 @@ What smaller or simpler options did you consider?
 - [ ] I searched for an existing issue first
 - [ ] This request supports stabilization rather than unrelated feature expansion
 - [ ] I described a concrete repo-specific payoff
+- [ ] I identified the current close-out phase this belongs to, or explained why a new phase change is needed
