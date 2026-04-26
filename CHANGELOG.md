@@ -2,8 +2,6 @@
 
 > All notable changes to the build-your-own-tools project will be documented in this file.
 
-**English** | [变更日志](docs/changelogs/INDEX.zh-CN.md)
-
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -15,7 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [0.2.0 - 2026-03-13](#020---2026-03-13)
 - [0.1.1 - 2026-03-10](#011---2026-03-10)
 - [0.1.0 - 2026-02-13](#010---2026-02-13)
-- [Sub-project Changelogs](#sub-project-changelogs)
 
 ---
 
@@ -23,17 +20,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Re-centered the repository around a single OpenSpec cleanup change: `stabilize-project-finalization`
-- Rewrote project governance docs (`AGENTS.md`, `CLAUDE.md`, Copilot instructions, project spec, OpenSpec config)
-- Reworked README and Pages home content so the public site is no longer just a README-style mirror
-- Simplified GitHub Actions responsibilities and added tracked Copilot setup steps
-- Added shared editor/LSP recommendations and tracked security policy config (`deny.toml`)
+- Re-centered close-out work around sequential OpenSpec phase changes instead of treating one archived cleanup change as the ongoing active scope
+- Tightened project guidance so agents create or use the current phase change rather than reviving archived history
+- Reduced low-value changelog helper pages and kept `CHANGELOG.md` as the canonical project history surface
+- Simplified Pages navigation so durable docs matter more than changelog depth
 
 ### Fixed
 
-- Restored `npm run docs:check` by adding the missing `vue-tsc` dependency
-- Corrected English/Chinese architecture document drift
-- Removed stale active OpenSpec feature scope (`add-cat-tool`) from the working backlog
+- Corrected stale references that still pointed contributors at an archived cleanup change
 
 ---
 
@@ -169,43 +163,4 @@ Cross-platform system monitor
 
 ---
 
-## Sub-project Changelogs
-
-For detailed changes in each sub-project, see:
-
-| Project | Changelog | Latest Version |
-|---------|-----------|----------------|
-| dos2unix | [dos2unix/changelog/CHANGELOG.md](dos2unix/changelog/CHANGELOG.md) | v0.2.1 |
-| gzip (Go) | [gzip/go/changelog/CHANGELOG.md](gzip/go/changelog/CHANGELOG.md) | v0.3.0 |
-| gzip (Rust) | [gzip/rust/changelog/CHANGELOG.md](gzip/rust/changelog/CHANGELOG.md) | v0.3.0 |
-| htop (shared) | [htop/changelog/CHANGELOG.md](htop/changelog/CHANGELOG.md) | v0.1.0 |
-| htop (Unix/Rust) | [htop/unix/rust/changelog/CHANGELOG.md](htop/unix/rust/changelog/CHANGELOG.md) | v0.1.5 |
-| htop (Win/Rust) | [htop/win/rust/changelog/CHANGELOG.md](htop/win/rust/changelog/CHANGELOG.md) | v0.1.5 |
-| htop (Win/Go) | [htop/win/go/changelog/CHANGELOG.md](htop/win/go/changelog/CHANGELOG.md) | v0.1.3 |
-
-See [docs/changelogs/INDEX.md](docs/changelogs/INDEX.md) for the complete index.
-
----
-
-## Migration Guides
-
-See [docs/changelogs/MIGRATION.md](docs/changelogs/MIGRATION.md) for detailed migration instructions.
-
-| Version Range | Migration Guide |
-|---------------|-----------------|
-| v0.1.x → v0.2.0 | [Migration Guide](docs/changelogs/MIGRATION.md#v01x-to-v020) |
-| Initial → v0.1.0 | [Getting Started](docs/setup/GETTING-STARTED.md) |
-
----
-
-## Contributors
-
-Thank you to all contributors who have helped improve this project!
-
-See [GitHub Contributors](https://github.com/LessUp/build-your-own-tools/graphs/contributors) for the full list.
-
----
-
-**Last Updated**: 2026-04-16  
-**Format**: [Keep a Changelog](https://keepachangelog.com/)  
-**Versioning**: [Semantic Versioning](https://semver.org/)
+**Last Updated**: 2026-04-26

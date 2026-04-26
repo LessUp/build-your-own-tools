@@ -16,7 +16,7 @@ The repository is now in a **stabilization / close-out phase**. Prefer finishing
 | --- | --- |
 | Stable requirements | `openspec/specs/` |
 | Active change work | `openspec/changes/<change>/` |
-| Current repo-wide cleanup change | `openspec/changes/stabilize-project-finalization/` |
+| Current repo-wide cleanup work | `openspec/changes/<current-phase-change>/` (create the active phase change if none exists) |
 | Public repo entry point | `README.md` |
 | Public project landing page | `index.md` + `.vitepress/` |
 | AI workflow rules | `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` |
@@ -26,7 +26,8 @@ The repository is now in a **stabilization / close-out phase**. Prefer finishing
 1. **Start from OpenSpec**
    - Run `openspec list`.
    - If the task belongs to an active change, read `proposal.md`, `specs/`, `design.md`, and `tasks.md` first.
-   - If the task changes repo behavior and no active change exists, create one before implementing.
+   - If the task changes repo behavior and no active change exists, create the current phase change before implementing.
+   - Do not treat archived cleanup changes as active scope.
 
 2. **Keep scope aligned with close-out**
    - Prefer bug fixes, documentation consolidation, workflow simplification, and release/readiness work.

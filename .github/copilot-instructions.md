@@ -3,7 +3,7 @@
 ## Start from OpenSpec
 
 - Check `openspec/changes/` for an active change before editing repo behavior.
-- For repo-wide cleanup, stabilization, or workflow changes, use the active `stabilize-project-finalization` change as the starting point.
+- For repo-wide cleanup, stabilization, or workflow changes, create or use the current phase change under `openspec/changes/`; do not treat archived changes as active.
 - Keep the active backlog aligned with current goals; do not keep abandoned feature changes active.
 
 ## Project priorities

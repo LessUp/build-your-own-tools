@@ -7,8 +7,8 @@ This repository is in an **archive-ready stabilization phase**. Optimize for cla
 ## First steps for any non-trivial task
 
 1. Run `openspec list`.
-2. Read the active change artifacts that match the task.
-3. Prefer implementing against the current active change instead of inventing parallel scope.
+2. Read the active change artifacts that match the task, or create the current phase change first if none exists.
+3. Prefer implementing against the current phase change instead of treating archived changes as live scope.
 
 ## Repository-specific priorities
 

@@ -17,8 +17,7 @@
 
 #### Changelog Improvements
 
-- Centralized changelog index at `docs/changelogs/`
-- Migration guide for version upgrades
+- Consolidated project release history in `CHANGELOG.md`
 - Professional formatting with categories (Added/Changed/Fixed/Performance)
 - Performance metrics and benchmarks
 
@@ -26,7 +25,7 @@
 
 - ✅ English Documentation (4 guides + index)
 - ✅ 简体中文文档 (4 指南 + 索引)
-- ✅ Changelog Index & Migration Guide
+- ✅ Root project changelog
 - ✅ API Reference Documentation
 - ✅ Architecture Diagrams (Mermaid)
 
@@ -75,8 +74,7 @@ mv dos2unix-rust-linux-amd64 /usr/local/bin/dos2unix-rust
 
 #### 变更日志改进
 
-- 集中式变更日志索引位于 `docs/changelogs/`
-- 版本升级迁移指南
+- 项目级发布历史统一收敛到 `CHANGELOG.md`
 - 专业格式化（新增/变更/修复/性能）
 - 性能指标和基准测试
 

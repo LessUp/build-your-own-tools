@@ -30,6 +30,13 @@ The project SHALL use OpenSpec as the canonical planning workflow for repository
 - **WHEN** work begins
 - **THEN** an OpenSpec change SHALL capture proposal, spec, design, and tasks before implementation proceeds
 
+#### Scenario: Starting a close-out phase with no active change
+- **GIVEN** the repository is in close-out mode
+- **AND** no active cleanup change exists
+- **WHEN** maintainers begin the next close-out phase
+- **THEN** they SHALL create a new phase-scoped change before implementation
+- **AND** they SHALL NOT treat an archived change as the active source of scope
+
 #### Scenario: Removing stale active changes
 - **GIVEN** an OpenSpec change that no longer matches project priorities
 - **WHEN** maintainers review the active backlog
@@ -49,6 +56,12 @@ The project SHALL maintain a small, durable documentation set with one canonical
 - **WHEN** maintainers revise the docs
 - **THEN** duplicated or stale explanations SHALL be pruned
 - **AND** each document SHALL have a distinct purpose
+
+#### Scenario: Changelog helper surfaces
+- **GIVEN** changelog index, migration, or helper pages
+- **WHEN** maintainers evaluate their ongoing value
+- **THEN** only the surfaces that still justify maintenance SHALL remain public
+- **AND** low-value helper layers SHALL be removed or collapsed into a canonical project history surface
 
 ### Requirement: AI-Assisted Workflow
 
