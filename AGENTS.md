@@ -2,53 +2,68 @@
 
 ## Project intent
 
-Build Your Own Tools is a learning-focused repository for three existing tool families:
+Build Your Own Tools is a learning-focused repository for three tool implementations:
 
 - `dos2unix` - Rust
 - `gzip` - Rust + Go
 - `htop` - Rust (Unix/Windows) + Go (Windows)
 
-The repository is now in a **stabilization / close-out phase**. Prefer finishing, clarifying, and hardening the existing project over adding new surface area.
+The repository is in **close-out / archive-ready phase** (governed by OpenSpec phases). All work prioritizes **stabilization, clarity, and reduced maintenance burden** over new features.
 
-## Canonical sources of truth
+## Shared workflow rules for all AI tools
 
-| Topic | Canonical location |
-| --- | --- |
-| Stable requirements | `openspec/specs/` |
-| Active change work | `openspec/changes/<change>/` |
-| Current repo-wide cleanup work | `openspec/changes/<current-phase-change>/` (create the active phase change if none exists) |
-| Public repo entry point | `README.md` |
-| Public project landing page | `index.md` + `.vitepress/` |
-| AI workflow rules | `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` |
+### 1. OpenSpec-first discipline
 
-## Required workflow
+- **Always** run `openspec list` before starting work.
+- Read the active phase change's `proposal.md`, `design.md`, and `tasks.md` if one exists.
+- Do not treat archived changes as active scope or reference points; they are historical only.
+- If a task requires scope changes and no active change exists, **create the current phase change first**. Do not work in the void.
 
-1. **Start from OpenSpec**
-   - Run `openspec list`.
-   - If the task belongs to an active change, read `proposal.md`, `specs/`, `design.md`, and `tasks.md` first.
-   - If the task changes repo behavior and no active change exists, create the current phase change before implementing.
-   - Do not treat archived cleanup changes as active scope.
+### 2. Close-out scope discipline
 
-2. **Keep scope aligned with close-out**
-   - Prefer bug fixes, documentation consolidation, workflow simplification, and release/readiness work.
-   - Do **not** add new tools or major feature expansion unless explicitly approved.
-   - Remove drift instead of layering yet another parallel system.
+- **Prefer**: bug fixes, documentation simplification, workflow consolidation, version anchoring, and readiness work.
+- **Avoid**: new tools, major feature expansion, adding parallel systems or governance layers.
+- **Principle**: Remove drift instead of layering. Simplify instead of explaining away complexity.
 
-3. **Keep one canonical explanation per topic**
-   - `README.md` explains what the project is and how to navigate it.
-   - Pages explains why the project is worth exploring and where to go next.
-   - Deep docs explain details; they should not re-copy the whole README.
-   - Changelogs should record meaningful release history, not every minor doc churn.
+### 3. Documentation ownership model
 
-4. **Use AI tools deliberately**
-   - Use `/opsx:propose`, `/opsx:apply`, and `/opsx:archive` for OpenSpec lifecycle work.
-   - Use `/review` before merge-ready or workflow-heavy changes.
-   - Use subagents/autopilot for long sequential work.
-   - Avoid `/fleet` unless the work is clearly independent and the speedup is worth the quota cost.
+- `README.md` = repo orientation and quick routing (not a duplicate of everything)
+- `index.md` / GitHub Pages = public landing page, project value, and calls to action
+- `openspec/specs/` = canonical requirements; stable, long-lived
+- `docs/architecture/`, `docs/setup/` = deep content for readers who want detail
+- `CHANGELOG.md` = minimal release history
+- Do **not** maintain parallel copies of the same explanation across multiple surfaces.
 
-5. **Preserve user work**
-   - The worktree may already contain in-progress edits.
-   - Integrate with them carefully; do not revert or overwrite unrelated local changes.
+### 4. Review gates
+
+Use `/review` **before merge** for any of:
+- Workflow or CI/CD changes (risk of cascading failures)
+- Cross-file refactoring or governance changes (risk of inconsistency)
+- Large documentation rewrites or information architecture changes
+- Changes to AGENTS.md, CLAUDE.md, or .github/copilot-instructions.md (governance layer changes)
+
+### 5. Execution model
+
+- Use **Copilot CLI**, **Claude**, or other agents with **long context retention** for sequential, stateful work.
+- Use `/opsx:propose`, `/opsx:apply`, `/opsx:archive` for OpenSpec change lifecycle.
+- Prefer **autopilot** or **subagent-driven-development** for long runs; use `/fleet` only if work is truly independent and quota trade-off is justified.
+- Preserve existing local edits; integrate carefully rather than reverting.
+
+### 6. Validation always, everywhere
+
+After any code / workflow / docs / config edits:
+
+```bash
+# For code/config changes
+make lint-all
+make test-all
+
+# For docs/site changes
+npm run docs:check
+npm run docs:build
+```
+
+**Never commit without running the relevant checks.**
 
 ## Project structure
 
