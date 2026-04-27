@@ -16,7 +16,6 @@ The repository is now in a **stabilization / close-out phase**. Prefer finishing
 | --- | --- |
 | Stable requirements | `openspec/specs/` |
 | Active change work | `openspec/changes/<change>/` |
-| Current repo-wide cleanup change | `openspec/changes/stabilize-project-finalization/` |
 | Public repo entry point | `README.md` |
 | Public project landing page | `index.md` + `.vitepress/` |
 | AI workflow rules | `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` |
@@ -90,6 +89,19 @@ Use `npm run docs:check` for docs/site/config changes and `npm run docs:build` f
 - Keep project-level editor/LSP config minimal and useful.
 - Prefer removing stale docs/config over retaining low-signal history.
 - When changing GitHub metadata or Pages, keep repository description/topics/homepage aligned with the final public narrative.
+
+## File deletion policy
+
+The following files/directories have been removed as part of stabilization:
+
+- `htop/.github/workflows/ci.yml` - Duplicate CI workflow
+- `docs/architecture/0001-project-architecture.md` - Duplicate of ARCHITECTURE.md
+- `release-notes.md` - Duplicate of CHANGELOG.md
+- `docs/README.md` and `docs/README.zh-CN.md` - Duplicate of root README
+- `.github/workflows/coverage.yml` - Half-finished workflow
+- `_bmad/` - BMAD methodology artifacts
+- `.claude/skills/bmad-*` - BMAD-related skills
+- All subproject changelog directories - Consolidated into root CHANGELOG.md
 
 ## Close-out checklist
 

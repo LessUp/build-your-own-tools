@@ -63,7 +63,8 @@ impl App {
         self.sort = match self.sort {
             SortKey::Cpu => SortKey::Mem,
             SortKey::Mem => SortKey::Pid,
-            SortKey::Pid => SortKey::Cpu,
+            SortKey::Pid => SortKey::Name,
+            SortKey::Name => SortKey::Cpu,
         };
     }
 
@@ -310,6 +311,7 @@ fn draw_summary(frame: &mut ratatui::Frame<'_>, area: Rect, sys: &System, app: &
         SortKey::Cpu => "CPU",
         SortKey::Mem => "MEM",
         SortKey::Pid => "PID",
+        SortKey::Name => "NAME",
     };
     let order = if app.desc { "desc" } else { "asc" };
     let mode = match app.mode {
@@ -465,6 +467,8 @@ mod tests {
         assert!(matches!(app.sort, SortKey::Mem));
         app.cycle_sort();
         assert!(matches!(app.sort, SortKey::Pid));
+        app.cycle_sort();
+        assert!(matches!(app.sort, SortKey::Name));
         app.cycle_sort();
         assert!(matches!(app.sort, SortKey::Cpu));
     }

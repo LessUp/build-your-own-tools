@@ -3,6 +3,9 @@
 	lint-rust lint-go lint-all test-rust test-go test-all \
 	fmt-rust fmt-go fmt-all clean
 
+# 并行构建支持
+MAKEFLAGS += -j$(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2)
+
 # ── Build ─────────────────────────────────────────────
 
 build-dos2unix:

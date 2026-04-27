@@ -85,7 +85,6 @@ export default defineConfig({
               { text: '🚀 快速开始', link: '/docs/setup/GETTING-STARTED' },
               { text: '🏗️ 架构指南', link: '/docs/architecture/ARCHITECTURE' },
               { text: '🔍 语言对比', link: '/docs/tutorials/COMPARISON' },
-              { text: '📚 API 参考', link: '/docs/architecture/API' },
             ]
           },
           {
@@ -100,8 +99,6 @@ export default defineConfig({
             text: '更多',
             items: [
               { text: '📋 变更日志', link: '/CHANGELOG' },
-              { text: '🤝 贡献指南', link: '/CONTRIBUTING' },
-              { text: '🔒 安全政策', link: '/SECURITY' },
               { text: '⭐ GitHub', link: 'https://github.com/LessUp/build-your-own-tools' },
             ]
           }
@@ -114,65 +111,25 @@ export default defineConfig({
               items: [
                 { text: '🚀 快速开始', link: '/docs/setup/GETTING-STARTED' },
                 { text: '🏗️ 架构指南', link: '/docs/architecture/ARCHITECTURE' },
-                { text: '🔀 语言对比', link: '/docs/tutorials/COMPARISON' },
-                { text: '🔌 API 参考', link: '/docs/architecture/API' },
-              ]
-            },
-            {
-              text: '📌 项目',
-              items: [
-                { text: '📋 项目日志', link: '/CHANGELOG' },
-                { text: '参与贡献', link: '/CONTRIBUTING' },
-                { text: '安全政策', link: '/SECURITY' },
-              ]
-            },
-            {
-              text: '🤝 社区',
-              items: [
-                { text: '行为准则', link: '/CODE_OF_CONDUCT' },
-                { text: 'GitHub 仓库', link: 'https://github.com/LessUp/build-your-own-tools' },
+                { text: '🔍 语言对比', link: '/docs/tutorials/COMPARISON' },
               ]
             },
           ],
           '/dos2unix/': [
             { text: '概览', link: '/dos2unix/' },
-            { text: '变更日志', link: '/dos2unix/changelog/CHANGELOG' },
             { text: '← 返回首页', link: '/' },
           ],
           '/gzip/': [
-            {
-              text: 'gzip',
-              items: [
-                { text: '概览', link: '/gzip/' },
-                { text: 'Go 实现', link: '/gzip/go/' },
-                { text: 'Rust 实现', link: '/gzip/rust/' },
-              ]
-            },
-            {
-              text: '日志',
-              items: [
-                { text: 'Go 日志', link: '/gzip/go/changelog/CHANGELOG' },
-                { text: 'Rust 日志', link: '/gzip/rust/changelog/CHANGELOG' },
-              ]
-            },
+            { text: '概览', link: '/gzip/' },
+            { text: 'Go 实现', link: '/gzip/go/' },
+            { text: 'Rust 实现', link: '/gzip/rust/' },
             { text: '← 返回首页', link: '/' },
           ],
           '/htop/': [
-            {
-              text: 'htop',
-              items: [
-                { text: '概览', link: '/htop/' },
-                { text: '变更日志', link: '/htop/changelog/CHANGELOG' },
-              ]
-            },
-            {
-              text: '实现版本',
-              items: [
-                { text: 'Unix Rust', link: '/htop/unix/rust/' },
-                { text: 'Windows Rust', link: '/htop/win/rust/' },
-                { text: 'Windows Go', link: '/htop/win/go/' },
-              ]
-            },
+            { text: '概览', link: '/htop/' },
+            { text: 'Unix Rust', link: '/htop/unix/rust/' },
+            { text: 'Windows Rust', link: '/htop/win/rust/' },
+            { text: 'Windows Go', link: '/htop/win/go/' },
             { text: '← 返回首页', link: '/' },
           ],
         },
@@ -227,7 +184,6 @@ export default defineConfig({
               { text: '🚀 Getting Started', link: '/en/docs/setup/GETTING-STARTED' },
               { text: '🏗️ Architecture', link: '/en/docs/architecture/ARCHITECTURE' },
               { text: '🔍 Comparison', link: '/en/docs/tutorials/COMPARISON' },
-              { text: '📚 API Reference', link: '/en/docs/architecture/API' },
             ]
           },
           {
@@ -242,8 +198,6 @@ export default defineConfig({
             text: 'More',
             items: [
               { text: '📋 Changelog', link: '/en/CHANGELOG' },
-              { text: '🤝 Contributing', link: '/en/CONTRIBUTING' },
-              { text: '🔒 Security', link: '/en/SECURITY' },
               { text: '⭐ GitHub', link: 'https://github.com/LessUp/build-your-own-tools' },
             ]
           }
@@ -256,65 +210,25 @@ export default defineConfig({
               items: [
                 { text: '🚀 Getting Started', link: '/en/docs/setup/GETTING-STARTED' },
                 { text: '🏗️ Architecture', link: '/en/docs/architecture/ARCHITECTURE' },
-                { text: '🔀 Comparison', link: '/en/docs/tutorials/COMPARISON' },
-                { text: '🔌 API Reference', link: '/en/docs/architecture/API' },
-              ]
-            },
-            {
-              text: '📌 Project',
-              items: [
-                { text: '📋 Project Changelog', link: '/en/CHANGELOG' },
-                { text: 'Contributing', link: '/en/CONTRIBUTING' },
-                { text: 'Security', link: '/en/SECURITY' },
-              ]
-            },
-            {
-              text: '🤝 Community',
-              items: [
-                { text: 'Code of Conduct', link: '/en/CODE_OF_CONDUCT' },
-                { text: 'GitHub Repository', link: 'https://github.com/LessUp/build-your-own-tools' },
+                { text: '🔍 Comparison', link: '/en/docs/tutorials/COMPARISON' },
               ]
             },
           ],
           '/en/dos2unix/': [
             { text: 'Overview', link: '/en/dos2unix/' },
-            { text: 'Changelog', link: '/en/dos2unix/changelog/CHANGELOG' },
             { text: '← Back to Home', link: '/en/' },
           ],
           '/en/gzip/': [
-            {
-              text: 'gzip',
-              items: [
-                { text: 'Overview', link: '/en/gzip/' },
-                { text: 'Go Implementation', link: '/en/gzip/go/' },
-                { text: 'Rust Implementation', link: '/en/gzip/rust/' },
-              ]
-            },
-            {
-              text: 'Changelogs',
-              items: [
-                { text: 'Go Changelog', link: '/en/gzip/go/changelog/CHANGELOG' },
-                { text: 'Rust Changelog', link: '/en/gzip/rust/changelog/CHANGELOG' },
-              ]
-            },
+            { text: 'Overview', link: '/en/gzip/' },
+            { text: 'Go Implementation', link: '/en/gzip/go/' },
+            { text: 'Rust Implementation', link: '/en/gzip/rust/' },
             { text: '← Back to Home', link: '/en/' },
           ],
           '/en/htop/': [
-            {
-              text: 'htop',
-              items: [
-                { text: 'Overview', link: '/en/htop/' },
-                { text: 'Changelog', link: '/en/htop/changelog/CHANGELOG' },
-              ]
-            },
-            {
-              text: 'Implementations',
-              items: [
-                { text: 'Unix Rust', link: '/en/htop/unix/rust/' },
-                { text: 'Windows Rust', link: '/en/htop/win/rust/' },
-                { text: 'Windows Go', link: '/en/htop/win/go/' },
-              ]
-            },
+            { text: 'Overview', link: '/en/htop/' },
+            { text: 'Unix Rust', link: '/en/htop/unix/rust/' },
+            { text: 'Windows Rust', link: '/en/htop/win/rust/' },
+            { text: 'Windows Go', link: '/en/htop/win/go/' },
             { text: '← Back to Home', link: '/en/' },
           ],
         },

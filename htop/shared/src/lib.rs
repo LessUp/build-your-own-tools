@@ -12,6 +12,7 @@ pub enum SortKey {
     Cpu,
     Mem,
     Pid,
+    Name,
 }
 
 /// A row in the process table
@@ -81,6 +82,13 @@ pub fn compare_proc_rows(a: &ProcRow, b: &ProcRow, sort: SortKey) -> std::cmp::O
             .then_with(|| a.cpu.partial_cmp(&b.cpu).unwrap_or(Ordering::Equal))
             .then_with(|| a.mem_mb.cmp(&b.mem_mb))
             .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
+        SortKey::Name => a
+            .name
+            .to_lowercase()
+            .cmp(&b.name.to_lowercase())
+            .then_with(|| a.cpu.partial_cmp(&b.cpu).unwrap_or(Ordering::Equal))
+            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
+            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32())),
     }
 }
 

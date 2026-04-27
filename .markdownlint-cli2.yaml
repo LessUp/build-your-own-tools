@@ -1,17 +1,19 @@
 # Markdownlint CLI 2 Configuration
 # https://github.com/DavidAnson/markdownlint-cli2
 
-# Override rules directly at the top level
-MD013: false
-MD022: false
-MD024: false
-MD025: false
-MD031: false
-MD032: false
-MD033: false
-MD034: false
-MD036: false
-MD040: false
-MD041: false
-MD045: false
-MD058: false
+# Enable necessary rules for quality documentation
+config:
+  MD013:
+    line_length: 120
+    code_blocks: false
+  MD024:
+    siblings_only: true
+  MD033: false  # Allow HTML (VitePress needs it)
+  MD041: true   # First line must be a heading
+
+# Ignore generated and vendor directories
+ignores:
+  - "node_modules"
+  - ".vitepress/dist"
+  - ".vitepress/cache"
+  - "target"

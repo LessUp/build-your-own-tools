@@ -24,6 +24,19 @@ This repository is in an **archive-ready stabilization phase**. Optimize for cla
 - Use `gh` for repository metadata, workflow inspection, and GitHub-side cleanup.
 - Use `/review` before merge-ready workflow, docs-governance, or cross-cutting automation changes.
 
+## Archive-ready checklist
+
+Before declaring the repository archive-ready, verify:
+
+- [ ] No duplicate changelog files (only root `CHANGELOG.md`)
+- [ ] No duplicate CI workflows (removed `htop/.github/workflows/ci.yml`)
+- [ ] All `checkout` actions use the same version (v5)
+- [ ] VitePress navigation has fewer than 12 top-level items
+- [ ] No dead links in documentation
+- [ ] `make lint-all` passes
+- [ ] `make test-all` passes
+- [ ] `npm run docs:build` succeeds
+
 ## Validation commands
 
 ```bash

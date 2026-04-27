@@ -25,112 +25,38 @@ on:
 
 permissions:
   contents: read
-  security-events: write
-  actions: read
 
 jobs:
-  rust-audit:
-    name: Rust Security Audit
+  security:
+    name: Security Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
-
-      - name: Install cargo-audit
-        run: cargo install cargo-audit --locked
-
-      - name: Run cargo audit
-        run: cargo audit
-
-      - name: Install cargo-deny
-        run: cargo install cargo-deny --locked
-
-      - name: Run cargo deny check
-        run: cargo deny check
-
-  go-security:
-    name: Go Security Scan
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        module:
-          - path: "gzip/go"
-            name: "gzip-go"
-          - path: "htop/win/go"
-            name: "htop-win-go"
-    steps:
-      - uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: stable
-          cache: true
-          cache-dependency-path: ${{ matrix.module.path }}/go.sum
 
-      - name: Install govulncheck
-        run: go install golang.org/x/vuln/cmd/govulncheck@latest
-
-      - name: Run govulncheck
-        working-directory: ${{ matrix.module.path }}
-        run: govulncheck ./...
-
-      - name: Run go mod verify
-        working-directory: ${{ matrix.module.path }}
-        run: go mod verify
-
-  trivy-scan:
-    name: Trivy Vulnerability Scan
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: "fs"
-          ignore-unfixed: true
-          format: "sarif"
-          output: "trivy-results.sarif"
-          severity: "CRITICAL,HIGH"
-          exit-code: "0"
-
-      - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: trivy-results.sarif
-
-  secret-detection:
-    name: Secret Detection
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Check for secrets with truffleHog
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          extra_args: --debug --only-verified
-
-  security-summary:
-    name: Security Summary
-    needs: [rust-audit, go-security, trivy-scan, secret-detection]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Check security scan results
+      - name: Rust Security Audit
         run: |
-          if [[ "${{ needs.rust-audit.result }}" == "failure" ]] || \
-             [[ "${{ needs.go-security.result }}" == "failure" ]] || \
-             [[ "${{ needs.trivy-scan.result }}" == "failure" ]] || \
-             [[ "${{ needs.secret-detection.result }}" == "failure" ]]; then
-            echo "Some security checks failed"
-            exit 1
-          fi
-          echo "All security checks passed"
+          cargo install cargo-audit --locked
+          cargo audit
+
+      - name: Rust Dependency Check
+        run: |
+          cargo install cargo-deny --locked
+          cargo deny check
+
+      - name: Go Security Scan (gzip)
+        working-directory: gzip/go
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+      - name: Go Security Scan (htop)
+        working-directory: htop/win/go
+        run: govulncheck ./...

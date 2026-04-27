@@ -3,12 +3,12 @@
 ## Start from OpenSpec
 
 - Check `openspec/changes/` for an active change before editing repo behavior.
-- For repo-wide cleanup, stabilization, or workflow changes, use the active `stabilize-project-finalization` change as the starting point.
+- For repo-wide cleanup, stabilization, or workflow changes, use the active change as the starting point.
 - Keep the active backlog aligned with current goals; do not keep abandoned feature changes active.
 
 ## Project priorities
 
-- This repository is nearing completion. Prefer stabilization, cleanup, documentation quality, and public presentation over new features.
+- This repository is in archive-ready stabilization phase. Prefer stabilization, cleanup, documentation quality, and public presentation over new features.
 - Keep only one canonical explanation per topic. Avoid copying the same content across README, docs pages, and changelogs.
 - Treat GitHub Pages as the public landing page and keep it aligned with repository metadata.
 
@@ -25,7 +25,6 @@
 2. Make the smallest coherent batch of edits.
 3. Run the existing checks relevant to the touched area.
 4. Use `/review` before merge-ready or workflow-heavy changes.
-5. Prefer autopilot or long-running sequential execution over `/fleet` unless the work is clearly parallel and worth the quota.
 
 ## Validation commands
 
