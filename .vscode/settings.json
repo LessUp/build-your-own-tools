@@ -1,4 +1,7 @@
 {
+  "// IMPORTANT": "Minimal, project-specific VSCode configuration. Do NOT add generic boilerplate or plugins.",
+  "// SOURCE_OF_TRUTH": ".editorconfig is the primary formatting spec; .vscode/settings.json supplements only.",
+  
   "files.eol": "\n",
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
@@ -6,10 +9,17 @@
   "editor.codeActionsOnSave": {
     "source.fixAll": "explicit"
   },
+  
+  "// RUST": "Workspace uses Cargo.toml; clippy is the check baseline",
   "rust-analyzer.check.command": "clippy",
   "rust-analyzer.cargo.allTargets": true,
   "rust-analyzer.cargo.features": "all",
   "rust-analyzer.procMacro.enable": true,
+  "[rust]": {
+    "editor.rulers": [100]
+  },
+  
+  "// GO": "Workspace uses go.work; gopls with staticcheck for linting",
   "gopls": {
     "staticcheck": true,
     "usePlaceholders": true,
@@ -20,20 +30,30 @@
     }
   },
   "[go]": {
-    "editor.defaultFormatter": "golang.Go"
+    "editor.defaultFormatter": "golang.Go",
+    "editor.rulers": [80]
   },
+  
+  "// MARKDOWN": "Docs build with VitePress; markdown wrapping at 100 chars for readability",
   "[markdown]": {
     "editor.wordWrap": "bounded",
     "editor.wordWrapColumn": 100,
-    "editor.quickSuggestions": false
+    "editor.quickSuggestions": false,
+    "editor.rulers": [80]
   },
+  
+  "// YAML": "GitHub workflow schemas for .github/workflows/*.yml files",
   "yaml.schemas": {
     "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml"
   },
+  
+  "// SEARCH_EXCLUDE": "Speed up editor searches by excluding build/cache directories",
   "search.exclude": {
     "**/target": true,
     "**/node_modules": true,
     ".vitepress/dist": true,
-    ".vitepress/cache": true
+    ".vitepress/cache": true,
+    ".git": true
   }
 }
+

@@ -1,28 +1,28 @@
 # CLAUDE.md
 
-## Working mode
+## Working principles
 
-This repository is in an **archive-ready stabilization phase**. Optimize for clarity, consistency, and reduced maintenance burden.
+Claude's role in this repository: **cross-file reasoning, process design, governance coherence, and high-context problem-solving.**
 
-## First steps for any non-trivial task
+This is a **close-out / archive-ready** repository. All decisions prioritize **clarity, reduced maintenance, and stabilization** over adding new complexity.
 
-1. Run `openspec list`.
-2. Read the active change artifacts that match the task.
-3. Prefer implementing against the current active change instead of inventing parallel scope.
+## How Claude works here: first steps
 
-## Repository-specific priorities
+1. **Read the governance layer first**
+   - Run `openspec list` to find any active phase change.
+   - Read `.github/copilot-instructions.md` for project-domain quick reference (tool structure, language stacks, conventions).
+   - Read `AGENTS.md` for shared workflow rules.
 
-- Finish and harden the current tool set; avoid new tool expansion.
-- Treat documentation as product surface area: remove duplication, dead structure, and generic filler.
-- Keep GitHub Pages distinct from the README; the site should sell the project quickly and route readers deeper.
-- Keep GitHub metadata aligned with the final public narrative.
+2. **Understand the phase context**
+   - If an active phase change exists, read its `proposal.md`, `design.md`, and `tasks.md` before starting.
+   - Work **within** the phase scope; do not invent parallel changes.
+   - If no active change exists and your work changes repo behavior, create the phase change first.
 
-## Tooling guidance
+3. **Never treat archived changes as active**
+   - Archived changes under `openspec/changes/archive/` are historical reference only.
+   - The **current active phase** is always the authoritative scope.
 
-- Use repo-tracked hooks, workflows, and config instead of local-only conventions whenever the rule should be shared.
-- Prefer minimal editor/LSP settings and explicit instruction files over adding many plugins or MCP integrations.
-- Use `gh` for repository metadata, workflow inspection, and GitHub-side cleanup.
-- Use `/review` before merge-ready workflow, docs-governance, or cross-cutting automation changes.
+## Repository-specific Claude reasoning
 
 ## Archive-ready checklist
 
@@ -46,6 +46,37 @@ npm run docs:check
 npm run docs:build
 ```
 
-## Local overrides
+**Never claim a fix or feature is "done" without running the relevant checks.**
 
-`CLAUDE.local.md` is for maintainer-specific or machine-local preferences only. Shared project rules belong here or in `AGENTS.md`.
+### When to request `/review`
+
+Before merging any of:
+- Workflow, CI/CD, or security changes (high cascade risk)
+- Cross-file refactoring or governance changes (consistency risk)
+- Documentation architecture or Pages rewrites (user experience risk)
+- Changes to AGENTS.md, CLAUDE.md, or copilot-instructions.md (governance layer risk)
+
+### When Claude should defer
+
+- Local or machine-specific preferences belong in `CLAUDE.local.md`, not here.
+- Shared project rules belong in AGENTS.md or project-level documentation.
+- User authentication, secrets, or sensitive config: **never commit; always flag**.
+
+## Remote work and sub-agent prompting
+
+When delegating to other agents (e.g., code-reviewer, explore, general-purpose):
+
+1. **Provide complete context** (do not rely on them reading this session's history).
+2. **Quote the relevant phase change** if one is active.
+3. **State the validation gates** (e.g., "verify with `npm run docs:build`").
+4. **Specify the expected output** (e.g., "return a list of issues by severity").
+
+Example template:
+
+```
+Task: Review Phase 2 workflow changes
+Context: Active change is phase-2-github-workflow-alignment
+Scope: Simplified .github/workflows/security.yml, narrowed ci.yml triggers
+Validation: Confirm changes pass make lint-all and do not break GitHub Actions syntax
+Expected output: Issues categorized as Critical/Important/Minor with reproduction steps
+```

@@ -9,7 +9,7 @@ Describe the change in 2-5 bullets:
 ## OpenSpec
 
 - [ ] This PR maps to an active OpenSpec change
-- OpenSpec change: ``
+- Current phase change: ``
 - Relevant task(s): ``
 
 ## Scope check
