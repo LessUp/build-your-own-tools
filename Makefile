@@ -1,5 +1,5 @@
 .PHONY: build-dos2unix build-gzip-rust build-htop-unix-rust build-htop-win-rust \
-	build-gzip-go build-htop-win-go build-rust build-go build-all \
+	build-gzip-go build-htop-unix-go build-htop-win-go build-rust build-go build-all \
 	lint-rust lint-go lint-all test-rust test-go test-all \
 	fmt-rust fmt-go fmt-all clean
 
@@ -23,12 +23,15 @@ build-htop-win-rust:
 build-gzip-go:
 	$(MAKE) -C gzip/go build
 
+build-htop-unix-go:
+	$(MAKE) -C htop/unix/go build
+
 build-htop-win-go:
 	$(MAKE) -C htop/win/go build
 
 build-rust: build-dos2unix build-gzip-rust build-htop-unix-rust build-htop-win-rust
 
-build-go: build-gzip-go build-htop-win-go
+build-go: build-gzip-go build-htop-unix-go build-htop-win-go
 
 build-all: build-rust build-go
 
@@ -39,6 +42,7 @@ fmt-rust:
 
 fmt-go:
 	$(MAKE) -C gzip/go fmt
+	$(MAKE) -C htop/unix/go fmt
 	$(MAKE) -C htop/win/go fmt
 
 fmt-all: fmt-rust fmt-go
@@ -53,6 +57,9 @@ lint-go:
 	@echo "==> gzip/go"
 	$(MAKE) -C gzip/go fmt-check
 	go vet -C gzip/go ./...
+	@echo "==> htop/unix/go"
+	$(MAKE) -C htop/unix/go fmt-check
+	go vet -C htop/unix/go ./...
 	@echo "==> htop/win/go"
 	$(MAKE) -C htop/win/go fmt-check
 	go vet -C htop/win/go ./...
@@ -66,6 +73,7 @@ test-rust:
 
 test-go:
 	go test -C gzip/go ./...
+	go test -C htop/unix/go ./...
 	go test -C htop/win/go ./...
 
 test-all: test-rust test-go

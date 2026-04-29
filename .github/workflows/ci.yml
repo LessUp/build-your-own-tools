@@ -105,6 +105,43 @@ jobs:
       - name: go build
         run: go build -o bin/gzip-go ./cmd/gzip-go
 
+  go-htop-unix:
+    name: Go htop (Unix)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    defaults:
+      run:
+        working-directory: htop/unix/go
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: stable
+          cache: true
+          cache-dependency-path: htop/unix/go/go.mod
+
+      - name: gofmt check
+        run: |
+          changed=$(gofmt -l .)
+          if [ -n "$changed" ]; then
+            echo "Go files not formatted:" >&2
+            echo "$changed" >&2
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test
+        run: go test ./...
+
+      - name: go build
+        run: go build -o bin/htop-go ./cmd/htop-go
+
   go-htop-windows:
     name: Go htop (Windows)
     runs-on: windows-latest
@@ -141,7 +178,7 @@ jobs:
 
   ci-success:
     name: CI Success
-    needs: [rust, go-gzip, go-htop-windows]
+    needs: [rust, go-gzip, go-htop-unix, go-htop-windows]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -149,6 +186,7 @@ jobs:
         run: |
           if [[ "${{ needs.rust.result }}" != "success" ]] || \
              [[ "${{ needs.go-gzip.result }}" != "success" ]] || \
+             [[ "${{ needs.go-htop-unix.result }}" != "success" ]] || \
              [[ "${{ needs.go-htop-windows.result }}" != "success" ]]; then
             echo "One or more jobs failed"
             exit 1
