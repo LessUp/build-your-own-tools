@@ -31,7 +31,7 @@
     "vue-tsc": "^2.0.29"
   },
   "optionalDependencies": {
-    "@lhci/cli": "^0.14.0"
+    "@lhci/cli": "^0.15.1"
   },
   "browserslist": [
     "> 1%",
