@@ -1,1 +1,0 @@
-../../../docs/changelogs/MIGRATION.md

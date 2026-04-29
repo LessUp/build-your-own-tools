@@ -1,1 +1,0 @@
-../../../docs/changelogs/INDEX.md
