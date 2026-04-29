@@ -28,14 +28,14 @@ This is a **close-out / archive-ready** repository. All decisions prioritize **c
 
 Before declaring the repository archive-ready, verify:
 
-- [ ] No duplicate changelog files (only root `CHANGELOG.md`)
-- [ ] No duplicate CI workflows (removed `htop/.github/workflows/ci.yml`)
-- [ ] All `checkout` actions use the same version (v5)
-- [ ] VitePress navigation has fewer than 12 top-level items
-- [ ] No dead links in documentation
-- [ ] `make lint-all` passes
-- [ ] `make test-all` passes
-- [ ] `npm run docs:build` succeeds
+- [x] No duplicate changelog files (only root `CHANGELOG.md`)
+- [x] No duplicate CI workflows (removed `htop/.github/workflows/ci.yml`)
+- [x] All `checkout` actions use the same version (v5)
+- [x] VitePress navigation has fewer than 12 top-level items
+- [x] No dead links in documentation
+- [x] `make lint-all` passes
+- [x] `make test-all` passes
+- [x] `npm run docs:build` succeeds
 
 ## Validation commands
 
