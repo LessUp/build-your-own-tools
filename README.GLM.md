@@ -11,7 +11,7 @@ A **learning-focused CLI tools repository** in **close-out / archive-ready phase
 Three tool implementations:
 - **dos2unix** - Rust only (line-ending converter)
 - **gzip** - Rust + Go implementations (DEFLATE compressor)
-- **htop** - Rust (Unix/Windows) + Go (Windows) (system monitor)
+- **htop** - Rust (Unix/Windows) + Go (Unix/Windows) (system monitor)
 
 Phases 1-3 have **stabilized the repository**: fixed documentation narrative, simplified GitHub workflows, unified AI agent governance.
 

@@ -128,6 +128,7 @@ export default defineConfig({
           '/htop/': [
             { text: '概览', link: '/htop/' },
             { text: 'Unix Rust', link: '/htop/unix/rust/' },
+            { text: 'Unix Go', link: '/htop/unix/go/' },
             { text: 'Windows Rust', link: '/htop/win/rust/' },
             { text: 'Windows Go', link: '/htop/win/go/' },
             { text: '← 返回首页', link: '/' },
@@ -227,6 +228,7 @@ export default defineConfig({
           '/en/htop/': [
             { text: 'Overview', link: '/en/htop/' },
             { text: 'Unix Rust', link: '/en/htop/unix/rust/' },
+            { text: 'Unix Go', link: '/en/htop/unix/go/' },
             { text: 'Windows Rust', link: '/en/htop/win/rust/' },
             { text: 'Windows Go', link: '/en/htop/win/go/' },
             { text: '← Back to Home', link: '/en/' },

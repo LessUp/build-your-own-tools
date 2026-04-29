@@ -201,5 +201,5 @@ pub fn selected_pid(processes: &[ProcRow], selected_index: usize) -> Option<u32>
 
 ---
 
-**Implementation Languages**: Rust (Unix, Windows) + Go (Windows)
+**Implementation Languages**: Rust (Unix, Windows) + Go (Unix, Windows)
 **Complexity Level**: Advanced (⭐⭐⭐)

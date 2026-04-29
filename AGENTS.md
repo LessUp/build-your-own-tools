@@ -6,7 +6,7 @@ Build Your Own Tools is a learning-focused repository for three tool implementat
 
 - `dos2unix` - Rust
 - `gzip` - Rust + Go
-- `htop` - Rust (Unix/Windows) + Go (Windows)
+- `htop` - Rust (Unix/Windows) + Go (Unix/Windows)
 
 The repository is in **close-out / archive-ready phase** (governed by OpenSpec phases). All work prioritizes **stabilization, clarity, and reduced maintenance burden** over new features.
 
@@ -80,6 +80,7 @@ build-your-own-tools/
 ├── gzip/rust/                 Rust implementation
 ├── htop/shared/               shared Rust logic
 ├── htop/unix/rust/            Unix Rust UI
+├── htop/unix/go/              Unix Go UI
 ├── htop/win/rust/             Windows Rust UI
 ├── htop/win/go/               Windows Go UI
 ├── README.md                  repo entry point
