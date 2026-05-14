@@ -6,133 +6,133 @@
 
 ---
 
-## 目录
+## Table of Contents
 
-- [前置条件](#前置条件)
-- [安装](#安装)
-- [首次构建](#首次构建)
-- [开发工作流](#开发工作流)
-- [理解代码](#理解代码)
-- [运行测试](#运行测试)
-- [调试](#调试)
-- [故障排除](#故障排除)
-- [下一步](#下一步)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [First Build](#first-build)
+- [Development Workflow](#development-workflow)
+- [Understanding the Code](#understanding-the-code)
+- [Running Tests](#running-tests)
+- [Debugging](#debugging)
+- [Troubleshooting](#troubleshooting)
+- [Next Steps](#next-steps)
 
 ---
 
-## 前置条件
+## Prerequisites
 
-### 必需工具
+### Required Tools
 
-| 工具 | 版本 | 用途 | 安装链接 |
+| Tool | Version | Purpose | Installation Link |
 |------|---------|---------|--------------|
-| Rust | 1.70+ | Rust 编译 | [rustup.rs](https://rustup.rs/) |
-| Go | 1.21+ | Go 编译 | [golang.org](https://golang.org/dl/) |
-| make | 任意 | 构建自动化 | 通常预装 |
-| git | 2.0+ | 版本控制 | [git-scm.com](https://git-scm.com/) |
+| Rust | 1.70+ | Rust compilation | [rustup.rs](https://rustup.rs/) |
+| Go | 1.21+ | Go compilation | [golang.org](https://golang.org/dl/) |
+| make | Any | Build automation | Usually pre-installed |
+| git | 2.0+ | Version control | [git-scm.com](https://git-scm.com/) |
 
-### 验证安装
+### Verify Installation
 
 ```bash
-# 检查 Rust
+# Check Rust
 rustc --version
-# 输出: rustc 1.80.0 (051478957 2024-07-21)
+# Output: rustc 1.80.0 (051478957 2024-07-21)
 
 cargo --version
-# 输出: cargo 1.80.0 (376290515 2024-07-16)
+# Output: cargo 1.80.0 (376290515 2024-07-16)
 
-# 检查 Go
+# Check Go
 go version
-# 输出: go version go1.23.0 linux/amd64
+# Output: go version go1.23.0 linux/amd64
 
-# 检查 make
+# Check make
 make --version
-# 输出: GNU Make 4.3
+# Output: GNU Make 4.3
 ```
 
-### 可选工具
+### Optional Tools
 
-| 工具 | 用途 | 安装 |
+| Tool | Purpose | Installation |
 |------|---------|---------|
-| `gh` | 用于发布的 GitHub CLI | `brew install gh` 或 [cli.github.com](https://cli.github.com/) |
-| `jq` | JSON 处理 | `brew install jq` 或 `apt install jq` |
-| `hyperfine` | 基准测试 | `cargo install hyperfine` |
+| `gh` | GitHub CLI for releases | `brew install gh` or [cli.github.com](https://cli.github.com/) |
+| `jq` | JSON processing | `brew install jq` or `apt install jq` |
+| `hyperfine` | Benchmarking | `cargo install hyperfine` |
 
 ---
 
-## 安装
+## Installation
 
-### 1. 克隆仓库
+### 1. Clone the Repository
 
 ```bash
 # HTTPS
 git clone https://github.com/LessUp/build-your-own-tools.git
 
-# 或 SSH
+# Or SSH
 git clone git@github.com:LessUp/build-your-own-tools.git
 
 cd build-your-own-tools
 ```
 
-### 2. 验证项目结构
+### 2. Verify Project Structure
 
 ```bash
 ls -la
 ```
 
-预期输出:
+Expected output:
 ```
 build-your-own-tools/
-├── dos2unix/          # CRLF 转换器
-├── gzip/              # 压缩工具
-├── htop/              # 系统监控
-├── docs/              # 文档
-├── .github/           # CI/CD 工作流
-├── Cargo.toml         # Rust 工作区
-├── go.work            # Go 工作区
-├── Makefile           # 构建自动化
-└── README.md          # 项目概览
+├── dos2unix/          # CRLF converter
+├── gzip/              # Compression tool
+├── htop/              # System monitor
+├── docs/              # Documentation
+├── .github/           # CI/CD workflows
+├── Cargo.toml         # Rust workspace
+├── go.work            # Go workspace
+├── Makefile           # Build automation
+└── README.md          # Project overview
 ```
 
-### 3. 初始化工作区
+### 3. Initialize Workspaces
 
 ```bash
-# Rust 工作区（自动获取依赖）
+# Rust workspace (auto-fetch dependencies)
 cargo fetch
 
-# Go 工作区
+# Go workspace
 go work sync
 ```
 
 ---
 
-## 首次构建
+## First Build
 
-### 构建所有项目
+### Build All Projects
 
 ```bash
 make build-all
 ```
 
-这将:
-1. 构建所有 Rust 项目（发布模式）
-2. 构建所有 Go 项目
-3. 将二进制文件放在相应目录中
+This will:
+1. Build all Rust projects (release mode)
+2. Build all Go projects
+3. Place binaries in their respective directories
 
-### 构建单个项目
+### Build Individual Projects
 
 **dos2unix (Rust)**:
 ```bash
 cargo build --release -p dos2unix-rust
 
-# 二进制位置: target/release/dos2unix-rust
+# Binary location: target/release/dos2unix-rust
 ```
 
 **gzip - Rust**:
 ```bash
 cargo build --release -p rgzip
 
-# 二进制位置: target/release/rgzip
+# Binary location: target/release/rgzip
 ```
 
 **gzip - Go**:
@@ -140,21 +140,21 @@ cargo build --release -p rgzip
 cd gzip/go
 make build
 
-# 二进制位置: gzip/go/bin/gzip-go
+# Binary location: gzip/go/bin/gzip-go
 ```
 
 **htop - Unix Rust**:
 ```bash
 cargo build --release -p htop-rust
 
-# 二进制位置: target/release/htop-unix-rust
+# Binary location: target/release/htop-unix-rust
 ```
 
 **htop - Windows Rust**:
 ```bash
 cargo build --release -p htop-win-rust
 
-# 二进制位置: target/release/htop-win-rust
+# Binary location: target/release/htop-win-rust
 ```
 
 **htop - Windows Go**:
@@ -162,266 +162,266 @@ cargo build --release -p htop-win-rust
 cd htop/win/go
 go build -o bin/htop-win-go ./cmd/htop-win-go
 
-# 二进制位置: htop/win/go/bin/htop-win-go
+# Binary location: htop/win/go/bin/htop-win-go
 ```
 
-### 测试你的构建
+### Test Your Build
 
 ```bash
-# 运行 dos2unix
+# Run dos2unix
 echo "Hello" | ./target/release/dos2unix-rust
 
-# 运行 gzip（先创建测试文件）
+# Run gzip (create a test file first)
 echo "Test content" > /tmp/test.txt
 ./target/release/rgzip /tmp/test.txt
 ls -la /tmp/test.txt.gz
 
-# 运行 htop（如果在 Unix 上）
+# Run htop (if on Unix)
 ./target/release/htop-unix-rust
 ```
 
 ---
 
-## 开发工作流
+## Development Workflow
 
-### 典型开发周期
+### Typical Development Cycle
 
 ```
-编辑代码 → 格式化 → Lint → 测试 → 构建 → 通过? → 提交
+Edit code → Format → Lint → Test → Build → Pass? → Commit
                                     ↓
-                                  未通过 → 继续编辑
+                                  Fail → Continue editing
 ```
 
-### 分步工作流
+### Step-by-Step Workflow
 
 ```bash
-# 1. 修改源文件
+# 1. Modify source files
 # ...
 
-# 2. 格式化代码
+# 2. Format code
 make fmt-all
 
-# 3. 运行 linter
+# 3. Run linters
 make lint-all
 
-# 4. 运行测试
+# 4. Run tests
 make test-all
 
-# 5. 构建发布版本
+# 5. Build release
 make build-all
 ```
 
-### 使用 Make 目标
+### Using Make Targets
 
 ```bash
-# 构建命令
-make build-all          # 构建所有项目
-make build-rust         # 仅构建 Rust 项目
-make build-go           # 仅构建 Go 项目
-make build-dos2unix     # 构建特定项目
+# Build commands
+make build-all          # Build all projects
+make build-rust         # Build Rust projects only
+make build-go           # Build Go projects only
+make build-dos2unix     # Build specific project
 
-# 质量命令
-make test-all           # 运行所有测试
-make test-rust          # 仅运行 Rust 测试
-make test-go            # 仅运行 Go 测试
+# Quality commands
+make test-all           # Run all tests
+make test-rust          # Run Rust tests only
+make test-go            # Run Go tests only
 
-make lint-all           # 运行所有 linter
-make lint-rust          # 运行 Rust clippy
-make lint-go            # 运行 go vet
+make lint-all           # Run all linters
+make lint-rust          # Run Rust clippy
+make lint-go            # Run go vet
 
-make fmt-all            # 格式化所有代码
-make fmt-rust           # 仅格式化 Rust
-make fmt-go             # 仅格式化 Go
+make fmt-all            # Format all code
+make fmt-rust           # Format Rust only
+make fmt-go             # Format Go only
 
-# 清理构建产物
-make clean              # 移除构建目录
+# Clean build artifacts
+make clean              # Remove build directories
 ```
 
 ---
 
-## 理解代码
+## Understanding the Code
 
-### 项目复杂度进阶
+### Project Complexity Progression
 
 ```
-dos2unix (⭐ 初级) → gzip (⭐⭐ 中级) → htop (⭐⭐⭐ 高级)
+dos2unix (⭐ Beginner) → gzip (⭐⭐ Intermediate) → htop (⭐⭐⭐ Advanced)
 ```
 
-### 推荐学习路径
+### Recommended Learning Path
 
-1. **从 dos2unix 开始**（最简单）
-   - 学习文件 I/O 基础
-   - 理解流式处理
-   - 练习错误处理
+1. **Start with dos2unix** (simplest)
+   - Learn file I/O basics
+   - Understand stream processing
+   - Practice error handling
 
-2. **进阶到 gzip**（中级）
-   - 学习压缩算法
-   - 练习库设计
-   - 对比 Rust vs Go
+2. **Progress to gzip** (intermediate)
+   - Learn compression algorithms
+   - Practice library design
+   - Compare Rust vs Go
 
-3. **完成 htop**（高级）
-   - 学习 TUI 开发
-   - 练习系统 API
-   - 理解异步/并发
+3. **Complete htop** (advanced)
+   - Learn TUI development
+   - Practice system APIs
+   - Understand async/concurrency
 
-### 代码探索技巧
+### Code Exploration Tips
 
-**导航 Rust 代码**:
+**Navigating Rust code**:
 ```bash
-# 查找所有公共函数
+# Find all public functions
 grep -r "^pub fn" dos2unix/src/
 
-# 查找主入口点
+# Find main entry points
 grep -r "fn main" --include="*.rs"
 
-# 列出所有测试
+# List all tests
 grep -r "#\[test\]" --include="*.rs"
 ```
 
-**导航 Go 代码**:
+**Navigating Go code**:
 ```bash
-# 查找所有函数
+# Find all functions
 grep -r "^func " gzip/go/cmd/
 
-# 查找 main 包
+# Find main packages
 grep -r "package main" --include="*.go"
 
-# 列出所有测试
+# List all tests
 grep -r "^func Test" --include="*.go"
 ```
 
 ---
 
-## 运行测试
+## Running Tests
 
-### 所有测试
+### All Tests
 
 ```bash
 make test-all
 ```
 
-### Rust 测试
+### Rust Tests
 
 ```bash
-# 所有 Rust 测试
+# All Rust tests
 cargo test --all
 
-# 带输出
+# With output
 cargo test --all -- --nocapture
 
-# 特定包
+# Specific package
 cargo test -p dos2unix-rust
 cargo test -p rgzip
 
-# 特定测试
+# Specific test
 cargo test test_stream_large_data -- --nocapture
 
-# 带覆盖率（需要 cargo-tarpaulin）
+# With coverage (requires cargo-tarpaulin)
 cargo tarpaulin --all
 ```
 
-### Go 测试
+### Go Tests
 
 ```bash
-# 所有 Go 测试
+# All Go tests
 go test ./...
 
-# 带详细输出
+# With verbose output
 go test -v ./...
 
-# 特定包
+# Specific package
 cd gzip/go && go test -v ./...
 cd htop/win/go && go test -v ./...
 
-# 特定测试
+# Specific test
 go test -run TestGzipStream -v ./...
 
-# 带覆盖率
+# With coverage
 go test -cover ./...
 go test -coverprofile=coverage.out ./...
 go tool cover -html=coverage.out
 ```
 
-### 测试驱动开发
+### Test-Driven Development
 
 ```bash
-# 1. 编写失败的测试
-# 2. 运行测试确认失败
+# 1. Write a failing test
+# 2. Run test to confirm failure
 cargo test --lib test_new_feature
 
-# 3. 实现功能
-# 4. 运行测试确认成功
+# 3. Implement the feature
+# 4. Run test to confirm success
 cargo test --lib test_new_feature
 
-# 5. 重构并重复
+# 5. Refactor and repeat
 ```
 
 ---
 
-## 调试
+## Debugging
 
-### Rust 调试
+### Rust Debugging
 
-**使用 println!（快速方法）**:
+**Using println! (quick method)**:
 ```rust
 fn process_data(data: &[u8]) {
-    println!("DEBUG: 处理 {} 字节", data.len());
-    println!("DEBUG: 第一个字节: {:02x?}", data.first());
+    println!("DEBUG: processing {} bytes", data.len());
+    println!("DEBUG: first byte: {:02x?}", data.first());
     // ...
 }
 ```
 
-**使用 dbg! 宏**:
+**Using dbg! macro**:
 ```rust
 fn complex_function(x: i32, y: i32) -> i32 {
-    let sum = dbg!(x + y);  // 打印 file:line 和值
+    let sum = dbg!(x + y);  // Prints file:line and value
     sum * 2
 }
 ```
 
-**使用 GDB/LLDB**:
+**Using GDB/LLDB**:
 ```bash
-# 带调试符号构建
+# Build with debug symbols
 cargo build
 
-# 使用调试器运行
+# Run with debugger
 gdb ./target/debug/dos2unix-rust
 lldb ./target/debug/dos2unix-rust
 
-# 或使用 IDE 调试器（带 CodeLLDB 的 VS Code）
+# Or use IDE debugger (VS Code with CodeLLDB)
 ```
 
-**环境变量**:
+**Environment Variables**:
 ```bash
-# panic 时显示完整回溯
+# Show full backtrace on panic
 RUST_BACKTRACE=1 cargo run
 RUST_BACKTRACE=full cargo run
 
-# 日志级别（如果使用 tracing）
+# Log level (if using tracing)
 RUST_LOG=debug cargo run
 ```
 
-### Go 调试
+### Go Debugging
 
-**使用 fmt.Println（快速方法）**:
+**Using fmt.Println (quick method)**:
 ```go
 func processData(data []byte) {
-    fmt.Printf("DEBUG: 处理 %d 字节\n", len(data))
-    fmt.Printf("DEBUG: 数据: %x\n", data[:10])
+    fmt.Printf("DEBUG: processing %d bytes\n", len(data))
+    fmt.Printf("DEBUG: data: %x\n", data[:10])
     // ...
 }
 ```
 
-**使用 Delve 调试器**:
+**Using Delve debugger**:
 ```bash
-# 安装 delve
+# Install delve
 go install github.com/go-delve/delve/cmd/dlv@latest
 
-# 调试
+# Debug
 dlv debug ./cmd/gzip-go
 dlv test ./...
 
-# 调试器内常用命令:
+# Common debugger commands:
 # (dlv) break main.main
 # (dlv) continue
 # (dlv) print variable
@@ -430,25 +430,25 @@ dlv test ./...
 # (dlv) quit
 ```
 
-**环境变量**:
+**Environment Variables**:
 ```bash
-# 详细测试输出
+# Verbose test output
 GO111MODULE=on go test -v ./...
 
-# 竞争检测器
+# Race detector
 go run -race ./...
 go test -race ./...
 
-# 内存分析
+# Memory profiling
 go test -memprofile=mem.prof ./...
 go tool pprof mem.prof
 ```
 
 ---
 
-## 故障排除
+## Troubleshooting
 
-### 常见构建问题
+### Common Build Issues
 
 #### Rust: "linker 'cc' not found"
 
@@ -468,9 +468,9 @@ xcode-select --install
 sudo dnf install gcc gcc-c++ make
 ```
 
-#### Rust: "cannot find -lpq"（或类似错误）
+#### Rust: "cannot find -lpq" (or similar error)
 
-缺少系统库。安装开发包:
+Missing system library. Install development packages:
 ```bash
 # Ubuntu/Debian
 sudo apt install libpq-dev
@@ -482,13 +482,13 @@ brew install libpq
 #### Go: "cannot find main module"
 
 ```bash
-# 确保在正确目录
+# Ensure you're in the correct directory
 cd gzip/go
 
-# 验证 go.mod 存在
+# Verify go.mod exists
 ls go.mod
 
-# 如果缺失，重新创建
+# If missing, recreate
 go mod init github.com/LessUp/build-your-own-tools/gzip/go
 ```
 
@@ -496,143 +496,127 @@ go mod init github.com/LessUp/build-your-own-tools/gzip/go
 
 ```bash
 # Windows (Git Bash)
-# Make 包含在 Git for Windows 中
+# Make is included in Git for Windows
 
 # Windows (PowerShell)
-# 通过 chocolatey 安装
+# Install via chocolatey
 choco install make
 
-# 或使用 mingw
-# 从 https://www.mingw-w64.org/ 下载
+# Or use mingw
+# Download from https://www.mingw-w64.org/
 ```
 
-### 常见运行时问题
+### Common Runtime Issues
 
-#### 运行二进制文件时 "Permission denied"
+#### "Permission denied" when running binary
 
 ```bash
-# 添加执行权限
+# Add execute permission
 chmod +x ./target/release/dos2unix-rust
 
-# 或移动到 PATH
+# Or move to PATH
 sudo cp ./target/release/dos2unix-rust /usr/local/bin/
 ```
 
 #### htop: "terminal not supported"
 
 ```bash
-# 设置 TERM 变量
+# Set TERM variable
 export TERM=xterm-256color
 
-# 或尝试不同终端
+# Or try a different terminal
 TERM=screen-256color ./target/release/htop-unix-rust
 ```
 
 #### gzip: "invalid gzip header"
 
-输入文件不是有效的 gzip 格式:
+Input file is not valid gzip format:
 ```bash
-# 检查文件类型
+# Check file type
 file corrupted.gz
 
-# 使用 gunzip 验证
+# Verify with gunzip
 gunzip -t corrupted.gz
 ```
 
-### 性能问题
+### Performance Issues
 
-#### Rust 编译慢
+#### Slow Rust Compilation
 
 ```bash
-# 使用更快的链接器（添加到 .cargo/config.toml）
+# Use a faster linker (add to .cargo/config.toml)
 [target.x86_64-unknown-linux-gnu]
 linker = "clang"
 rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 
-# 或使用 mold 链接器
+# Or use mold linker
 cargo install mold
 ```
 
-#### Go 构建慢
+#### Slow Go Build
 
 ```bash
-# 启用构建缓存
+# Enable build cache
 export GOCACHE=$HOME/.cache/go-build
 
-# 使用 -p 标志并行构建
+# Use -p flag for parallel builds
 go build -p 4 ./...
 ```
 
-### 获取帮助
+### Getting Help
 
-1. **检查日志**:
+1. **Check logs**:
    ```bash
    cargo build 2>&1 | tee build.log
    ```
 
-2. **搜索 issues**:
+2. **Search issues**:
    ```bash
    # GitHub CLI
-   gh issue list --search "你的错误"
+   gh issue list --search "your error"
    ```
 
-3. **在讨论区提问**:
+3. **Ask in discussion forums**:
    - GitHub Discussions
    - Rust Discord/Reddit
    - Go Slack/Forum
 
 ---
 
-## 下一步
+## Next Steps
 
-### 了解更多
+### Learn More
 
-- 📖 [架构指南](ARCHITECTURE.md) - 系统设计和模式
-- 📊 [对比指南](COMPARISON.md) - Rust vs Go 分析
-- 📚 [API 参考](API.md) - 库文档
+- 📖 [Architecture Guide](ARCHITECTURE.md) - System design and patterns
+- 📊 [Comparison Guide](COMPARISON.md) - Rust vs Go analysis
+- 📚 [API Reference](API.md) - Library documentation
 
-### 贡献
+### Contributing
 
-1. 阅读 [CONTRIBUTING.md](../../CONTRIBUTING.md)
-2. 选择一个 issue 或建议新功能
-3. 遵循 [开发工作流](#开发工作流)
-4. 提交 Pull Request
+1. Read [CONTRIBUTING.md](../../CONTRIBUTING.md)
+2. Pick an issue or suggest a new feature
+3. Follow the [Development Workflow](#development-workflow)
+4. Submit a Pull Request
 
-### 探索相关项目
+### Explore Related Projects
 
-| 项目 | 语言 | 说明 |
+| Project | Language | Description |
 |---------|----------|-------------|
-| [redis](https://github.com/antirez/redis) | C | 内存数据库 |
-| [rclone](https://github.com/rclone/rclone) | Go | 云存储同步 |
-| [ripgrep](https://github.com/BurntSushi/ripgrep) | Rust | 快速文本搜索 |
-| [fzf](https://github.com/junegunn/fzf) | Go | 模糊查找器 |
+| [redis](https://github.com/antirez/redis) | C | In-memory database |
+| [rclone](https://github.com/rclone/rclone) | Go | Cloud storage sync |
+| [ripgrep](https://github.com/BurntSushi/ripgrep) | Rust | Fast text search |
+| [fzf](https://github.com/junegunn/fzf) | Go | Fuzzy finder |
 
-### 构建你自己的工具
+### Build Your Own Tools
 
-尝试实现这些工具:
-- `cat` - 文件连接
-- `wc` - 字数统计
-- `sort` - 行排序
-- `uniq` - 重复过滤
-- `head`/`tail` - 行提取
-
----
-
-**术语中英文对照表**
-
-| 英文 | 中文 |
-|------|------|
-| Build | 构建 |
-| Debugging | 调试 |
-| Error | 错误 |
-| Linter | 代码检查工具 |
-| Module | 模块 |
-| Test | 测试 |
-| Toolchain | 工具链 |
-| Troubleshooting | 故障排除 |
-| Workspace | 工作区 |
+Try implementing these tools:
+- `cat` - File concatenation
+- `wc` - Word count
+- `sort` - Line sorting
+- `uniq` - Duplicate filtering
+- `head`/`tail` - Line extraction
 
 ---
 
-**最后更新**: 2026-04-16  
-**版本**: 1.0
+**Last updated**: 2026-04-16  
+**Version**: 1.0
