@@ -19,72 +19,9 @@ use ratatui::widgets::{
 use ratatui::{Frame, Terminal};
 use sysinfo::{CpuExt, Pid, PidExt, ProcessExt, System, SystemExt};
 
-// Import from shared library (note: we extend SortKey with Name locally)
-use htop_shared::{color_for_ratio, ProcRow, SortKey as BaseSortKey};
-
-/// Extended sort key including Name (Windows-specific feature)
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum SortKey {
-    Cpu,
-    Mem,
-    Pid,
-    Name,
-}
-
-impl From<SortKey> for BaseSortKey {
-    fn from(key: SortKey) -> Self {
-        match key {
-            SortKey::Cpu => BaseSortKey::Cpu,
-            SortKey::Mem => BaseSortKey::Mem,
-            SortKey::Pid => BaseSortKey::Pid,
-            SortKey::Name => BaseSortKey::Cpu, // Fallback
-        }
-    }
-}
-
-fn compare_proc_rows_local(a: &ProcRow, b: &ProcRow, sort_key: SortKey) -> std::cmp::Ordering {
-    match sort_key {
-        SortKey::Cpu => a
-            .cpu
-            .partial_cmp(&b.cpu)
-            .unwrap_or(std::cmp::Ordering::Equal)
-            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
-            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32()))
-            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
-        SortKey::Mem => a
-            .mem_mb
-            .cmp(&b.mem_mb)
-            .then_with(|| {
-                a.cpu
-                    .partial_cmp(&b.cpu)
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            })
-            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32()))
-            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
-        SortKey::Pid => a
-            .pid
-            .as_u32()
-            .cmp(&b.pid.as_u32())
-            .then_with(|| {
-                a.cpu
-                    .partial_cmp(&b.cpu)
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            })
-            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
-            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
-        SortKey::Name => a
-            .name
-            .to_lowercase()
-            .cmp(&b.name.to_lowercase())
-            .then_with(|| {
-                a.cpu
-                    .partial_cmp(&b.cpu)
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            })
-            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
-            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32())),
-    }
-}
+// Import from shared library
+use htop_shared::render::usage_color;
+use htop_shared::{filter_processes, sort_process_list, ProcRow, SortKey};
 
 struct App {
     sys: System,
@@ -124,31 +61,10 @@ fn push_capped(history: &mut VecDeque<u64>, value: u64, capacity: usize) {
     }
 }
 
-fn filter_matches(row: &ProcRow, query: &str) -> bool {
-    let q = query.to_lowercase();
-    row.name.to_lowercase().contains(&q) || row.pid.as_u32().to_string().contains(&q)
-}
-
-fn current_selected_pid(rows: &[ProcRow], selected: Option<usize>) -> Option<Pid> {
+fn current_selected_pid(rows: &[ProcRow], selected: Option<usize>) -> Option<u32> {
     selected
         .and_then(|index| rows.get(index))
         .map(|row| row.pid)
-}
-
-fn resolve_selected_index_local(
-    rows: &[ProcRow],
-    preferred_pid: Option<Pid>,
-    fallback_index: Option<usize>,
-) -> Option<usize> {
-    if rows.is_empty() {
-        return None;
-    }
-    if let Some(pid) = preferred_pid {
-        if let Some(index) = rows.iter().position(|row| row.pid == pid) {
-            return Some(index);
-        }
-    }
-    Some(fallback_index.unwrap_or(0).min(rows.len() - 1))
 }
 
 impl App {
@@ -160,7 +76,7 @@ impl App {
             sys,
             rows: Vec::new(),
             table_state: TableState::default(),
-            sort_key: SortKey::Cpu,
+            sort_key: SortKey::default(),
             sort_desc: true,
             last_refresh: Instant::now(),
             cpu_usage: 0.0,
@@ -220,46 +136,43 @@ impl App {
         push_capped(&mut self.cpu_hist, cpu_pct, self.hist_capacity);
         push_capped(&mut self.mem_hist, mem_pct, self.hist_capacity);
 
-        let mut new_rows: Vec<ProcRow> = self
+        // Collect processes
+        let raw: Vec<ProcRow> = self
             .sys
             .processes()
             .values()
-            .map(|p| ProcRow {
-                pid: p.pid(),
-                name: p.name().to_string(),
-                cpu: p.cpu_usage(),
-                mem_mb: p.memory() / 1024, // KiB -> MiB
+            .map(|p| {
+                ProcRow::new(
+                    p.pid().as_u32(),
+                    p.name(),
+                    p.cpu_usage(),
+                    p.memory() / 1024, // KiB -> MiB
+                )
             })
             .collect();
 
-        if let Some(ft) = &self.filter_text {
-            new_rows.retain(|r| filter_matches(r, ft));
-        }
-        self.sort_rows(&mut new_rows);
-        self.rows = new_rows;
-        self.table_state.select(resolve_selected_index_local(
-            &self.rows,
+        // Apply filter
+        self.rows = if let Some(ft) = &self.filter_text {
+            filter_processes(&raw, ft)
+        } else {
+            raw
+        };
+
+        // Apply sort and restore selection
+        let new_selected = sort_process_list(
+            &mut self.rows,
+            self.sort_key,
+            self.sort_desc,
             preferred_pid,
-            selected,
-        ));
+            selected.unwrap_or(0),
+        );
+        self.table_state.select(Some(new_selected));
 
         self.last_refresh = Instant::now();
     }
 
-    fn sort_rows(&self, rows: &mut [ProcRow]) {
-        rows.sort_by(|a, b| compare_proc_rows_local(a, b, self.sort_key));
-        if self.sort_desc {
-            rows.reverse();
-        }
-    }
-
     fn cycle_sort_key(&mut self) {
-        self.sort_key = match self.sort_key {
-            SortKey::Cpu => SortKey::Mem,
-            SortKey::Mem => SortKey::Pid,
-            SortKey::Pid => SortKey::Name,
-            SortKey::Name => SortKey::Cpu,
-        };
+        self.sort_key = self.sort_key.next();
         self.refresh_data();
     }
 
@@ -272,7 +185,7 @@ impl App {
         self.table_state
             .selected()
             .and_then(|i| self.rows.get(i))
-            .map(|r| r.pid)
+            .map(|r| Pid::from_u32(r.pid))
     }
 
     fn page_down(&mut self) {
@@ -344,7 +257,8 @@ impl App {
     fn kill_selected(&mut self) {
         if let Some(i) = self.table_state.selected() {
             if let Some(row) = self.rows.get(i) {
-                if let Some(proc_) = self.sys.process(row.pid) {
+                let pid = Pid::from_u32(row.pid);
+                if let Some(proc_) = self.sys.process(pid) {
                     let _ = proc_.kill();
                 }
             }
@@ -540,7 +454,7 @@ fn draw_top_panel(frame: &mut Frame, area: Rect, app: &App) {
         .split(area);
 
     let cpu_ratio = (app.cpu_usage / 100.0).clamp(0.0, 1.0);
-    let cpu_color = color_for_ratio(cpu_ratio);
+    let cpu_color = usage_color(cpu_ratio);
     let cpu_gauge = Gauge::default()
         .block(
             Block::default()
@@ -559,7 +473,7 @@ fn draw_top_panel(frame: &mut Frame, area: Rect, app: &App) {
         app.mem_used_mb as f32 / app.mem_total_mb as f32
     }
     .clamp(0.0, 1.0);
-    let mem_color = color_for_ratio(mem_ratio);
+    let mem_color = usage_color(mem_ratio);
     let mem_gauge = Gauge::default()
         .block(
             Block::default()
@@ -626,10 +540,10 @@ fn draw_process_table(frame: &mut Frame, area: Rect, app: &mut App) {
         .enumerate()
         .map(|(i, r)| {
             let cpu_cell = ratatui::widgets::Cell::from(format!("{:>6.1}", r.cpu))
-                .style(Style::default().fg(color_for_ratio((r.cpu / 100.0).clamp(0.0, 1.0))));
+                .style(Style::default().fg(usage_color((r.cpu / 100.0).clamp(0.0, 1.0))));
             let row = Row::new(vec![
-                ratatui::widgets::Cell::from(r.pid.as_u32().to_string()),
-                ratatui::widgets::Cell::from(r.name.clone()),
+                ratatui::widgets::Cell::from(r.pid.to_string()),
+                ratatui::widgets::Cell::from(r.name.as_str()),
                 cpu_cell,
                 ratatui::widgets::Cell::from(format!("{:>10}", r.mem_mb)),
             ]);
@@ -641,12 +555,7 @@ fn draw_process_table(frame: &mut Frame, area: Rect, app: &mut App) {
         })
         .collect();
 
-    let sort_text = match app.sort_key {
-        SortKey::Cpu => "CPU",
-        SortKey::Mem => "内存",
-        SortKey::Pid => "PID",
-        SortKey::Name => "名称",
-    };
+    let sort_text = app.sort_key.label();
     let order_text = if app.sort_desc { "↓" } else { "↑" };
     let widths = vec![
         Constraint::Length(8),
@@ -800,12 +709,7 @@ mod tests {
     use super::*;
 
     fn proc_row(pid: u32, name: &str, cpu: f32, mem_mb: u64) -> ProcRow {
-        ProcRow {
-            pid: Pid::from_u32(pid),
-            name: name.to_string(),
-            cpu,
-            mem_mb,
-        }
+        ProcRow::new(pid, name, cpu, mem_mb)
     }
 
     #[test]
@@ -825,98 +729,70 @@ mod tests {
     }
 
     #[test]
-    fn test_filter_matches_name_and_pid() {
-        let row = proc_row(1234, "Python", 1.0, 100);
-        assert!(filter_matches(&row, "py"));
-        assert!(filter_matches(&row, "234"));
-        assert!(!filter_matches(&row, "nginx"));
+    fn test_current_selected_pid() {
+        let rows = vec![proc_row(100, "a", 1.0, 10), proc_row(200, "b", 2.0, 20)];
+
+        assert_eq!(current_selected_pid(&rows, Some(0)), Some(100));
+        assert_eq!(current_selected_pid(&rows, Some(1)), Some(200));
+        assert_eq!(current_selected_pid(&rows, None), None);
+        assert_eq!(current_selected_pid(&rows, Some(99)), None);
     }
 
     #[test]
-    fn test_resolve_selected_index_prefers_existing_pid() {
-        let rows = vec![proc_row(1, "a", 1.0, 100), proc_row(2, "b", 2.0, 200)];
-        let selected = resolve_selected_index_local(&rows, Some(Pid::from_u32(2)), Some(0));
-        assert_eq!(selected, Some(1));
+    fn test_sort_key_cycle() {
+        assert_eq!(SortKey::Cpu.next(), SortKey::Mem);
+        assert_eq!(SortKey::Mem.next(), SortKey::Pid);
+        assert_eq!(SortKey::Pid.next(), SortKey::Name);
+        assert_eq!(SortKey::Name.next(), SortKey::Cpu);
     }
 
     #[test]
-    fn test_resolve_selected_index_falls_back_when_pid_missing() {
-        let rows = vec![proc_row(1, "a", 1.0, 100), proc_row(2, "b", 2.0, 200)];
-        let selected = resolve_selected_index_local(&rows, Some(Pid::from_u32(9)), Some(8));
-        assert_eq!(selected, Some(1));
+    fn test_sort_key_labels() {
+        assert_eq!(SortKey::Cpu.label(), "CPU");
+        assert_eq!(SortKey::Mem.label(), "MEM");
+        assert_eq!(SortKey::Pid.label(), "PID");
+        assert_eq!(SortKey::Name.label(), "NAME");
     }
 
     #[test]
-    fn test_resolve_selected_index_empty_rows() {
-        let rows: Vec<ProcRow> = Vec::new();
-        let selected = resolve_selected_index_local(&rows, Some(Pid::from_u32(9)), Some(0));
-        assert_eq!(selected, None);
-    }
-
-    #[test]
-    fn test_sort_rows_by_cpu_desc() {
-        let app = App {
-            sys: System::new(),
-            rows: Vec::new(),
-            table_state: TableState::default(),
-            sort_key: SortKey::Cpu,
-            sort_desc: true,
-            last_refresh: Instant::now(),
-            cpu_usage: 0.0,
-            mem_used_mb: 0,
-            mem_total_mb: 0,
-            should_quit: false,
-            filter_text: None,
-            filter_input: String::new(),
-            filter_active: false,
-            paused: false,
-            refresh_interval_ms: 1000,
-            show_details: false,
-            cpu_hist: VecDeque::new(),
-            mem_hist: VecDeque::new(),
-            hist_capacity: 120,
-        };
+    fn test_sort_process_list_cpu_desc() {
         let mut rows = vec![
             proc_row(1, "zeta", 10.0, 100),
             proc_row(2, "alpha", 10.0, 200),
             proc_row(3, "beta", 2.0, 300),
         ];
-        app.sort_rows(&mut rows);
-        let pids: Vec<u32> = rows.iter().map(|row| row.pid.as_u32()).collect();
-        assert_eq!(pids, vec![2, 1, 3]);
+
+        sort_process_list(&mut rows, SortKey::Cpu, true, None, 0);
+
+        let pids: Vec<u32> = rows.iter().map(|r| r.pid).collect();
+        assert_eq!(pids, vec![2, 1, 3]); // alpha (10,200) > zeta (10,100) > beta (2,300)
     }
 
     #[test]
-    fn test_sort_rows_by_name_ascending() {
-        let app = App {
-            sys: System::new(),
-            rows: Vec::new(),
-            table_state: TableState::default(),
-            sort_key: SortKey::Name,
-            sort_desc: false,
-            last_refresh: Instant::now(),
-            cpu_usage: 0.0,
-            mem_used_mb: 0,
-            mem_total_mb: 0,
-            should_quit: false,
-            filter_text: None,
-            filter_input: String::new(),
-            filter_active: false,
-            paused: false,
-            refresh_interval_ms: 1000,
-            show_details: false,
-            cpu_hist: VecDeque::new(),
-            mem_hist: VecDeque::new(),
-            hist_capacity: 120,
-        };
+    fn test_sort_process_list_name_asc() {
         let mut rows = vec![
             proc_row(1, "zeta", 10.0, 100),
             proc_row(2, "Alpha", 10.0, 200),
             proc_row(3, "beta", 2.0, 300),
         ];
-        app.sort_rows(&mut rows);
-        let names: Vec<&str> = rows.iter().map(|row| row.name.as_str()).collect();
+
+        sort_process_list(&mut rows, SortKey::Name, false, None, 0);
+
+        let names: Vec<&str> = rows.iter().map(|r| r.name.as_str()).collect();
         assert_eq!(names, vec!["Alpha", "beta", "zeta"]);
+    }
+
+    #[test]
+    fn test_filter_processes() {
+        let procs = vec![
+            proc_row(1, "bash", 1.0, 100),
+            proc_row(2, "Python", 2.0, 200),
+            proc_row(3, "nginx", 3.0, 300),
+        ];
+
+        let filtered = filter_processes(&procs, "py");
+        assert_eq!(filtered.len(), 1);
+        assert_eq!(filtered[0].pid, 2);
     }
 
     #[test]
@@ -954,9 +830,11 @@ mod tests {
     }
 
     #[test]
-    fn test_color_for_ratio_thresholds() {
-        assert_eq!(color_for_ratio(0.49), Color::LightGreen);
-        assert_eq!(color_for_ratio(0.5), Color::Yellow);
-        assert_eq!(color_for_ratio(0.8), Color::Red);
+    fn test_usage_color_thresholds() {
+        use htop_shared::render::usage_color;
+
+        assert_eq!(usage_color(0.49), Color::LightGreen);
+        assert_eq!(usage_color(0.5), Color::Yellow);
+        assert_eq!(usage_color(0.8), Color::Red);
     }
 }

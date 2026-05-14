@@ -19,12 +19,11 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph, Row, Table, TableState, Wrap},
     Terminal,
 };
-use sysinfo::{CpuExt, Pid, ProcessExt, System, SystemExt};
+use sysinfo::{CpuExt, Pid, PidExt, ProcessExt, System, SystemExt};
 
 // Import from shared library
-use htop_shared::{
-    compare_proc_rows, filter_processes, resolve_selected_index, selected_pid, ProcRow, SortKey,
-};
+use htop_shared::render::render_proc_row;
+use htop_shared::{filter_processes, sort_process_list, ProcRow, SortKey};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum InputMode {
@@ -47,7 +46,7 @@ struct App {
 impl App {
     fn new() -> Self {
         Self {
-            sort: SortKey::Cpu,
+            sort: SortKey::default(),
             desc: true,
             selected: 0,
             processes: Vec::new(),
@@ -59,27 +58,19 @@ impl App {
         }
     }
 
-    fn cycle_sort(&mut self) {
-        self.sort = match self.sort {
-            SortKey::Cpu => SortKey::Mem,
-            SortKey::Mem => SortKey::Pid,
-            SortKey::Pid => SortKey::Name,
-            SortKey::Name => SortKey::Cpu,
-        };
+    fn anchor_pid(&self) -> Option<u32> {
+        self.processes.get(self.selected).map(|p| p.pid)
     }
 
-    fn sort_processes(&mut self) {
-        let preferred_pid = selected_pid(&self.processes, self.selected);
-        self.sort_processes_with_selection(preferred_pid, self.selected);
-    }
-
-    fn sort_processes_with_selection(&mut self, preferred_pid: Option<Pid>, fallback_index: usize) {
-        self.processes
-            .sort_by(|a, b| compare_proc_rows(a, b, self.sort));
-        if self.desc {
-            self.processes.reverse();
-        }
-        self.selected = resolve_selected_index(&self.processes, preferred_pid, fallback_index);
+    fn apply_sort(&mut self) {
+        let anchor = self.anchor_pid();
+        self.selected = sort_process_list(
+            &mut self.processes,
+            self.sort,
+            self.desc,
+            anchor,
+            self.selected,
+        );
     }
 }
 
@@ -156,12 +147,12 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<(), 
                             app.selected = app.processes.len().saturating_sub(1);
                         }
                         KeyCode::Char('s') => {
-                            app.cycle_sort();
-                            app.sort_processes();
+                            app.sort = app.sort.next();
+                            app.apply_sort();
                         }
                         KeyCode::Char('r') => {
                             app.desc = !app.desc;
-                            app.sort_processes();
+                            app.apply_sort();
                         }
                         KeyCode::Char('/') => {
                             app.mode = InputMode::Searching;
@@ -174,7 +165,8 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<(), 
                         }
                         KeyCode::Char('k') => {
                             if let Some(row) = app.processes.get(app.selected) {
-                                if let Some(process) = sys.process(row.pid) {
+                                let pid = Pid::from_u32(row.pid);
+                                if let Some(process) = sys.process(pid) {
                                     if process.kill() {
                                         app.status = format!("killed PID {}", row.pid);
                                         do_refresh(&mut sys, &mut app);
@@ -239,24 +231,23 @@ fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<(), 
 fn collect_processes(sys: &System) -> Vec<ProcRow> {
     sys.processes()
         .iter()
-        .map(|(pid, p)| ProcRow {
-            pid: *pid,
-            name: p.name().to_string(),
-            cpu: p.cpu_usage(),
-            mem_mb: p.memory() / 1024, // KiB -> MiB
+        .map(|(pid, p)| {
+            ProcRow::new(
+                pid.as_u32(),
+                p.name(),
+                p.cpu_usage(),
+                p.memory() / 1024, // KiB -> MiB
+            )
         })
         .collect()
 }
 
 fn rebuild_processes(sys: &System, app: &mut App) {
-    let preferred_pid = selected_pid(&app.processes, app.selected);
-    let fallback_index = app.selected;
-    let mut processes = collect_processes(sys);
-    if !app.filter.is_empty() {
-        processes = filter_processes(processes, &app.filter);
-    }
-    app.processes = processes;
-    app.sort_processes_with_selection(preferred_pid, fallback_index);
+    let anchor = app.anchor_pid();
+    let fallback = app.selected;
+    let raw = collect_processes(sys);
+    app.processes = filter_processes(&raw, &app.filter);
+    app.selected = sort_process_list(&mut app.processes, app.sort, app.desc, anchor, fallback);
 }
 
 fn do_refresh(sys: &mut System, app: &mut App) {
@@ -307,12 +298,7 @@ fn draw_summary(frame: &mut ratatui::Frame<'_>, area: Rect, sys: &System, app: &
     let used_gb = (used as f64) / (1024.0 * 1024.0);
     let total_gb = (total as f64) / (1024.0 * 1024.0);
 
-    let sort = match app.sort {
-        SortKey::Cpu => "CPU",
-        SortKey::Mem => "MEM",
-        SortKey::Pid => "PID",
-        SortKey::Name => "NAME",
-    };
+    let sort = app.sort.label();
     let order = if app.desc { "desc" } else { "asc" };
     let mode = match app.mode {
         InputMode::Normal => "NORMAL",
@@ -369,7 +355,7 @@ fn draw_process_table(
             .add_modifier(Modifier::BOLD),
     );
 
-    let rows = app.processes.iter().map(|p| p.as_row());
+    let rows = app.processes.iter().map(render_proc_row);
 
     let widths = [
         Constraint::Length(8),
@@ -403,7 +389,7 @@ fn draw_process_details(frame: &mut ratatui::Frame<'_>, area: Rect, sys: &System
             return;
         }
     };
-    let pid = row.pid;
+    let pid = Pid::from_u32(row.pid);
     let (name, status, cpu, mem_mb, exe, cmd) = if let Some(p) = sys.process(pid) {
         let name = p.name().to_string();
         let status = format!("{:?}", p.status());
@@ -449,59 +435,96 @@ fn draw_process_details(frame: &mut ratatui::Frame<'_>, area: Rect, sys: &System
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sysinfo::PidExt;
-
-    fn proc_row(pid: u32, name: &str, cpu: f32, mem_mb: u64) -> ProcRow {
-        ProcRow {
-            pid: Pid::from_u32(pid),
-            name: name.to_string(),
-            cpu,
-            mem_mb,
-        }
-    }
 
     #[test]
-    fn test_cycle_sort_rotates_keys() {
-        let mut app = App::new();
-        app.cycle_sort();
-        assert!(matches!(app.sort, SortKey::Mem));
-        app.cycle_sort();
-        assert!(matches!(app.sort, SortKey::Pid));
-        app.cycle_sort();
-        assert!(matches!(app.sort, SortKey::Name));
-        app.cycle_sort();
+    fn test_app_new_defaults() {
+        let app = App::new();
         assert!(matches!(app.sort, SortKey::Cpu));
+        assert!(app.desc);
+        assert_eq!(app.selected, 0);
+        assert!(app.processes.is_empty());
+        assert!(app.filter.is_empty());
     }
 
     #[test]
-    fn test_sort_processes_cpu_with_tiebreakers() {
+    fn test_sort_key_cycle() {
+        assert_eq!(SortKey::Cpu.next(), SortKey::Mem);
+        assert_eq!(SortKey::Mem.next(), SortKey::Pid);
+        assert_eq!(SortKey::Pid.next(), SortKey::Name);
+        assert_eq!(SortKey::Name.next(), SortKey::Cpu);
+    }
+
+    #[test]
+    fn test_sort_key_labels() {
+        assert_eq!(SortKey::Cpu.label(), "CPU");
+        assert_eq!(SortKey::Mem.label(), "MEM");
+        assert_eq!(SortKey::Pid.label(), "PID");
+        assert_eq!(SortKey::Name.label(), "NAME");
+    }
+
+    #[test]
+    fn test_anchor_pid() {
+        let mut app = App::new();
+        assert!(app.anchor_pid().is_none());
+
+        app.processes = vec![
+            ProcRow::new(100, "a", 1.0, 10),
+            ProcRow::new(200, "b", 2.0, 20),
+        ];
+        app.selected = 0;
+        assert_eq!(app.anchor_pid(), Some(100));
+
+        app.selected = 1;
+        assert_eq!(app.anchor_pid(), Some(200));
+    }
+
+    #[test]
+    fn test_apply_sort_basic() {
         let mut app = App::new();
         app.processes = vec![
-            proc_row(30, "zeta", 10.0, 100),
-            proc_row(10, "alpha", 10.0, 200),
-            proc_row(20, "beta", 5.0, 400),
+            ProcRow::new(30, "zeta", 10.0, 100),
+            ProcRow::new(10, "alpha", 10.0, 200),
+            ProcRow::new(20, "beta", 5.0, 400),
         ];
         app.sort = SortKey::Cpu;
         app.desc = true;
-        app.sort_processes();
+        app.apply_sort();
 
-        let pids: Vec<u32> = app.processes.iter().map(|row| row.pid.as_u32()).collect();
-        assert_eq!(pids, vec![10, 30, 20]);
+        // CPU desc with MEM tiebreaker: alpha(10.0,200) > zeta(10.0,100) > beta(5.0,400)
+        assert_eq!(app.processes[0].pid, 10);
+        assert_eq!(app.processes[1].pid, 30);
+        assert_eq!(app.processes[2].pid, 20);
     }
 
     #[test]
-    fn test_sort_processes_pid_ascending() {
+    fn test_apply_sort_preserves_anchor() {
         let mut app = App::new();
         app.processes = vec![
-            proc_row(30, "zeta", 10.0, 100),
-            proc_row(10, "alpha", 10.0, 200),
-            proc_row(20, "beta", 5.0, 400),
+            ProcRow::new(1, "a", 1.0, 100),
+            ProcRow::new(2, "b", 5.0, 200),
         ];
-        app.sort = SortKey::Pid;
-        app.desc = false;
-        app.sort_processes();
+        app.selected = 0; // PID 1
 
-        let pids: Vec<u32> = app.processes.iter().map(|row| row.pid.as_u32()).collect();
-        assert_eq!(pids, vec![10, 20, 30]);
+        app.sort = SortKey::Cpu;
+        app.desc = true;
+        app.apply_sort();
+
+        // After sort, PID 2 is first (higher CPU)
+        // But anchor should keep selection on PID 1
+        assert_eq!(app.selected, 1);
+        assert_eq!(app.processes[app.selected].pid, 1);
+    }
+
+    #[test]
+    fn test_filter_processes() {
+        let procs = vec![
+            ProcRow::new(1, "bash", 1.0, 100),
+            ProcRow::new(2, "Python", 2.0, 200),
+            ProcRow::new(3, "nginx", 3.0, 300),
+        ];
+
+        let filtered = filter_processes(&procs, "py");
+        assert_eq!(filtered.len(), 1);
+        assert_eq!(filtered[0].pid, 2);
     }
 }
