@@ -1,17 +1,27 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
+import llmstxt from 'vitepress-plugin-llms'
 import { generateSitemap as sitemap } from 'sitemap-ts'
 import { resolve } from 'path'
 
+// 动态 base path - 支持 GitHub Pages 部署
+const rawBase = process.env.VITEPRESS_BASE
+const base = rawBase
+  ? rawBase.startsWith('/')
+    ? rawBase.endsWith('/') ? rawBase : `${rawBase}/`
+    : `/${rawBase}/`
+  : '/build-your-own-tools/'
+
 // https://vitepress.dev/reference/site-config
-export default defineConfig({
+export default withMermaid(defineConfig({
   // ===========================================================================
   // 基础配置
   // ===========================================================================
   title: 'Build Your Own Tools',
-  description: '用 Rust / Go 手写常用命令行工具的学习仓库',
+  description: '系统编程技术白皮书 - Rust × Go 双实现架构对比研究',
 
-  // 基础路径 - 必须匹配 GitHub Pages 路径
-  base: '/build-your-own-tools/',
+  // 基础路径
+  base,
 
   // 干净的 URL（无 .html）
   cleanUrls: true,
@@ -42,7 +52,7 @@ export default defineConfig({
       lang: 'zh-CN',
       title: 'Build Your Own Tools',
       titleTemplate: ':title | BYOT',
-      description: '用 Rust / Go 手写常用命令行工具的学习仓库，包含 dos2unix、gzip、htop 的实现',
+      description: '系统编程技术白皮书 - Rust × Go 双实现架构对比研究',
       themeConfig: {
         siteTitle: 'BYOT',
         outline: {
@@ -77,41 +87,103 @@ export default defineConfig({
         socialLinks: [
           { icon: 'github', link: 'https://github.com/LessUp/build-your-own-tools' },
         ],
-        // 中文导航
+        // 本地搜索
+        search: {
+          provider: 'local',
+          options: {
+            locales: {
+              root: {
+                translations: {
+                  button: { buttonText: '搜索文档', buttonAriaLabel: '搜索文档' },
+                  modal: {
+                    noResultsText: '无法找到相关结果',
+                    resetButtonTitle: '清除查询条件',
+                    footer: { selectText: '选择', navigateText: '切换', closeText: '关闭' }
+                  }
+                }
+              }
+            }
+          }
+        },
+        // 中文导航 - 技术白皮书风格
         nav: [
+          { text: '白皮书', link: '/whitepaper/', activeMatch: '/whitepaper/' },
+          { text: '技术规范', link: '/specs/', activeMatch: '/specs/' },
+          { text: '对比研究', link: '/comparison/', activeMatch: '/comparison/' },
           {
-            text: '指南',
-            items: [
-              { text: '🚀 快速开始', link: '/docs/setup/GETTING-STARTED' },
-              { text: '🏗️ 架构指南', link: '/docs/architecture/ARCHITECTURE' },
-              { text: '🔍 语言对比', link: '/docs/tutorials/COMPARISON' },
-            ]
-          },
-          {
-            text: '子项目',
+            text: '工具实现',
             items: [
               { text: '🔧 dos2unix', link: '/dos2unix/' },
               { text: '📦 gzip', link: '/gzip/' },
               { text: '📊 htop', link: '/htop/' },
             ]
           },
+          { text: '工程实践', link: '/engineering/', activeMatch: '/engineering/' },
           {
             text: '更多',
             items: [
               { text: '📋 变更日志', link: '/CHANGELOG' },
+              { text: '🚀 快速开始', link: '/docs/setup/GETTING-STARTED' },
               { text: '⭐ GitHub', link: 'https://github.com/LessUp/build-your-own-tools' },
             ]
           }
         ],
         // 中文侧边栏
         sidebar: {
+          '/whitepaper/': [
+            {
+              text: '白皮书',
+              items: [
+                { text: '概览', link: '/whitepaper/' },
+                { text: '项目概览', link: '/whitepaper/overview' },
+                { text: '系统架构', link: '/whitepaper/architecture' },
+                { text: '设计决策', link: '/whitepaper/decisions' },
+                { text: '性能分析', link: '/whitepaper/performance' },
+              ]
+            },
+          ],
+          '/specs/': [
+            {
+              text: '技术规范',
+              items: [
+                { text: '概览', link: '/specs/' },
+                { text: 'OpenSpec 工作流', link: '/specs/openspec-workflow' },
+                { text: 'dos2unix 规范', link: '/specs/dos2unix' },
+                { text: 'gzip 规范', link: '/specs/gzip' },
+                { text: 'htop 规范', link: '/specs/htop' },
+              ]
+            },
+          ],
+          '/comparison/': [
+            {
+              text: '对比研究',
+              items: [
+                { text: '概览', link: '/comparison/' },
+                { text: '内存模型', link: '/comparison/memory' },
+                { text: '并发模型', link: '/comparison/concurrency' },
+                { text: '错误处理', link: '/comparison/errors' },
+                { text: '性能基准', link: '/comparison/benchmarks' },
+              ]
+            },
+          ],
+          '/engineering/': [
+            {
+              text: '工程实践',
+              items: [
+                { text: '概览', link: '/engineering/' },
+                { text: 'AI 协作指南', link: '/engineering/ai-collaboration' },
+                { text: 'CI/CD 设计', link: '/engineering/cicd' },
+                { text: '文档策略', link: '/engineering/documentation' },
+              ]
+            },
+          ],
           '/docs/': [
             {
-              text: '📚 文档',
+              text: '快速参考',
               items: [
-                { text: '🚀 快速开始', link: '/docs/setup/GETTING-STARTED' },
-                { text: '🏗️ 架构指南', link: '/docs/architecture/ARCHITECTURE' },
-                { text: '🔍 语言对比', link: '/docs/tutorials/COMPARISON' },
+                { text: '快速开始', link: '/docs/setup/GETTING-STARTED' },
+                { text: '架构指南', link: '/docs/architecture/ARCHITECTURE' },
+                { text: '语言对比', link: '/docs/tutorials/COMPARISON' },
               ]
             },
           ],
@@ -141,7 +213,7 @@ export default defineConfig({
       lang: 'en',
       title: 'Build Your Own Tools',
       titleTemplate: ':title | BYOT',
-      description: 'Learn system programming by re-implementing common CLI tools in Rust and Go',
+      description: 'Technical Whitepaper - Rust × Go Dual-Implementation Architecture Comparison',
       link: '/en/',
       themeConfig: {
         siteTitle: 'BYOT',
@@ -177,41 +249,89 @@ export default defineConfig({
         socialLinks: [
           { icon: 'github', link: 'https://github.com/LessUp/build-your-own-tools' },
         ],
-        // 英文导航
+        // 本地搜索
+        search: {
+          provider: 'local',
+        },
+        // 英文导航 - Technical Whitepaper style
         nav: [
+          { text: 'Whitepaper', link: '/en/whitepaper/', activeMatch: '/en/whitepaper/' },
+          { text: 'Specifications', link: '/en/specs/', activeMatch: '/en/specs/' },
+          { text: 'Comparison', link: '/en/comparison/', activeMatch: '/en/comparison/' },
           {
-            text: 'Guide',
-            items: [
-              { text: '🚀 Getting Started', link: '/en/docs/setup/GETTING-STARTED' },
-              { text: '🏗️ Architecture', link: '/en/docs/architecture/ARCHITECTURE' },
-              { text: '🔍 Comparison', link: '/en/docs/tutorials/COMPARISON' },
-            ]
-          },
-          {
-            text: 'Projects',
+            text: 'Implementations',
             items: [
               { text: '🔧 dos2unix', link: '/en/dos2unix/' },
               { text: '📦 gzip', link: '/en/gzip/' },
               { text: '📊 htop', link: '/en/htop/' },
             ]
           },
+          { text: 'Engineering', link: '/en/engineering/', activeMatch: '/en/engineering/' },
           {
             text: 'More',
             items: [
               { text: '📋 Changelog', link: '/en/CHANGELOG' },
+              { text: '🚀 Getting Started', link: '/en/docs/setup/GETTING-STARTED' },
               { text: '⭐ GitHub', link: 'https://github.com/LessUp/build-your-own-tools' },
             ]
           }
         ],
         // 英文侧边栏
         sidebar: {
+          '/en/whitepaper/': [
+            {
+              text: 'Whitepaper',
+              items: [
+                { text: 'Overview', link: '/en/whitepaper/' },
+                { text: 'Project Overview', link: '/en/whitepaper/overview' },
+                { text: 'System Architecture', link: '/en/whitepaper/architecture' },
+                { text: 'Design Decisions', link: '/en/whitepaper/decisions' },
+                { text: 'Performance', link: '/en/whitepaper/performance' },
+              ]
+            },
+          ],
+          '/en/specs/': [
+            {
+              text: 'Specifications',
+              items: [
+                { text: 'Overview', link: '/en/specs/' },
+                { text: 'OpenSpec Workflow', link: '/en/specs/openspec-workflow' },
+                { text: 'dos2unix Spec', link: '/en/specs/dos2unix' },
+                { text: 'gzip Spec', link: '/en/specs/gzip' },
+                { text: 'htop Spec', link: '/en/specs/htop' },
+              ]
+            },
+          ],
+          '/en/comparison/': [
+            {
+              text: 'Comparison',
+              items: [
+                { text: 'Overview', link: '/en/comparison/' },
+                { text: 'Memory Model', link: '/en/comparison/memory' },
+                { text: 'Concurrency', link: '/en/comparison/concurrency' },
+                { text: 'Error Handling', link: '/en/comparison/errors' },
+                { text: 'Benchmarks', link: '/en/comparison/benchmarks' },
+              ]
+            },
+          ],
+          '/en/engineering/': [
+            {
+              text: 'Engineering',
+              items: [
+                { text: 'Overview', link: '/en/engineering/' },
+                { text: 'AI Collaboration', link: '/en/engineering/ai-collaboration' },
+                { text: 'CI/CD Design', link: '/en/engineering/cicd' },
+                { text: 'Documentation Strategy', link: '/en/engineering/documentation' },
+              ]
+            },
+          ],
           '/en/docs/': [
             {
-              text: '📚 Documentation',
+              text: 'Quick Reference',
               items: [
-                { text: '🚀 Getting Started', link: '/en/docs/setup/GETTING-STARTED' },
-                { text: '🏗️ Architecture', link: '/en/docs/architecture/ARCHITECTURE' },
-                { text: '🔍 Comparison', link: '/en/docs/tutorials/COMPARISON' },
+                { text: 'Getting Started', link: '/en/docs/setup/GETTING-STARTED' },
+                { text: 'Architecture', link: '/en/docs/architecture/ARCHITECTURE' },
+                { text: 'Comparison', link: '/en/docs/tutorials/COMPARISON' },
               ]
             },
           ],
@@ -287,6 +407,13 @@ export default defineConfig({
   },
 
   // ===========================================================================
+  // Mermaid 配置
+  // ===========================================================================
+  mermaid: {
+    // 参考: https://mermaid.js.org/config/theming.html
+  },
+
+  // ===========================================================================
   // 构建钩子 - 生成 Sitemap
   // ===========================================================================
   buildEnd: async (siteConfig) => {
@@ -304,6 +431,7 @@ export default defineConfig({
   // Vite 配置
   // ===========================================================================
   vite: {
+    plugins: [llmstxt()],
     build: {
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
@@ -348,4 +476,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))

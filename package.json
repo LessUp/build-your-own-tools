@@ -26,9 +26,14 @@
     "prettier": "^3.2.5",
     "sitemap-ts": "^1.6.0",
     "typescript": "^5.4.0",
-    "vitepress": "^1.1.0",
+    "vitepress": "^1.5.0",
     "vue": "^3.4.21",
     "vue-tsc": "^2.0.29"
+  },
+  "dependencies": {
+    "mermaid": "^11.12.2",
+    "vitepress-plugin-llms": "^1.10.0",
+    "vitepress-plugin-mermaid": "^2.0.17"
   },
   "optionalDependencies": {
     "@lhci/cli": "^0.15.1"

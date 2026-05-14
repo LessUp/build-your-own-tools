@@ -17,14 +17,5 @@
   ],
   "categories": ["developer tools", "education", "programming"],
   "lang": "zh-CN",
-  "dir": "ltr",
-  "screenshots": [
-    {
-      "src": "/build-your-own-tools/screenshot.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Build Your Own Tools Documentation"
-    }
-  ]
+  "dir": "ltr"
 }

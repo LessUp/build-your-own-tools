@@ -1,69 +1,85 @@
 ---
 layout: home
-
 hero:
   name: Build Your Own Tools
-  text: 用 Rust / Go 学系统编程
-  tagline: 三个真实 CLI 工具，覆盖流处理、压缩、终端 UI 与跨平台实现。
+  text: 系统编程技术白皮书
+  tagline: Rust × Go 双实现架构对比研究
   image:
     src: /logo.svg
     alt: Build Your Own Tools
   actions:
     - theme: brand
-      text: 探索文档
-      link: /docs/setup/GETTING-STARTED
+      text: 查看架构全景
+      link: /whitepaper/architecture
     - theme: alt
-      text: 查看语言对比
-      link: /docs/tutorials/COMPARISON
+      text: 技术规范
+      link: /specs/
     - theme: alt
       text: GitHub
       link: https://github.com/LessUp/build-your-own-tools
 
 features:
-  - icon: "🔧"
-    title: dos2unix
-    details: 从最小但不简单的流处理工具开始，学习文件 I/O、缓冲区边界和换行符细节。
-  - icon: "📦"
-    title: gzip
-    details: 用 Rust 和 Go 并排实现压缩/解压 CLI，直观看到两种语言的设计差异。
-  - icon: "📊"
-    title: htop
-    details: 通过跨平台终端 UI 掌握进程指标、刷新模型和系统 API 集成。
-  - icon: "🔀"
-    title: Rust × Go
-    details: 同一个问题，两种实现路径，适合做设计对比而不只是语法对比。
-  - icon: "🧭"
-    title: 渐进式学习路径
-    details: 从单一流处理程序一路走到跨平台 TUI，复杂度上升自然、可跟踪。
-  - icon: "📚"
-    title: 工程化可见
-    details: OpenSpec、CI、发布和文档站点都保留在仓库里，便于学习完整项目形态。
+  - icon: 🏗️
+    title: 架构对比
+    details: 同一问题的 Rust 与 Go 实现，深入分析两种语言的设计哲学差异
+  - icon: 📋
+    title: OpenSpec 规范
+    details: Gherkin 风格的需求规格，从需求到实现的完整追踪
+  - icon: 📊
+    title: 性能分析
+    details: 跨语言性能基准，内存模型与并发模型对比研究
+  - icon: 🤖
+    title: AI 协作
+    details: AGENTS.md + CLAUDE.md 治理层设计，AI 辅助工程实践
 ---
 
-## 为什么值得看
+## 技术白皮书概览
 
-| 你想看什么 | 这里能看到什么 |
-| --- | --- |
-| Rust 与 Go 的实际取舍 | 同一工具的双实现、双工作区、双风格对比 |
-| CLI 工具怎么从零实现 | 文件处理、压缩管线、终端界面、系统指标采集 |
-| 一个学习仓库如何工程化 | OpenSpec、Makefile、GitHub Actions、VitePress |
+本项目是一个**系统编程学习仓库**，通过重新实现三个真实的 CLI 工具（dos2unix、gzip、htop）来展示 Rust 和 Go 两种语言的系统编程风格差异。
 
-## 工具地图
+### 核心特性
 
-| 工具 | 语言 | 学习重点 | 推荐顺序 |
-| --- | --- | --- | --- |
-| `dos2unix` | Rust | 流式 I/O、换行符处理 | 1 |
-| `gzip` | Rust + Go | 压缩流程、CLI 设计、错误处理 | 2 |
-| `htop` | Rust + Go | TUI、系统 API、跨平台架构 | 3 |
+```mermaid
+graph LR
+    A[Monorepo] --> B[dos2unix]
+    A --> C[gzip]
+    A --> D[htop]
+    
+    B --> B1[Rust]
+    C --> C1[Rust]
+    C --> C2[Go]
+    D --> D1[Rust]
+    D --> D2[Go]
+    
+    style A fill:#f59e0b,color:#fff
+    style B fill:#3b82f6,color:#fff
+    style C fill:#3b82f6,color:#fff
+    style D fill:#3b82f6,color:#fff
+```
 
-## 下一步看什么
+### 学习路径
+
+| 阶段 | 工具 | 学习重点 | 复杂度 |
+|------|------|----------|--------|
+| 1 | dos2unix | 流式 I/O、换行符处理 | ⭐ |
+| 2 | gzip | 压缩流程、CLI 设计、错误处理 | ⭐⭐ |
+| 3 | htop | TUI、系统 API、跨平台架构 | ⭐⭐⭐ |
+
+### 技术栈
+
+- **Rust**: 系统编程、内存安全、零成本抽象
+- **Go**: 并发模型、简洁语法、快速开发
+- **VitePress**: 文档站点、Mermaid 图表、LLM 友好输出
+- **OpenSpec**: 需求规范、变更管理、Gherkin 场景
+
+## 快速导航
 
 <div class="quick-links">
 
-[快速开始](/docs/setup/GETTING-STARTED){.VPButton}
-[架构说明](/docs/architecture/ARCHITECTURE){.VPButton .alt}
-[语言对比](/docs/tutorials/COMPARISON){.VPButton .alt}
-[项目仓库](https://github.com/LessUp/build-your-own-tools){.VPButton .alt}
+[白皮书](/whitepaper/){.VPButton}
+[技术规范](/specs/){.VPButton .alt}
+[对比研究](/comparison/){.VPButton .alt}
+[工程实践](/engineering/){.VPButton .alt}
 
 </div>
 

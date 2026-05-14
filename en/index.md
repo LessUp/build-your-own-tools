@@ -1,69 +1,85 @@
 ---
 layout: home
-
 hero:
   name: Build Your Own Tools
-  text: Learn systems programming in Rust and Go
-  tagline: Three real CLI tools covering streaming I/O, compression, terminal UI, and cross-platform implementation trade-offs.
+  text: Technical Whitepaper
+  tagline: Rust × Go Dual-Implementation Architecture Comparison Study
   image:
     src: /logo.svg
     alt: Build Your Own Tools
   actions:
     - theme: brand
-      text: Explore the docs
-      link: /en/docs/setup/GETTING-STARTED
+      text: View Architecture
+      link: /en/whitepaper/architecture
     - theme: alt
-      text: Compare Rust and Go
-      link: /en/docs/tutorials/COMPARISON
+      text: Specifications
+      link: /en/specs/
     - theme: alt
       text: GitHub
       link: https://github.com/LessUp/build-your-own-tools
 
 features:
-  - icon: "🔧"
-    title: dos2unix
-    details: Start with a small but real streaming utility and learn file I/O, buffer boundaries, and newline handling.
-  - icon: "📦"
-    title: gzip
-    details: Compare Rust and Go on the same compression/decompression problem and see how the trade-offs surface in code.
-  - icon: "📊"
-    title: htop
-    details: Learn terminal UI architecture, process metrics, refresh models, and platform-specific system APIs.
-  - icon: "🔀"
-    title: Rust × Go
-    details: This repo is built for implementation comparison, not just syntax comparison.
-  - icon: "🧭"
-    title: Progressive learning path
-    details: Move from simple stream processing to a cross-platform TUI without jumping across unrelated examples.
-  - icon: "📚"
-    title: Full project surface
-    details: Specs, CI, releases, and the docs site stay in the repo so you can study the engineering around the code too.
+  - icon: 🏗️
+    title: Architecture Comparison
+    details: Same problem solved in Rust and Go, revealing deep design philosophy differences between the languages
+  - icon: 📋
+    title: OpenSpec Specifications
+    details: Gherkin-style requirements with complete traceability from spec to implementation
+  - icon: 📊
+    title: Performance Analysis
+    details: Cross-language benchmarks comparing memory models, concurrency patterns, and runtime characteristics
+  - icon: 🤖
+    title: AI Collaboration
+    details: AGENTS.md + CLAUDE.md governance layer design for AI-assisted engineering workflows
 ---
 
-## Why explore this repository
+## Technical Whitepaper Overview
 
-| If you want to study... | You will find... |
-| --- | --- |
-| real Rust vs Go trade-offs | dual implementations, dual workspaces, and side-by-side design choices |
-| how CLI tools are built | file processing, compression pipelines, terminal interfaces, and system metrics |
-| how a learning repo is engineered | OpenSpec, Makefile automation, GitHub Actions, and VitePress |
+This project is a **systems programming learning repository** that re-implements three real CLI tools (dos2unix, gzip, htop) to demonstrate the differences between Rust and Go system programming styles.
 
-## Tool map
+### Core Features
 
-| Tool | Languages | Main learning focus | Suggested order |
-| --- | --- | --- | --- |
-| `dos2unix` | Rust | streaming I/O and newline handling | 1 |
-| `gzip` | Rust + Go | compression pipelines, CLI design, error handling | 2 |
-| `htop` | Rust + Go | terminal UI, system APIs, cross-platform architecture | 3 |
+```mermaid
+graph LR
+    A[Monorepo] --> B[dos2unix]
+    A --> C[gzip]
+    A --> D[htop]
+    
+    B --> B1[Rust]
+    C --> C1[Rust]
+    C --> C2[Go]
+    D --> D1[Rust]
+    D --> D2[Go]
+    
+    style A fill:#f59e0b,color:#fff
+    style B fill:#3b82f6,color:#fff
+    style C fill:#3b82f6,color:#fff
+    style D fill:#3b82f6,color:#fff
+```
 
-## Where to go next
+### Learning Path
+
+| Stage | Tool | Learning Focus | Complexity |
+|-------|------|----------------|------------|
+| 1 | dos2unix | Streaming I/O, newline handling | ⭐ |
+| 2 | gzip | Compression pipelines, CLI design, error handling | ⭐⭐ |
+| 3 | htop | TUI, system APIs, cross-platform architecture | ⭐⭐⭐ |
+
+### Tech Stack
+
+- **Rust**: Systems programming, memory safety, zero-cost abstractions
+- **Go**: Concurrency model, simple syntax, rapid development
+- **VitePress**: Documentation site, Mermaid diagrams, LLM-friendly output
+- **OpenSpec**: Requirements specs, change management, Gherkin scenarios
+
+## Quick Navigation
 
 <div class="quick-links">
 
-[Getting Started](/en/docs/setup/GETTING-STARTED){.VPButton}
-[Architecture](/en/docs/architecture/ARCHITECTURE){.VPButton .alt}
-[Comparison](/en/docs/tutorials/COMPARISON){.VPButton .alt}
-[GitHub Repository](https://github.com/LessUp/build-your-own-tools){.VPButton .alt}
+[Whitepaper](/en/whitepaper/){.VPButton}
+[Specifications](/en/specs/){.VPButton .alt}
+[Comparison](/en/comparison/){.VPButton .alt}
+[Engineering](/en/engineering/){.VPButton .alt}
 
 </div>
 
