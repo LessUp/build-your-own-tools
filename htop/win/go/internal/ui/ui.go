@@ -12,7 +12,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
-	"htop-win-go/internal/metrics"
+	"htop-shared-go/metrics"
 )
 
 // UI 是简单的 TUI 壳，显示系统指标和进程表

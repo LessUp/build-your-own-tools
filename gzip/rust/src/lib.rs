@@ -1,6 +1,10 @@
-use std::fs::{self, File};
+//! gzip 压缩/解压库
+//!
+//! 提供核心压缩和解压功能，不包含 CLI 相关逻辑。
+
+use std::fs::File;
 use std::io::{self, Read, Write};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::time::UNIX_EPOCH;
 
 use flate2::read::GzDecoder;
@@ -82,58 +86,10 @@ pub fn decompress_reader_to_writer<R: Read, W: Write>(reader: R, mut writer: W) 
     writer.flush()
 }
 
-/// 生成压缩输出文件的默认路径：`<input>.gz`。
-pub fn default_output_for_compress(input: &Path) -> PathBuf {
-    let mut p = input.to_path_buf();
-    let new_name = match input.file_name().and_then(|n| n.to_str()) {
-        Some(s) => format!("{}.gz", s),
-        None => format!("{}.gz", input.display()),
-    };
-    p.set_file_name(new_name);
-    p
-}
-
-/// 生成解压输出文件的默认路径：移除 `.gz` 或追加 `.out`。
-pub fn default_output_for_decompress(input: &Path) -> PathBuf {
-    let mut p = input.to_path_buf();
-    let new_name = match input.file_name().and_then(|n| n.to_str()) {
-        Some(s) => s
-            .strip_suffix(".gz")
-            .map(|x| x.to_string())
-            .unwrap_or_else(|| format!("{}.out", s)),
-        None => format!("{}.out", input.display()),
-    };
-    p.set_file_name(new_name);
-    p
-}
-
-/// 确保输出路径可写；若父目录不存在则创建。
-pub fn ensure_writable(output: &Path, force: bool) -> io::Result<()> {
-    if output.exists() && !force {
-        return Err(io::Error::new(
-            io::ErrorKind::AlreadyExists,
-            format!("输出文件已存在: {} (使用 -f 覆盖)", output.display()),
-        ));
-    }
-    if let Some(parent) = output.parent() {
-        if !parent.as_os_str().is_empty() {
-            fs::create_dir_all(parent)?;
-        }
-    }
-    Ok(())
-}
-
-/// 判断两个路径是否完全相同（尝试规范化后比较）。
-pub fn same_path(a: &Path, b: &Path) -> bool {
-    match (fs::canonicalize(a), fs::canonicalize(b)) {
-        (Ok(ca), Ok(cb)) => ca == cb,
-        _ => a == b,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
 
     #[test]
     fn test_sanitize_level_clamp() {
@@ -141,33 +97,6 @@ mod tests {
         assert_eq!(sanitize_level(6), 6);
         assert_eq!(sanitize_level(9), 9);
         assert_eq!(sanitize_level(100), 9);
-    }
-
-    #[test]
-    fn test_default_output_for_compress() {
-        let p = PathBuf::from("hello.txt");
-        assert_eq!(
-            default_output_for_compress(&p),
-            PathBuf::from("hello.txt.gz")
-        );
-    }
-
-    #[test]
-    fn test_default_output_for_decompress_gz() {
-        let p = PathBuf::from("hello.txt.gz");
-        assert_eq!(
-            default_output_for_decompress(&p),
-            PathBuf::from("hello.txt")
-        );
-    }
-
-    #[test]
-    fn test_default_output_for_decompress_no_gz() {
-        let p = PathBuf::from("hello.bin");
-        assert_eq!(
-            default_output_for_decompress(&p),
-            PathBuf::from("hello.bin.out")
-        );
     }
 
     #[test]
@@ -188,22 +117,6 @@ mod tests {
         assert_eq!(fs::read(&decompressed).unwrap(), data);
 
         // cleanup
-        let _ = fs::remove_dir_all(&dir);
-    }
-
-    #[test]
-    fn test_ensure_writable_no_force() {
-        let dir = std::env::temp_dir().join("rgzip_test_writable");
-        let _ = fs::create_dir_all(&dir);
-        let existing = dir.join("existing.txt");
-        fs::write(&existing, b"x").unwrap();
-
-        let err = ensure_writable(&existing, false);
-        assert!(err.is_err());
-
-        let ok = ensure_writable(&existing, true);
-        assert!(ok.is_ok());
-
         let _ = fs::remove_dir_all(&dir);
     }
 

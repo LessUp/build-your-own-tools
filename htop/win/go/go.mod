@@ -3,6 +3,7 @@ module htop-win-go
 go 1.24.0
 
 require (
+	htop-shared-go v0.0.0
 	github.com/gdamore/tcell/v2 v2.13.9
 	github.com/rivo/tview v0.42.0
 	github.com/shirou/gopsutil/v3 v3.24.5
@@ -23,3 +24,5 @@ require (
 	golang.org/x/term v0.37.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 )
+
+replace htop-shared-go => ../../shared/go

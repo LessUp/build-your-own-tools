@@ -8,10 +8,8 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
-// SystemStats holds CPU and memory usage snapshot
-// All percentages are 0-100
-// Memory sizes are in bytes
-// Keep it simple for UI rendering
+// SystemStats holds CPU and memory usage snapshot.
+// All percentages are 0-100. Memory sizes are in bytes.
 type SystemStats struct {
 	CPUPercent     float64
 	MemTotal       uint64
@@ -19,8 +17,7 @@ type SystemStats struct {
 	MemUsedPercent float64
 }
 
-// GetSystemStats collects system CPU and memory usage
-// Note: cpu.Percent(0, false) returns immediately, does not block for 1s
+// GetSystemStats collects system CPU and memory usage.
 func GetSystemStats(ctx context.Context) (SystemStats, error) {
 	var st SystemStats
 

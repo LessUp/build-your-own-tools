@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"htop-go/internal/metrics"
 	"htop-go/internal/ui"
+	"htop-shared-go/metrics"
 )
 
 func main() {

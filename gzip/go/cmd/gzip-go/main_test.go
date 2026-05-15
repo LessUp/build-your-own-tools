@@ -7,23 +7,26 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	gziplib "gzip-go/internal/gzip"
+	"gzip-go/internal/walk"
 )
 
 func TestGzipStream(t *testing.T) {
 	input := []byte("hello gzip stream test")
 	var buf bytes.Buffer
 
-	if err := gzipStream(bytes.NewReader(input), &buf, gzip.DefaultCompression, "test"); err != nil {
-		t.Fatalf("gzipStream failed: %v", err)
+	if err := gziplib.GzipStream(bytes.NewReader(input), &buf, gzip.DefaultCompression, "test"); err != nil {
+		t.Fatalf("GzipStream failed: %v", err)
 	}
 	if buf.Len() == 0 {
-		t.Fatal("gzipStream produced empty output")
+		t.Fatal("GzipStream produced empty output")
 	}
 
 	// decompress and verify
 	var out bytes.Buffer
-	if err := gunzipStream(&buf, &out); err != nil {
-		t.Fatalf("gunzipStream failed: %v", err)
+	if err := gziplib.GunzipStream(&buf, &out); err != nil {
+		t.Fatalf("GunzipStream failed: %v", err)
 	}
 	if !bytes.Equal(out.Bytes(), input) {
 		t.Fatalf("roundtrip mismatch: got %q, want %q", out.Bytes(), input)
@@ -40,8 +43,8 @@ func TestGzipFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := gzipFile(src, dest, gzip.DefaultCompression); err != nil {
-		t.Fatalf("gzipFile failed: %v", err)
+	if err := gziplib.GzipFile(src, dest, gzip.DefaultCompression); err != nil {
+		t.Fatalf("GzipFile failed: %v", err)
 	}
 
 	// verify compressed file exists
@@ -61,12 +64,12 @@ func TestGunzipFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := gzipFile(src, gz, gzip.DefaultCompression); err != nil {
+	if err := gziplib.GzipFile(src, gz, gzip.DefaultCompression); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := gunzipFile(gz, out); err != nil {
-		t.Fatalf("gunzipFile failed: %v", err)
+	if err := gziplib.GunzipFile(gz, out); err != nil {
+		t.Fatalf("GunzipFile failed: %v", err)
 	}
 
 	result, err := os.ReadFile(out)
@@ -82,9 +85,9 @@ func TestCollectInputs_SkipDir(t *testing.T) {
 	dir := t.TempDir()
 
 	// without recursive, directories should be skipped
-	inputs, err := collectInputs([]string{dir}, false, false)
+	inputs, err := walk.CollectInputs([]string{dir}, false, false)
 	if err != nil {
-		t.Fatalf("collectInputs failed: %v", err)
+		t.Fatalf("CollectInputs failed: %v", err)
 	}
 	if len(inputs) != 0 {
 		t.Fatalf("expected 0 inputs for non-recursive dir, got %d", len(inputs))
@@ -99,9 +102,9 @@ func TestCollectInputs_SkipGz(t *testing.T) {
 	}
 
 	// compress mode should skip .gz files
-	inputs, err := collectInputs([]string{gz}, false, false)
+	inputs, err := walk.CollectInputs([]string{gz}, false, false)
 	if err != nil {
-		t.Fatalf("collectInputs failed: %v", err)
+		t.Fatalf("CollectInputs failed: %v", err)
 	}
 	if len(inputs) != 0 {
 		t.Fatalf("expected .gz to be skipped in compress mode, got %d", len(inputs))
@@ -117,8 +120,8 @@ func TestGzipToWriter(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	if err := gzipToWriter(src, &buf, gzip.DefaultCompression); err != nil {
-		t.Fatalf("gzipToWriter failed: %v", err)
+	if err := gziplib.GzipToWriter(src, &buf, gzip.DefaultCompression); err != nil {
+		t.Fatalf("GzipToWriter failed: %v", err)
 	}
 
 	// decompress

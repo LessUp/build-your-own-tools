@@ -6,5 +6,9 @@ license.workspace = true
 description = "Rust 实现的轻量 dos2unix：将 CRLF 转换为 LF，支持 stdin/stdout 与就地转换。"
 readme = "README.md"
 
+[lib]
+name = "dos2unix"
+path = "src/lib.rs"
+
 [dependencies]
 anyhow.workspace = true

@@ -12,7 +12,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
-	"htop-go/internal/metrics"
+	"htop-shared-go/metrics"
 )
 
 // UI is a simple TUI shell displaying system metrics and process table

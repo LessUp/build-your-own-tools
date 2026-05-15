@@ -1,3 +1,4 @@
+// Package metrics provides process metrics collection for htop.
 package metrics
 
 import (
@@ -10,8 +11,7 @@ import (
 	"github.com/shirou/gopsutil/v3/process"
 )
 
-// ProcessInfo represents a single process snapshot
-// KISS: only show the most common fields
+// ProcessInfo represents a single process snapshot.
 type ProcessInfo struct {
 	PID        int32
 	Name       string
@@ -36,13 +36,8 @@ type Collector struct {
 func NewCollector() *Collector {
 	return &Collector{
 		cache:  make(map[int32]cpuCache),
-		numCPU: getNumCPU(),
+		numCPU: runtime.NumCPU(),
 	}
-}
-
-// getNumCPU is a separate function for easier testing/replacement
-func getNumCPU() int {
-	return runtime.NumCPU()
 }
 
 // Snapshot scans current processes and calculates CPU%, memory, etc.
@@ -63,7 +58,6 @@ func (c *Collector) Snapshot(ctx context.Context) ([]ProcessInfo, error) {
 
 		name, err := p.NameWithContext(ctx)
 		if err != nil || name == "" {
-			// Skip processes with name errors (permission or transient)
 			continue
 		}
 
@@ -92,7 +86,6 @@ func (c *Collector) Snapshot(ctx context.Context) ([]ProcessInfo, error) {
 					}
 				}
 			}
-			// update cache
 			c.cache[pid] = cpuCache{Total: curTotal, TS: now}
 		}
 
@@ -111,7 +104,7 @@ func (c *Collector) Snapshot(ctx context.Context) ([]ProcessInfo, error) {
 	// Sort: default by CPU% descending
 	sort.Slice(infos, func(i, j int) bool { return infos[i].CPUPercent > infos[j].CPUPercent })
 
-	// Clean up cache for exited processes to avoid unbounded growth
+	// Clean up cache for exited processes
 	alive := make(map[int32]struct{}, len(infos))
 	for _, info := range infos {
 		alive[info.PID] = struct{}{}

@@ -6,5 +6,4 @@ license.workspace = true
 description = "Shared library for htop implementations"
 
 [dependencies]
-ratatui.workspace = true
 sysinfo.workspace = true

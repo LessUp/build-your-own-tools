@@ -20,8 +20,18 @@ use ratatui::{Frame, Terminal};
 use sysinfo::{CpuExt, Pid, PidExt, ProcessExt, System, SystemExt};
 
 // Import from shared library
-use htop_shared::render::usage_color;
 use htop_shared::{filter_processes, sort_process_list, ProcRow, SortKey};
+
+/// Color for usage ratio (0.0 to 1.0).
+fn usage_color(ratio: f32) -> Color {
+    if ratio < 0.5 {
+        Color::LightGreen
+    } else if ratio < 0.8 {
+        Color::Yellow
+    } else {
+        Color::Red
+    }
+}
 
 struct App {
     sys: System,
@@ -831,8 +841,6 @@ mod tests {
 
     #[test]
     fn test_usage_color_thresholds() {
-        use htop_shared::render::usage_color;
-
         assert_eq!(usage_color(0.49), Color::LightGreen);
         assert_eq!(usage_color(0.5), Color::Yellow);
         assert_eq!(usage_color(0.8), Color::Red);

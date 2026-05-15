@@ -22,8 +22,17 @@ use ratatui::{
 use sysinfo::{CpuExt, Pid, PidExt, ProcessExt, System, SystemExt};
 
 // Import from shared library
-use htop_shared::render::render_proc_row;
 use htop_shared::{filter_processes, sort_process_list, ProcRow, SortKey};
+
+/// Render a ProcRow as a ratatui table row.
+fn render_proc_row(row: &ProcRow) -> Row<'_> {
+    Row::new(vec![
+        ratatui::widgets::Cell::from(row.pid.to_string()),
+        ratatui::widgets::Cell::from(row.name.as_str()),
+        ratatui::widgets::Cell::from(format!("{:.1}", row.cpu)),
+        ratatui::widgets::Cell::from(format!("{:.1}", row.mem_mb)),
+    ])
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum InputMode {

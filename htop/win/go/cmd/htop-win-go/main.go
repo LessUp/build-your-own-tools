@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"htop-win-go/internal/metrics"
+	"htop-shared-go/metrics"
 	"htop-win-go/internal/ui"
 )
 

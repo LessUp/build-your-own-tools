@@ -3,12 +3,11 @@ use std::io;
 use std::path::PathBuf;
 
 use clap::Parser;
-use rgzip::default_output_for_compress;
-use rgzip::default_output_for_decompress;
-use rgzip::ensure_writable;
-use rgzip::same_path;
+use cli::{default_output_for_compress, default_output_for_decompress, ensure_writable, same_path};
 use rgzip::{compress_path, compress_reader_to_path, compress_reader_to_writer, sanitize_level};
 use rgzip::{decompress_path, decompress_reader_to_path, decompress_reader_to_writer};
+
+mod cli;
 
 #[derive(Parser, Debug)]
 #[command(name = "rgzip", version, about = "A simple gzip CLI written in Rust")]
