@@ -15,7 +15,7 @@ license = "MIT OR Apache-2.0"
 [workspace.dependencies]
 crossterm = "0.29"
 ratatui = { version = "0.30", default-features = false, features = ["crossterm"] }
-sysinfo = "0.29"
+sysinfo = "0.39"
 clap = { version = "4.6", features = ["derive"] }
 flate2 = "1.0"
 anyhow = "1.0"
