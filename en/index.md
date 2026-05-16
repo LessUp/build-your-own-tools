@@ -9,11 +9,11 @@ hero:
     alt: Build Your Own Tools
   actions:
     - theme: brand
+      text: Start Learning
+      link: /en/academy/
+    - theme: alt
       text: View Architecture
       link: /en/whitepaper/architecture
-    - theme: alt
-      text: Specifications
-      link: /en/specs/
     - theme: alt
       text: GitHub
       link: https://github.com/LessUp/build-your-own-tools
@@ -51,10 +51,11 @@ graph LR
     D --> D1[Rust]
     D --> D2[Go]
     
-    style A fill:#f59e0b,color:#fff
-    style B fill:#3b82f6,color:#fff
-    style C fill:#3b82f6,color:#fff
-    style D fill:#3b82f6,color:#fff
+    classDef primary fill:#f59e0b,color:#fff,stroke:#d97706,stroke-width:2px
+    classDef secondary fill:#3b82f6,color:#fff,stroke:#2563eb,stroke-width:2px
+    
+    class A primary
+    class B,C,D secondary
 ```
 
 ### Learning Path
@@ -76,10 +77,10 @@ graph LR
 
 <div class="quick-links">
 
-[Whitepaper](/en/whitepaper/){.VPButton}
+[Academy](/en/academy/){.VPButton}
+[Whitepaper](/en/whitepaper/){.VPButton .alt}
 [Specifications](/en/specs/){.VPButton .alt}
 [Comparison](/en/comparison/){.VPButton .alt}
-[Engineering](/en/engineering/){.VPButton .alt}
 
 </div>
 

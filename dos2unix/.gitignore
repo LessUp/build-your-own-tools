@@ -1,7 +1,0 @@
-# Rust / Cargo
-target/
-
-# IDE / 编辑器
-.vscode/
-.idea/
-*.log

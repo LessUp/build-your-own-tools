@@ -1,1 +1,1 @@
-../../../../htop/unix/go/README.md
+README.md

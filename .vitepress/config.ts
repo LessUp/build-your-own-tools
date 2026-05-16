@@ -32,15 +32,25 @@ export default withMermaid(defineConfig({
   // 忽略失效链接
   ignoreDeadLinks: true,
 
-  // 排除内部规范与工具说明，避免被站点当作公开页面构建
+  // srcDir 为根目录
+  srcDir: '.',
+
+  // srcExclude 排除不需要构建的文件
   srcExclude: [
     'AGENTS.md',
     'CLAUDE.md',
-    'release-notes.md',
+    'CHANGELOG.md',
+    'README.md',
+    'README.zh-CN.md',
     'openspec/**',
     '.opencode/**',
     '.claude/**',
     '.github/**',
+    '.backup-old-docs/**',
+    'dos2unix/src/**',
+    'gzip/**/src/**',
+    'htop/**/src/**',
+    'target/**',
   ],
 
   // ===========================================================================
@@ -69,7 +79,7 @@ export default withMermaid(defineConfig({
         lightModeSwitchTitle: '切换到浅色模式',
         darkModeSwitchTitle: '切换到深色模式',
         editLink: {
-          pattern: 'https://github.com/LessUp/build-your-own-tools/edit/master/:path',
+          pattern: 'https://github.com/LessUp/build-your-own-tools/edit/master/docs/:path',
           text: '在 GitHub 上编辑此页'
         },
         lastUpdated: {
@@ -83,11 +93,9 @@ export default withMermaid(defineConfig({
           message: '基于 <a href="https://github.com/LessUp/build-your-own-tools/blob/master/LICENSE">MIT OR Apache-2.0</a> 许可发布',
           copyright: `Copyright © 2025-${new Date().getFullYear()} <a href="https://github.com/LessUp">LessUp</a>`
         },
-        // 社交链接
         socialLinks: [
           { icon: 'github', link: 'https://github.com/LessUp/build-your-own-tools' },
         ],
-        // 本地搜索
         search: {
           provider: 'local',
           options: {
@@ -107,102 +115,96 @@ export default withMermaid(defineConfig({
         },
         // 中文导航 - 技术白皮书风格
         nav: [
-          { text: '白皮书', link: '/whitepaper/', activeMatch: '/whitepaper/' },
-          { text: '技术规范', link: '/specs/', activeMatch: '/specs/' },
-          { text: '对比研究', link: '/comparison/', activeMatch: '/comparison/' },
+          { text: '学院', link: '/docs/academy/', activeMatch: '/docs/academy/' },
+          { text: '白皮书', link: '/docs/whitepaper/', activeMatch: '/docs/whitepaper/' },
+          { text: '技术规范', link: '/docs/specs/', activeMatch: '/docs/specs/' },
+          { text: '对比研究', link: '/docs/comparison/', activeMatch: '/docs/comparison/' },
           {
             text: '工具实现',
             items: [
-              { text: '🔧 dos2unix', link: '/dos2unix/' },
-              { text: '📦 gzip', link: '/gzip/' },
-              { text: '📊 htop', link: '/htop/' },
+              { text: '🔧 dos2unix', link: '/docs/dos2unix/' },
+              { text: '📦 gzip', link: '/docs/gzip/' },
+              { text: '📊 htop', link: '/docs/htop/' },
             ]
           },
-          { text: '工程实践', link: '/engineering/', activeMatch: '/engineering/' },
-          {
-            text: '更多',
-            items: [
-              { text: '📋 变更日志', link: '/CHANGELOG' },
-              { text: '🚀 快速开始', link: '/docs/setup/GETTING-STARTED' },
-              { text: '⭐ GitHub', link: 'https://github.com/LessUp/build-your-own-tools' },
-            ]
-          }
+          { text: '参考文献', link: '/docs/reference/', activeMatch: '/docs/reference/' },
         ],
         // 中文侧边栏
         sidebar: {
-          '/whitepaper/': [
+          '/docs/academy/': [
+            {
+              text: '学院',
+              items: [
+                { text: '概览', link: '/docs/academy/' },
+                { text: '模块一：dos2unix', link: '/docs/academy/module-01-dos2unix/' },
+                { text: '模块二：gzip', link: '/docs/academy/module-02-gzip/' },
+                { text: '模块三：htop', link: '/docs/academy/module-03-htop/' },
+              ]
+            },
+          ],
+          '/docs/whitepaper/': [
             {
               text: '白皮书',
               items: [
-                { text: '概览', link: '/whitepaper/' },
-                { text: '项目概览', link: '/whitepaper/overview' },
-                { text: '系统架构', link: '/whitepaper/architecture' },
-                { text: '设计决策', link: '/whitepaper/decisions' },
-                { text: '性能分析', link: '/whitepaper/performance' },
+                { text: '概览', link: '/docs/whitepaper/' },
+                { text: '项目概览', link: '/docs/whitepaper/overview' },
+                { text: '系统架构', link: '/docs/whitepaper/architecture' },
+                { text: '设计决策', link: '/docs/whitepaper/decisions' },
+                { text: '性能分析', link: '/docs/whitepaper/performance' },
               ]
             },
           ],
-          '/specs/': [
+          '/docs/specs/': [
             {
               text: '技术规范',
               items: [
-                { text: '概览', link: '/specs/' },
-                { text: 'OpenSpec 工作流', link: '/specs/openspec-workflow' },
-                { text: 'dos2unix 规范', link: '/specs/dos2unix' },
-                { text: 'gzip 规范', link: '/specs/gzip' },
-                { text: 'htop 规范', link: '/specs/htop' },
+                { text: '概览', link: '/docs/specs/' },
+                { text: 'OpenSpec 工作流', link: '/docs/specs/openspec-workflow' },
+                { text: 'dos2unix 规范', link: '/docs/specs/dos2unix' },
+                { text: 'gzip 规范', link: '/docs/specs/gzip' },
+                { text: 'htop 规范', link: '/docs/specs/htop' },
               ]
             },
           ],
-          '/comparison/': [
+          '/docs/comparison/': [
             {
               text: '对比研究',
               items: [
-                { text: '概览', link: '/comparison/' },
-                { text: '内存模型', link: '/comparison/memory' },
-                { text: '并发模型', link: '/comparison/concurrency' },
-                { text: '错误处理', link: '/comparison/errors' },
-                { text: '性能基准', link: '/comparison/benchmarks' },
+                { text: '概览', link: '/docs/comparison/' },
+                { text: '内存模型', link: '/docs/comparison/memory' },
+                { text: '并发模型', link: '/docs/comparison/concurrency' },
+                { text: '错误处理', link: '/docs/comparison/errors' },
+                { text: '性能基准', link: '/docs/comparison/benchmarks' },
               ]
             },
           ],
-          '/engineering/': [
+          '/docs/reference/': [
             {
-              text: '工程实践',
+              text: '参考文献',
               items: [
-                { text: '概览', link: '/engineering/' },
-                { text: 'AI 协作指南', link: '/engineering/ai-collaboration' },
-                { text: 'CI/CD 设计', link: '/engineering/cicd' },
-                { text: '文档策略', link: '/engineering/documentation' },
+                { text: '概览', link: '/docs/reference/' },
+                { text: '学术论文', link: '/docs/reference/papers' },
+                { text: '相关项目', link: '/docs/reference/projects' },
+                { text: '演进思考', link: '/docs/reference/evolution' },
               ]
             },
           ],
-          '/docs/': [
-            {
-              text: '快速参考',
-              items: [
-                { text: '快速开始', link: '/docs/setup/GETTING-STARTED' },
-                { text: '架构指南', link: '/docs/architecture/ARCHITECTURE' },
-                { text: '语言对比', link: '/docs/tutorials/COMPARISON' },
-              ]
-            },
-          ],
-          '/dos2unix/': [
-            { text: '概览', link: '/dos2unix/' },
+          '/docs/dos2unix/': [
+            { text: '概览', link: '/docs/dos2unix/' },
             { text: '← 返回首页', link: '/' },
           ],
-          '/gzip/': [
-            { text: '概览', link: '/gzip/' },
-            { text: 'Go 实现', link: '/gzip/go/' },
-            { text: 'Rust 实现', link: '/gzip/rust/' },
+          '/docs/gzip/': [
+            { text: '概览', link: '/docs/gzip/' },
+            { text: 'Go 实现', link: '/docs/gzip/go/' },
+            { text: 'Rust 实现', link: '/docs/gzip/rust/' },
             { text: '← 返回首页', link: '/' },
           ],
-          '/htop/': [
-            { text: '概览', link: '/htop/' },
-            { text: 'Unix Rust', link: '/htop/unix/rust/' },
-            { text: 'Unix Go', link: '/htop/unix/go/' },
-            { text: 'Windows Rust', link: '/htop/win/rust/' },
-            { text: 'Windows Go', link: '/htop/win/go/' },
+          '/docs/htop/': [
+            { text: '概览', link: '/docs/htop/' },
+            { text: 'Unix Rust', link: '/docs/htop/unix/rust/' },
+            { text: 'Unix Go', link: '/docs/htop/unix/go/' },
+            { text: 'Windows Rust', link: '/docs/htop/win/rust/' },
+            { text: 'Windows Go', link: '/docs/htop/win/go/' },
             { text: '← 返回首页', link: '/' },
           ],
         },
@@ -231,7 +233,7 @@ export default withMermaid(defineConfig({
         lightModeSwitchTitle: 'Switch to light theme',
         darkModeSwitchTitle: 'Switch to dark theme',
         editLink: {
-          pattern: 'https://github.com/LessUp/build-your-own-tools/edit/master/:path',
+          pattern: 'https://github.com/LessUp/build-your-own-tools/edit/master/docs/:path',
           text: 'Edit this page on GitHub'
         },
         lastUpdated: {
@@ -245,16 +247,15 @@ export default withMermaid(defineConfig({
           message: 'Released under the <a href="https://github.com/LessUp/build-your-own-tools/blob/master/LICENSE">MIT OR Apache-2.0</a> License',
           copyright: `Copyright © 2025-${new Date().getFullYear()} <a href="https://github.com/LessUp">LessUp</a>`
         },
-        // 社交链接
         socialLinks: [
           { icon: 'github', link: 'https://github.com/LessUp/build-your-own-tools' },
         ],
-        // 本地搜索
         search: {
           provider: 'local',
         },
-        // 英文导航 - Technical Whitepaper style
+        // 英文导航
         nav: [
+          { text: 'Academy', link: '/en/academy/', activeMatch: '/en/academy/' },
           { text: 'Whitepaper', link: '/en/whitepaper/', activeMatch: '/en/whitepaper/' },
           { text: 'Specifications', link: '/en/specs/', activeMatch: '/en/specs/' },
           { text: 'Comparison', link: '/en/comparison/', activeMatch: '/en/comparison/' },
@@ -266,18 +267,21 @@ export default withMermaid(defineConfig({
               { text: '📊 htop', link: '/en/htop/' },
             ]
           },
-          { text: 'Engineering', link: '/en/engineering/', activeMatch: '/en/engineering/' },
-          {
-            text: 'More',
-            items: [
-              { text: '📋 Changelog', link: '/en/CHANGELOG' },
-              { text: '🚀 Getting Started', link: '/en/docs/setup/GETTING-STARTED' },
-              { text: '⭐ GitHub', link: 'https://github.com/LessUp/build-your-own-tools' },
-            ]
-          }
+          { text: 'References', link: '/en/reference/', activeMatch: '/en/reference/' },
         ],
         // 英文侧边栏
         sidebar: {
+          '/en/academy/': [
+            {
+              text: 'Academy',
+              items: [
+                { text: 'Overview', link: '/en/academy/' },
+                { text: 'Module 1: dos2unix', link: '/en/academy/module-01-dos2unix/' },
+                { text: 'Module 2: gzip', link: '/en/academy/module-02-gzip/' },
+                { text: 'Module 3: htop', link: '/en/academy/module-03-htop/' },
+              ]
+            },
+          ],
           '/en/whitepaper/': [
             {
               text: 'Whitepaper',
@@ -314,36 +318,26 @@ export default withMermaid(defineConfig({
               ]
             },
           ],
-          '/en/engineering/': [
+          '/en/reference/': [
             {
-              text: 'Engineering',
+              text: 'References',
               items: [
-                { text: 'Overview', link: '/en/engineering/' },
-                { text: 'AI Collaboration', link: '/en/engineering/ai-collaboration' },
-                { text: 'CI/CD Design', link: '/en/engineering/cicd' },
-                { text: 'Documentation Strategy', link: '/en/engineering/documentation' },
-              ]
-            },
-          ],
-          '/en/docs/': [
-            {
-              text: 'Quick Reference',
-              items: [
-                { text: 'Getting Started', link: '/en/docs/setup/GETTING-STARTED' },
-                { text: 'Architecture', link: '/en/docs/architecture/ARCHITECTURE' },
-                { text: 'Comparison', link: '/en/docs/tutorials/COMPARISON' },
+                { text: 'Overview', link: '/en/reference/' },
+                { text: 'Papers', link: '/en/reference/papers' },
+                { text: 'Projects', link: '/en/reference/projects' },
+                { text: 'Evolution', link: '/en/reference/evolution' },
               ]
             },
           ],
           '/en/dos2unix/': [
             { text: 'Overview', link: '/en/dos2unix/' },
-            { text: '← Back to Home', link: '/en/' },
+            { text: '← Back to Home', link: '/' },
           ],
           '/en/gzip/': [
             { text: 'Overview', link: '/en/gzip/' },
             { text: 'Go Implementation', link: '/en/gzip/go/' },
             { text: 'Rust Implementation', link: '/en/gzip/rust/' },
-            { text: '← Back to Home', link: '/en/' },
+            { text: '← Back to Home', link: '/' },
           ],
           '/en/htop/': [
             { text: 'Overview', link: '/en/htop/' },
@@ -351,7 +345,7 @@ export default withMermaid(defineConfig({
             { text: 'Unix Go', link: '/en/htop/unix/go/' },
             { text: 'Windows Rust', link: '/en/htop/win/rust/' },
             { text: 'Windows Go', link: '/en/htop/win/go/' },
-            { text: '← Back to Home', link: '/en/' },
+            { text: '← Back to Home', link: '/' },
           ],
         },
       }

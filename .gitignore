@@ -59,3 +59,12 @@ _bmad-output/
 
 # Open Memory Collection (OMC)
 .omc/
+
+# 文档构建输出
+.vitepress/dist/
+.vitepress/cache/
+
+# 临时文件
+*.tmp
+*.swp
+.DS_Store
