@@ -1,0 +1,962 @@
+use std::collections::VecDeque;
+use std::io;
+use std::time::{Duration, Instant};
+
+use anyhow::Result;
+use crossterm::event::{self, Event, KeyCode, KeyEvent};
+use crossterm::execute;
+use crossterm::terminal::{
+    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
+};
+use ratatui::backend::CrosstermBackend;
+use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::style::{Color, Modifier, Style};
+use ratatui::symbols::bar::NINE_LEVELS;
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{
+    Block, BorderType, Borders, Clear, Gauge, Row, Sparkline, Table, TableState,
+};
+use ratatui::{Frame, Terminal};
+use sysinfo::{CpuExt, Pid, PidExt, ProcessExt, System, SystemExt};
+
+// Import from shared library (note: we extend SortKey with Name locally)
+use htop_shared::{color_for_ratio, ProcRow, SortKey as BaseSortKey};
+
+/// Extended sort key including Name (Windows-specific feature)
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum SortKey {
+    Cpu,
+    Mem,
+    Pid,
+    Name,
+}
+
+impl From<SortKey> for BaseSortKey {
+    fn from(key: SortKey) -> Self {
+        match key {
+            SortKey::Cpu => BaseSortKey::Cpu,
+            SortKey::Mem => BaseSortKey::Mem,
+            SortKey::Pid => BaseSortKey::Pid,
+            SortKey::Name => BaseSortKey::Cpu, // Fallback
+        }
+    }
+}
+
+fn compare_proc_rows_local(a: &ProcRow, b: &ProcRow, sort_key: SortKey) -> std::cmp::Ordering {
+    match sort_key {
+        SortKey::Cpu => a
+            .cpu
+            .partial_cmp(&b.cpu)
+            .unwrap_or(std::cmp::Ordering::Equal)
+            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
+            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32()))
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
+        SortKey::Mem => a
+            .mem_mb
+            .cmp(&b.mem_mb)
+            .then_with(|| {
+                a.cpu
+                    .partial_cmp(&b.cpu)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32()))
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
+        SortKey::Pid => a
+            .pid
+            .as_u32()
+            .cmp(&b.pid.as_u32())
+            .then_with(|| {
+                a.cpu
+                    .partial_cmp(&b.cpu)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase())),
+        SortKey::Name => a
+            .name
+            .to_lowercase()
+            .cmp(&b.name.to_lowercase())
+            .then_with(|| {
+                a.cpu
+                    .partial_cmp(&b.cpu)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .then_with(|| a.mem_mb.cmp(&b.mem_mb))
+            .then_with(|| a.pid.as_u32().cmp(&b.pid.as_u32())),
+    }
+}
+
+struct App {
+    sys: System,
+    rows: Vec<ProcRow>,
+    table_state: TableState,
+    sort_key: SortKey,
+    sort_desc: bool,
+    last_refresh: Instant,
+    cpu_usage: f32,
+    mem_used_mb: u64,
+    mem_total_mb: u64,
+    should_quit: bool,
+    // 过滤与输入
+    filter_text: Option<String>,
+    filter_input: String,
+    filter_active: bool,
+    // 刷新控制
+    paused: bool,
+    refresh_interval_ms: u64,
+    // 详情弹窗
+    show_details: bool,
+    // 历史曲线（0-100 百分比）
+    cpu_hist: VecDeque<u64>,
+    mem_hist: VecDeque<u64>,
+    hist_capacity: usize,
+}
+
+fn clamp_refresh_interval(current_ms: u64, delta_ms: i64) -> u64 {
+    let next = current_ms as i64 + delta_ms;
+    next.clamp(200, 5000) as u64
+}
+
+fn push_capped(history: &mut VecDeque<u64>, value: u64, capacity: usize) {
+    history.push_back(value);
+    while history.len() > capacity {
+        history.pop_front();
+    }
+}
+
+fn filter_matches(row: &ProcRow, query: &str) -> bool {
+    let q = query.to_lowercase();
+    row.name.to_lowercase().contains(&q) || row.pid.as_u32().to_string().contains(&q)
+}
+
+fn current_selected_pid(rows: &[ProcRow], selected: Option<usize>) -> Option<Pid> {
+    selected
+        .and_then(|index| rows.get(index))
+        .map(|row| row.pid)
+}
+
+fn resolve_selected_index_local(
+    rows: &[ProcRow],
+    preferred_pid: Option<Pid>,
+    fallback_index: Option<usize>,
+) -> Option<usize> {
+    if rows.is_empty() {
+        return None;
+    }
+    if let Some(pid) = preferred_pid {
+        if let Some(index) = rows.iter().position(|row| row.pid == pid) {
+            return Some(index);
+        }
+    }
+    Some(fallback_index.unwrap_or(0).min(rows.len() - 1))
+}
+
+impl App {
+    fn new() -> Self {
+        let mut sys = System::new_all();
+        // 第一次刷新，注意进程 CPU 使用率需要至少两次刷新才准确
+        sys.refresh_all();
+        let mut app = Self {
+            sys,
+            rows: Vec::new(),
+            table_state: TableState::default(),
+            sort_key: SortKey::Cpu,
+            sort_desc: true,
+            last_refresh: Instant::now(),
+            cpu_usage: 0.0,
+            mem_used_mb: 0,
+            mem_total_mb: 0,
+            should_quit: false,
+            filter_text: None,
+            filter_input: String::new(),
+            filter_active: false,
+            paused: false,
+            refresh_interval_ms: 1000,
+            show_details: false,
+            cpu_hist: VecDeque::with_capacity(120),
+            mem_hist: VecDeque::with_capacity(120),
+            hist_capacity: 120,
+        };
+        // 立刻刷新一次数据用于首帧显示
+        app.refresh_data();
+        // 选中第一行（如果有）
+        if !app.rows.is_empty() {
+            app.table_state.select(Some(0));
+        }
+        app
+    }
+
+    fn on_tick(&mut self) {
+        if self.paused {
+            return;
+        }
+        // 按可调间隔刷新
+        if self.last_refresh.elapsed() >= Duration::from_millis(self.refresh_interval_ms) {
+            self.refresh_data();
+        }
+    }
+
+    fn refresh_data(&mut self) {
+        let selected = self.table_state.selected();
+        let preferred_pid = current_selected_pid(&self.rows, selected);
+
+        // 为了更准确的 CPU% 需要连续两次刷新间隔一段时间，但我们采用周期性刷新简化
+        self.sys.refresh_cpu();
+        self.sys.refresh_memory();
+        self.sys.refresh_processes();
+
+        self.cpu_usage = self.sys.global_cpu_info().cpu_usage();
+        self.mem_total_mb = self.sys.total_memory() / 1024;
+        self.mem_used_mb = self.sys.used_memory() / 1024;
+
+        // 维护历史（百分比 0-100）
+        let cpu_pct = self.cpu_usage.clamp(0.0, 100.0) as u64;
+        let mem_pct = self
+            .mem_used_mb
+            .checked_mul(100)
+            .and_then(|v| v.checked_div(self.mem_total_mb))
+            .unwrap_or(0)
+            .min(100);
+        push_capped(&mut self.cpu_hist, cpu_pct, self.hist_capacity);
+        push_capped(&mut self.mem_hist, mem_pct, self.hist_capacity);
+
+        let mut new_rows: Vec<ProcRow> = self
+            .sys
+            .processes()
+            .values()
+            .map(|p| ProcRow {
+                pid: p.pid(),
+                name: p.name().to_string(),
+                cpu: p.cpu_usage(),
+                mem_mb: p.memory() / 1024, // KiB -> MiB
+            })
+            .collect();
+
+        if let Some(ft) = &self.filter_text {
+            new_rows.retain(|r| filter_matches(r, ft));
+        }
+        self.sort_rows(&mut new_rows);
+        self.rows = new_rows;
+        self.table_state.select(resolve_selected_index_local(
+            &self.rows,
+            preferred_pid,
+            selected,
+        ));
+
+        self.last_refresh = Instant::now();
+    }
+
+    fn sort_rows(&self, rows: &mut [ProcRow]) {
+        rows.sort_by(|a, b| compare_proc_rows_local(a, b, self.sort_key));
+        if self.sort_desc {
+            rows.reverse();
+        }
+    }
+
+    fn cycle_sort_key(&mut self) {
+        self.sort_key = match self.sort_key {
+            SortKey::Cpu => SortKey::Mem,
+            SortKey::Mem => SortKey::Pid,
+            SortKey::Pid => SortKey::Name,
+            SortKey::Name => SortKey::Cpu,
+        };
+        self.refresh_data();
+    }
+
+    fn toggle_sort_order(&mut self) {
+        self.sort_desc = !self.sort_desc;
+        self.refresh_data();
+    }
+
+    fn selected_pid(&self) -> Option<Pid> {
+        self.table_state
+            .selected()
+            .and_then(|i| self.rows.get(i))
+            .map(|r| r.pid)
+    }
+
+    fn page_down(&mut self) {
+        if self.rows.is_empty() {
+            self.table_state.select(None);
+            return;
+        }
+        let cur = self.table_state.selected().unwrap_or(0);
+        let step = 10usize;
+        let i = (cur + step).min(self.rows.len() - 1);
+        self.table_state.select(Some(i));
+    }
+
+    fn page_up(&mut self) {
+        if self.rows.is_empty() {
+            self.table_state.select(None);
+            return;
+        }
+        let cur = self.table_state.selected().unwrap_or(0);
+        let step = 10usize;
+        let i = cur.saturating_sub(step);
+        self.table_state.select(Some(i));
+    }
+
+    fn go_home(&mut self) {
+        if self.rows.is_empty() {
+            self.table_state.select(None);
+        } else {
+            self.table_state.select(Some(0));
+        }
+    }
+
+    fn go_end(&mut self) {
+        if self.rows.is_empty() {
+            self.table_state.select(None);
+        } else {
+            self.table_state.select(Some(self.rows.len() - 1));
+        }
+    }
+
+    fn force_refresh(&mut self) {
+        self.refresh_data();
+    }
+
+    fn set_interval_faster(&mut self) {
+        self.refresh_interval_ms = clamp_refresh_interval(self.refresh_interval_ms, -200);
+    }
+
+    fn set_interval_slower(&mut self) {
+        self.refresh_interval_ms = clamp_refresh_interval(self.refresh_interval_ms, 200);
+    }
+
+    fn select_next(&mut self) {
+        let i = match self.table_state.selected() {
+            Some(i) => (i + 1).min(self.rows.len().saturating_sub(1)),
+            None => 0,
+        };
+        self.table_state.select(Some(i));
+    }
+
+    fn select_prev(&mut self) {
+        let i = match self.table_state.selected() {
+            Some(i) => i.saturating_sub(1),
+            None => 0,
+        };
+        self.table_state.select(Some(i));
+    }
+
+    fn kill_selected(&mut self) {
+        if let Some(i) = self.table_state.selected() {
+            if let Some(row) = self.rows.get(i) {
+                if let Some(proc_) = self.sys.process(row.pid) {
+                    let _ = proc_.kill();
+                }
+            }
+            // 结束进程后刷新进程列表
+            self.sys.refresh_processes();
+            self.refresh_data();
+        }
+    }
+
+    // 处理键盘事件；返回 true 表示退出
+    fn handle_key(&mut self, key: KeyEvent) -> bool {
+        // 详情弹窗模式优先处理
+        if self.show_details {
+            match key.code {
+                KeyCode::Esc | KeyCode::Enter | KeyCode::Char('i') => {
+                    self.show_details = false;
+                    return false;
+                }
+                _ => return false,
+            }
+        }
+        // 处于过滤输入模式时优先处理输入
+        if self.filter_active {
+            match key.code {
+                KeyCode::Esc => {
+                    self.filter_active = false;
+                    return false;
+                }
+                KeyCode::Enter => {
+                    let trimmed = self.filter_input.trim().to_string();
+                    if trimmed.is_empty() {
+                        self.filter_text = None;
+                    } else {
+                        self.filter_text = Some(trimmed);
+                    }
+                    self.filter_active = false;
+                    self.refresh_data();
+                    return false;
+                }
+                KeyCode::Backspace => {
+                    self.filter_input.pop();
+                    return false;
+                }
+                KeyCode::Char(c) => {
+                    self.filter_input.push(c);
+                    return false;
+                }
+                _ => return false,
+            }
+        }
+        match key.code {
+            KeyCode::Char('q') => {
+                self.should_quit = true;
+                true
+            }
+            KeyCode::Down => {
+                self.select_next();
+                false
+            }
+            KeyCode::Up => {
+                self.select_prev();
+                false
+            }
+            KeyCode::PageDown => {
+                self.page_down();
+                false
+            }
+            KeyCode::PageUp => {
+                self.page_up();
+                false
+            }
+            KeyCode::Home => {
+                self.go_home();
+                false
+            }
+            KeyCode::End => {
+                self.go_end();
+                false
+            }
+            KeyCode::Char('s') => {
+                self.cycle_sort_key();
+                false
+            }
+            KeyCode::Char('r') => {
+                self.toggle_sort_order();
+                false
+            }
+            KeyCode::Char('k') => {
+                self.kill_selected();
+                false
+            }
+            KeyCode::Char('i') => {
+                if self.selected_pid().is_some() {
+                    self.show_details = true;
+                }
+                false
+            }
+            KeyCode::Char('/') => {
+                self.filter_active = true;
+                self.filter_input = self.filter_text.clone().unwrap_or_default();
+                false
+            }
+            KeyCode::Char('p') => {
+                self.paused = !self.paused;
+                false
+            }
+            KeyCode::Char('+') | KeyCode::Char('=') => {
+                self.set_interval_faster();
+                false
+            }
+            KeyCode::Char('-') => {
+                self.set_interval_slower();
+                false
+            }
+            KeyCode::F(5) => {
+                self.force_refresh();
+                false
+            }
+            _ => false,
+        }
+    }
+}
+
+fn main() -> Result<()> {
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen)?;
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+
+    let res = run_app(&mut terminal);
+
+    // 清理终端状态
+    disable_raw_mode().ok();
+    let mut stdout = io::stdout();
+    execute!(stdout, LeaveAlternateScreen).ok();
+
+    res
+}
+
+fn run_app(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<()> {
+    let mut app = App::new();
+    // 清空启动前残留按键（例如在 shell 中按 Enter 启动命令的回车）
+    while event::poll(Duration::from_millis(0))? {
+        let _ = event::read()?;
+    }
+
+    loop {
+        terminal.draw(|f| ui(f, &mut app))?;
+
+        // 事件处理，带超时让 UI 定期刷新
+        let timeout = Duration::from_millis(200);
+        if event::poll(timeout)? {
+            if let Event::Key(key) = event::read()? {
+                if app.handle_key(key) {
+                    break;
+                }
+            }
+        }
+        app.on_tick();
+    }
+
+    Ok(())
+}
+
+fn ui(frame: &mut Frame, app: &mut App) {
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(10), // 顶部 CPU/内存 + 历史曲线
+            Constraint::Min(8),     // 进程表
+            Constraint::Length(1),  // 底部帮助
+        ])
+        .split(frame.area());
+
+    draw_top_panel(frame, chunks[0], app);
+    draw_process_table(frame, chunks[1], app);
+    draw_footer(frame, chunks[2], app);
+
+    if app.show_details {
+        draw_details_popup(frame, app);
+    }
+}
+
+fn draw_top_panel(frame: &mut Frame, area: Rect, app: &App) {
+    let lines = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(2),
+            Constraint::Length(2),
+            Constraint::Min(3),
+        ])
+        .split(area);
+
+    let cpu_ratio = (app.cpu_usage / 100.0).clamp(0.0, 1.0);
+    let cpu_color = color_for_ratio(cpu_ratio);
+    let cpu_gauge = Gauge::default()
+        .block(
+            Block::default()
+                .title("CPU")
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded),
+        )
+        .gauge_style(Style::default().fg(cpu_color).bg(Color::Black))
+        .ratio(cpu_ratio as f64)
+        .label(format!("{:.1}%", app.cpu_usage));
+    frame.render_widget(cpu_gauge, lines[0]);
+
+    let mem_ratio = if app.mem_total_mb == 0 {
+        0.0
+    } else {
+        app.mem_used_mb as f32 / app.mem_total_mb as f32
+    }
+    .clamp(0.0, 1.0);
+    let mem_color = color_for_ratio(mem_ratio);
+    let mem_gauge = Gauge::default()
+        .block(
+            Block::default()
+                .title("内存")
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded),
+        )
+        .gauge_style(Style::default().fg(mem_color).bg(Color::Black))
+        .ratio(mem_ratio as f64)
+        .label(format!(
+            "{} / {} MiB ({:.1}%)",
+            app.mem_used_mb,
+            app.mem_total_mb,
+            mem_ratio * 100.0
+        ));
+    frame.render_widget(mem_gauge, lines[1]);
+
+    let hist_rows = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(2), Constraint::Length(2)])
+        .split(lines[2]);
+
+    let cpu_data: Vec<u64> = app.cpu_hist.iter().copied().collect();
+    let mem_data: Vec<u64> = app.mem_hist.iter().copied().collect();
+
+    let cpu_spark = Sparkline::default()
+        .block(
+            Block::default()
+                .title("CPU历史")
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded),
+        )
+        .style(Style::default().fg(cpu_color))
+        .data(&cpu_data)
+        .max(100)
+        .bar_set(NINE_LEVELS);
+    frame.render_widget(cpu_spark, hist_rows[0]);
+
+    let mem_spark = Sparkline::default()
+        .block(
+            Block::default()
+                .title("内存历史")
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded),
+        )
+        .style(Style::default().fg(mem_color))
+        .data(&mem_data)
+        .max(100)
+        .bar_set(NINE_LEVELS);
+    frame.render_widget(mem_spark, hist_rows[1]);
+}
+
+fn draw_process_table(frame: &mut Frame, area: Rect, app: &mut App) {
+    let header = Row::new(vec!["PID", "进程", "CPU%", "内存(MiB)"]).style(
+        Style::default()
+            .bg(Color::DarkGray)
+            .fg(Color::White)
+            .add_modifier(Modifier::BOLD),
+    );
+
+    let rows: Vec<Row> = app
+        .rows
+        .iter()
+        .enumerate()
+        .map(|(i, r)| {
+            let cpu_cell = ratatui::widgets::Cell::from(format!("{:>6.1}", r.cpu))
+                .style(Style::default().fg(color_for_ratio((r.cpu / 100.0).clamp(0.0, 1.0))));
+            let row = Row::new(vec![
+                ratatui::widgets::Cell::from(r.pid.as_u32().to_string()),
+                ratatui::widgets::Cell::from(r.name.clone()),
+                cpu_cell,
+                ratatui::widgets::Cell::from(format!("{:>10}", r.mem_mb)),
+            ]);
+            if i % 2 == 0 {
+                row.style(Style::default().bg(Color::Rgb(32, 32, 32)))
+            } else {
+                row
+            }
+        })
+        .collect();
+
+    let sort_text = match app.sort_key {
+        SortKey::Cpu => "CPU",
+        SortKey::Mem => "内存",
+        SortKey::Pid => "PID",
+        SortKey::Name => "名称",
+    };
+    let order_text = if app.sort_desc { "↓" } else { "↑" };
+    let widths = vec![
+        Constraint::Length(8),
+        Constraint::Percentage(55),
+        Constraint::Length(8),
+        Constraint::Length(12),
+    ];
+
+    let table = Table::new(rows, widths)
+        .header(header)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded)
+                .title(format!("进程（排序: {} {}）", sort_text, order_text)),
+        )
+        .row_highlight_style(
+            Style::default()
+                .bg(Color::DarkGray)
+                .fg(Color::White)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol("> ");
+
+    frame.render_stateful_widget(table, area, &mut app.table_state);
+}
+
+fn draw_footer(frame: &mut Frame, area: Rect, app: &App) {
+    let filter_display = if app.filter_active {
+        format!("/{}_", app.filter_input)
+    } else if let Some(t) = &app.filter_text {
+        format!("filter: {}", t)
+    } else {
+        "filter: (none)".to_string()
+    };
+    let paused = if app.paused { "暂停" } else { "运行" };
+    let interval = format!("{}ms", app.refresh_interval_ms);
+    let shown = app.rows.len();
+    let total = app.sys.processes().len();
+
+    let help = Line::from(vec![
+        Span::styled(" q ", Style::default().bg(Color::DarkGray)),
+        Span::raw("退出  "),
+        Span::styled(
+            " ↑/↓ PgUp/PgDn Home/End ",
+            Style::default().bg(Color::DarkGray),
+        ),
+        Span::raw("导航  "),
+        Span::styled(" s/r ", Style::default().bg(Color::DarkGray)),
+        Span::raw("切换/反转排序  "),
+        Span::styled(" / ", Style::default().bg(Color::DarkGray)),
+        Span::raw("搜索  "),
+        Span::styled(" i ", Style::default().bg(Color::DarkGray)),
+        Span::raw("详情  "),
+        Span::styled(" p ", Style::default().bg(Color::DarkGray)),
+        Span::raw("暂停  "),
+        Span::styled(" +/- ", Style::default().bg(Color::DarkGray)),
+        Span::raw("调整刷新  "),
+        Span::styled(" F5 ", Style::default().bg(Color::DarkGray)),
+        Span::raw("强制刷新  |  "),
+        Span::raw(format!(
+            "{} | {} | {} | 进程 {} / {}",
+            filter_display, paused, interval, shown, total
+        )),
+    ]);
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded);
+    let paragraph = ratatui::widgets::Paragraph::new(help).block(block);
+    frame.render_widget(paragraph, area);
+}
+
+fn draw_details_popup(frame: &mut Frame, app: &App) {
+    let area = centered_rect(70, 60, frame.area());
+    frame.render_widget(Clear, area);
+
+    let mut lines: Vec<Line> = Vec::new();
+    if let Some(pid) = app.selected_pid() {
+        if let Some(p) = app.sys.process(pid) {
+            let name = p.name();
+            let parent = p.parent().map(|pp| pp.as_u32()).unwrap_or(0);
+            let cpu = p.cpu_usage();
+            let mem = p.memory() / 1024;
+            let exe = p.exe().to_string_lossy().to_string();
+            let cwd = p.cwd().to_string_lossy().to_string();
+            let cmd: String = if p.cmd().is_empty() {
+                String::new()
+            } else {
+                p.cmd()
+                    .iter()
+                    .map(|s| s.as_str())
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            };
+            let status = format!("{:?}", p.status());
+
+            lines.push(Line::raw(format!("名称: {}", name)));
+            lines.push(Line::raw(format!(
+                "PID: {}    PPID: {}",
+                pid.as_u32(),
+                parent
+            )));
+            lines.push(Line::raw(format!("状态: {}", status)));
+            lines.push(Line::raw(format!("CPU%: {:.1}    内存: {} MiB", cpu, mem)));
+            lines.push(Line::raw(format!("Exe: {}", exe)));
+            lines.push(Line::raw(format!("Cwd: {}", cwd)));
+            if !cmd.is_empty() {
+                lines.push(Line::raw(format!("Cmd: {}", cmd)));
+            }
+        } else {
+            lines.push(Line::raw("未找到进程详情（可能已退出）"));
+        }
+    } else {
+        lines.push(Line::raw("未选中任何进程"));
+    }
+
+    let block = Block::default()
+        .title("进程详情（Esc/Enter 关闭）")
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded);
+    let paragraph = ratatui::widgets::Paragraph::new(lines)
+        .block(block)
+        .wrap(ratatui::widgets::Wrap { trim: true });
+    frame.render_widget(paragraph, area);
+}
+
+fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage((100 - percent_y) / 2),
+            Constraint::Percentage(percent_y),
+            Constraint::Percentage((100 - percent_y) / 2),
+        ])
+        .split(r);
+
+    let horizontal = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - percent_x) / 2),
+            Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
+        ])
+        .split(popup_layout[1]);
+    horizontal[1]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn proc_row(pid: u32, name: &str, cpu: f32, mem_mb: u64) -> ProcRow {
+        ProcRow {
+            pid: Pid::from_u32(pid),
+            name: name.to_string(),
+            cpu,
+            mem_mb,
+        }
+    }
+
+    #[test]
+    fn test_clamp_refresh_interval_bounds() {
+        assert_eq!(clamp_refresh_interval(1000, -200), 800);
+        assert_eq!(clamp_refresh_interval(200, -200), 200);
+        assert_eq!(clamp_refresh_interval(5000, 200), 5000);
+    }
+
+    #[test]
+    fn test_push_capped_keeps_capacity() {
+        let mut history = VecDeque::new();
+        push_capped(&mut history, 1, 2);
+        push_capped(&mut history, 2, 2);
+        push_capped(&mut history, 3, 2);
+        assert_eq!(history.into_iter().collect::<Vec<_>>(), vec![2, 3]);
+    }
+
+    #[test]
+    fn test_filter_matches_name_and_pid() {
+        let row = proc_row(1234, "Python", 1.0, 100);
+        assert!(filter_matches(&row, "py"));
+        assert!(filter_matches(&row, "234"));
+        assert!(!filter_matches(&row, "nginx"));
+    }
+
+    #[test]
+    fn test_resolve_selected_index_prefers_existing_pid() {
+        let rows = vec![proc_row(1, "a", 1.0, 100), proc_row(2, "b", 2.0, 200)];
+        let selected = resolve_selected_index_local(&rows, Some(Pid::from_u32(2)), Some(0));
+        assert_eq!(selected, Some(1));
+    }
+
+    #[test]
+    fn test_resolve_selected_index_falls_back_when_pid_missing() {
+        let rows = vec![proc_row(1, "a", 1.0, 100), proc_row(2, "b", 2.0, 200)];
+        let selected = resolve_selected_index_local(&rows, Some(Pid::from_u32(9)), Some(8));
+        assert_eq!(selected, Some(1));
+    }
+
+    #[test]
+    fn test_resolve_selected_index_empty_rows() {
+        let rows: Vec<ProcRow> = Vec::new();
+        let selected = resolve_selected_index_local(&rows, Some(Pid::from_u32(9)), Some(0));
+        assert_eq!(selected, None);
+    }
+
+    #[test]
+    fn test_sort_rows_by_cpu_desc() {
+        let app = App {
+            sys: System::new(),
+            rows: Vec::new(),
+            table_state: TableState::default(),
+            sort_key: SortKey::Cpu,
+            sort_desc: true,
+            last_refresh: Instant::now(),
+            cpu_usage: 0.0,
+            mem_used_mb: 0,
+            mem_total_mb: 0,
+            should_quit: false,
+            filter_text: None,
+            filter_input: String::new(),
+            filter_active: false,
+            paused: false,
+            refresh_interval_ms: 1000,
+            show_details: false,
+            cpu_hist: VecDeque::new(),
+            mem_hist: VecDeque::new(),
+            hist_capacity: 120,
+        };
+        let mut rows = vec![
+            proc_row(1, "zeta", 10.0, 100),
+            proc_row(2, "alpha", 10.0, 200),
+            proc_row(3, "beta", 2.0, 300),
+        ];
+        app.sort_rows(&mut rows);
+        let pids: Vec<u32> = rows.iter().map(|row| row.pid.as_u32()).collect();
+        assert_eq!(pids, vec![2, 1, 3]);
+    }
+
+    #[test]
+    fn test_sort_rows_by_name_ascending() {
+        let app = App {
+            sys: System::new(),
+            rows: Vec::new(),
+            table_state: TableState::default(),
+            sort_key: SortKey::Name,
+            sort_desc: false,
+            last_refresh: Instant::now(),
+            cpu_usage: 0.0,
+            mem_used_mb: 0,
+            mem_total_mb: 0,
+            should_quit: false,
+            filter_text: None,
+            filter_input: String::new(),
+            filter_active: false,
+            paused: false,
+            refresh_interval_ms: 1000,
+            show_details: false,
+            cpu_hist: VecDeque::new(),
+            mem_hist: VecDeque::new(),
+            hist_capacity: 120,
+        };
+        let mut rows = vec![
+            proc_row(1, "zeta", 10.0, 100),
+            proc_row(2, "Alpha", 10.0, 200),
+            proc_row(3, "beta", 2.0, 300),
+        ];
+        app.sort_rows(&mut rows);
+        let names: Vec<&str> = rows.iter().map(|row| row.name.as_str()).collect();
+        assert_eq!(names, vec!["Alpha", "beta", "zeta"]);
+    }
+
+    #[test]
+    fn test_navigation_clamps() {
+        let mut app = App::new();
+        app.rows = vec![
+            proc_row(1, "a", 1.0, 1),
+            proc_row(2, "b", 2.0, 2),
+            proc_row(3, "c", 3.0, 3),
+        ];
+        app.table_state.select(Some(0));
+
+        app.select_prev();
+        assert_eq!(app.table_state.selected(), Some(0));
+
+        app.page_down();
+        assert_eq!(app.table_state.selected(), Some(2));
+
+        app.select_next();
+        assert_eq!(app.table_state.selected(), Some(2));
+
+        app.go_home();
+        assert_eq!(app.table_state.selected(), Some(0));
+
+        app.go_end();
+        assert_eq!(app.table_state.selected(), Some(2));
+    }
+
+    #[test]
+    fn test_centered_rect_size() {
+        let area = Rect::new(0, 0, 100, 50);
+        let centered = centered_rect(70, 60, area);
+        assert_eq!(centered.width, 70);
+        assert_eq!(centered.height, 30);
+    }
+
+    #[test]
+    fn test_color_for_ratio_thresholds() {
+        assert_eq!(color_for_ratio(0.49), Color::LightGreen);
+        assert_eq!(color_for_ratio(0.5), Color::Yellow);
+        assert_eq!(color_for_ratio(0.8), Color::Red);
+    }
+}

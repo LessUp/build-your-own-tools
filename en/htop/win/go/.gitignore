@@ -1,0 +1,22 @@
+# Build artifacts
+bin/
+dist/
+build/
+*.exe
+*.exe~
+*.dll
+*.so
+*.test
+*.out
+
+# Temporary files
+tmp/
+*.log
+*.cover
+*.prof
+
+# IDE settings
+.vscode/
+.idea/
+htop-win-go.exe
+htop-win-go.exe

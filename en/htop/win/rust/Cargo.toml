@@ -1,0 +1,12 @@
+[package]
+name = "htop-win-rust"
+version = "0.1.5"
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+crossterm.workspace = true
+ratatui.workspace = true
+sysinfo.workspace = true
+anyhow.workspace = true
+htop-shared = { path = "../../shared" }
